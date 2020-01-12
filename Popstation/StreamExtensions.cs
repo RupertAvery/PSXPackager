@@ -36,15 +36,15 @@ namespace Popstation
         {
             foreach (var index in isoIndices)
             {
-                var membuf = BitConverter.GetBytes(index.offset);
+                var membuf = BitConverter.GetBytes(index.Offset);
                 stream.Write(membuf, 0, sizeof(uint));
 
-                membuf = BitConverter.GetBytes(index.length);
+                membuf = BitConverter.GetBytes(index.Length);
                 stream.Write(membuf, 0, sizeof(uint));
 
-                for (var j = 0; j < index.dummy.Length; j++)
+                for (var j = 0; j < index.Dummy.Length; j++)
                 {
-                    membuf = BitConverter.GetBytes(index.dummy[j]);
+                    membuf = BitConverter.GetBytes(index.Dummy[j]);
                     stream.Write(membuf, 0, sizeof(uint));
                 }
             }

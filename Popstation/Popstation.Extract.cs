@@ -3,6 +3,8 @@ using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Popstation
 {
@@ -21,41 +23,33 @@ namespace Popstation
         // The size of one "block" of the ISO
         const int ISO_BLOCK_SIZE = 0x930;
 
-
-        ExtractIsoInfo extractInfo;
-        bool cancelExtract = false;
-        string pbpFileName;
-
-        public void Extract(ExtractIsoInfo info)
+        public Task Extract(ExtractIsoInfo extractInfo, CancellationToken cancellationToken)
         {
-            extractInfo = info;
-            cancelExtract = false;
-            ExtractIso();
+            return Task.Run(() => ExtractIso(extractInfo, cancellationToken));
         }
 
-        private void ExtractIso()
+        private void ExtractIso(ExtractIsoInfo extractInfo, CancellationToken cancellationToken)
         {
 
-            using (var iso_stream = new FileStream(extractInfo.dstISO, FileMode.Create, FileAccess.Write))
+            using (var iso_stream = new FileStream(extractInfo.DestinationIso, FileMode.Create, FileAccess.Write))
             {
-                List<INDEX> iso_index = Init(extractInfo.srcPBP);
+                List<INDEX> iso_index = ReadIsoIndexes(extractInfo.SourcePbp);
 
                 if (iso_index.Count == 0) throw new Exception("No iso index was found.");
 
-                uint isoSize = (uint)GetIsoSize(iso_index);
+                uint isoSize = (uint)GetIsoSize(extractInfo.SourcePbp, iso_index);
 
-                Console.WriteLine($"ISO Size: {isoSize} ({Math.Round((double)(isoSize / (1024 * 1024)), 2)}MB)");
+                OnEvent?.Invoke(PopstationEventEnum.GetIsoSize, isoSize);
+
                 uint totSize = 0;
                 int i;
                 for (i = 0; i < iso_index.Count; i++)
                 {
                     byte[] buffer;
-                    buffer = ReadBlock(iso_index, i, out uint bufferSize);
+                    buffer = ReadBlock(extractInfo.SourcePbp, iso_index, i, out uint bufferSize);
 
 
                     totSize += bufferSize;
-
-                    Console.WriteLine($"{totSize:X4}");
 
                     if (totSize > isoSize)
                     {
@@ -65,21 +59,12 @@ namespace Popstation
 
                     iso_stream.Write(buffer, 0, (int)bufferSize);
 
-                    //PostMessage(extractInfo.callback, WM_EXTRACT_PROGRESS, 0, totSize);
-                    //Console.WriteLine($"Reading block {i}");
-                    if (cancelExtract) break;
+                    OnEvent?.Invoke(PopstationEventEnum.ExtractProgress, totSize);
                 }
-
-                //fclose(iso_stream);
-                //popstripFinal(&iso_index);
-                //PostMessage(extractInfo.callback, WM_EXTRACT_DONE, 0, 0);
-                Console.WriteLine("Done");
-
-                return;
             }
         }
 
-        private List<INDEX> Init(string pbpFile)  //Returns index count
+        private List<INDEX> ReadIsoIndexes(string pbpFile) 
         {
             int psar_offset;
             int this_offset;
@@ -88,18 +73,11 @@ namespace Popstation
             int length;
             int[] dummy = new int[6];
 
-            pbpFileName = pbpFile;
-
             var iso_index = new List<INDEX>();
 
             // Open the PBP file
-            using (var pbp_stream = new FileStream(pbpFileName, FileMode.Open, FileAccess.Read))
+            using (var pbp_stream = new FileStream(pbpFile, FileMode.Open, FileAccess.Read))
             {
-                //if (pbp_stream == NULL)
-                //{
-                //    return popstripErrorExit("Unable to open \"%s\".", pbpFileName);
-                //}
-
                 // Read in the offset of the PSAR file
                 pbp_stream.Seek(HEADER_PSAR_OFFSET, SeekOrigin.Begin);
                 psar_offset = pbp_stream.ReadInteger();
@@ -166,7 +144,7 @@ namespace Popstation
             }
         }
 
-        private byte[] ReadBlock(List<INDEX> iso_index, int blockNo, out uint datalength)
+        private byte[] ReadBlock(string pbpFile, List<INDEX> iso_index, int blockNo, out uint datalength)
         {
             byte[] in_buffer;
             byte[] out_buffer;
@@ -174,7 +152,7 @@ namespace Popstation
             int this_offset;
             int out_length;
 
-            using (var pbp_stream = new FileStream(pbpFileName, FileMode.Open, FileAccess.Read))
+            using (var pbp_stream = new FileStream(pbpFile, FileMode.Open, FileAccess.Read))
             {
                 // Read in the offset of the PSAR file
                 pbp_stream.Seek(HEADER_PSAR_OFFSET, SeekOrigin.Begin);
@@ -212,7 +190,7 @@ namespace Popstation
             }
         }
 
-        private int GetIsoSize(List<INDEX> iso_index)
+        private int GetIsoSize(string pbpFile, List<INDEX> iso_index)
         {
             byte[] out_buffer;
             int iso_length;
@@ -220,7 +198,7 @@ namespace Popstation
 
             // The ISO size is contained in the data referenced in index #2
             // If we've just read in index #2, grab the ISO size from the output buffer
-            out_buffer = ReadBlock(iso_index, 1, out bufferSize);
+            out_buffer = ReadBlock(pbpFile, iso_index, 1, out bufferSize);
             iso_length = (out_buffer[104] + (out_buffer[105] << 8) + (out_buffer[106] << 16) + (out_buffer[107] << 24)) * ISO_BLOCK_SIZE;
 
             return iso_length;

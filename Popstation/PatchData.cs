@@ -2,7 +2,7 @@
 {
     public class PatchData
     {
-        public byte newData;
-        public long dataPosition;
+        public byte Data { get; set; }
+        public long Position { get; set; }
     }
 }

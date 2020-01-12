@@ -1,27 +1,27 @@
-﻿namespace Popstation
+﻿using System.Collections.Generic;
+
+namespace Popstation
 {
     public class ConvertIsoInfo
     {
-        public string _base;
-        public string data_psp;
-        public string srcISO;
-        public string dstPBP;
-        public string pic0;
-        public string pic1;
-        public string icon0;
-        public string icon1;
-        public string snd0;
-        public string boot;
-        public bool srcIsPbp;
-        public string gameTitle;
-        public string saveTitle;
-        public string gameID;
-        public string saveID;
-        public int compLevel;
-        public int tocSize;
-        public byte[] tocData;
-        public MultiDiscInfo multiDiscInfo;
-        public int patchCount;
-        public PatchData[] patchData;
+        public string BasePbp { get; set; }
+        public string DataPsp { get; set; }
+        //public string SourceIso {get; set;}
+        public string DestinationPbp { get; set; }
+        public string Pic0 { get; set; }
+        public string Pic1 { get; set; }
+        public string Icon0 { get; set; }
+        public string Icon1 { get; set; }
+        public string Snd0 { get; set; }
+        public string Boot { get; set; }
+        public string MainGameTitle { get; set; }
+        public string SaveTitle { get; set; }
+        public string MainGameID { get; set; }
+        public string SaveID { get; set; }
+        public int CompressionLevel { get; set; }
+        public int TocSize { get; set; }
+        public byte[] TocData { get; set; }
+        public List<DiscInfo> DiscInfos { get; set; }
+        public List<PatchData> Patches { get; set; }
     };
 }

@@ -2,13 +2,13 @@
 {
     public class IsoIndex
     {
-        public uint offset;
-        public uint length;
-        public uint[] dummy;
+        public uint Offset { get; set; }
+        public uint Length { get; set; }
+        public uint[] Dummy { get; set; }
 
         public IsoIndex()
         {
-            dummy = new uint[6];
+            Dummy = new uint[6];
         }
     }
 }

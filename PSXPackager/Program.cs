@@ -1,5 +1,7 @@
 ﻿using Popstation;
 using System;
+using System.Collections.Generic;
+using System.Threading;
 
 namespace PSXPackager
 {
@@ -9,38 +11,51 @@ namespace PSXPackager
         {
             var info = new ConvertIsoInfo()
             {
-                multiDiscInfo = new MultiDiscInfo()
+                DiscInfos = new List<DiscInfo>()
                 {
-                    fileCount = 1,
-                    gameID1 = "SLUS01324",
-                    gameTitle1 = "Breath of Fire IV",
-                    srcISO1 = @"C:\ROMS\PSX\Breath of Fire IV.bin",
+                    new DiscInfo()
+                    {
+                    GameID = "SLUS01324",
+                    GameTitle = "Breath of Fire IV",
+                    SourceIso = @"C:\ROMS\PSX\Breath of Fire IV.bin",
+                    }
                 },
-                srcISO = @"C:\ROMS\PSX\Breath of Fire IV.bin",
-                dstPBP = @"C:\ROMS\PSX\Breath of Fire IV - TEST.PBP",
-                gameTitle = "Breath of Fire IV",
-                gameID = "SLUS01324",
-                saveTitle = "Breath of Fire IV",
-                saveID = "SLUS01324",
-                data_psp = @"C:\Play\PSXPackager\Popstation\Resources\DATA.PSP",
-                pic0 = @"C:\Play\PSXPackager\Popstation\Resources\PIC0.PNG",
-                pic1 = @"C:\Play\PSXPackager\Popstation\Resources\PIC1.PNG",
-                icon0 = @"C:\Play\PSXPackager\Popstation\Resources\ICON0.PNG",
-                _base = @"C:\Play\PSXPackager\Popstation\Resources\BASE.PBP",
-                compLevel = 9
+                DestinationPbp = @"C:\ROMS\PSX\Breath of Fire IV - TEST.PBP",
+                MainGameTitle = "Breath of Fire IV",
+                MainGameID = "SLUS01324",
+                SaveTitle = "Breath of Fire IV",
+                SaveID = "SLUS01324",
+                //data_psp = @"C:\Play\PSXPackager\Popstation\Resources\DATA.PSP",
+                Pic0 = @"C:\Play\PSXPackager\Popstation\Resources\PIC0.PNG",
+                Pic1 = @"C:\Play\PSXPackager\Popstation\Resources\PIC1.PNG",
+                Icon0 = @"C:\Play\PSXPackager\Popstation\Resources\ICON0.PNG",
+                BasePbp = @"C:\Play\PSXPackager\Popstation\Resources\BASE.PBP",
+                CompressionLevel = 9
             };
 
             var popstation = new Popstation.Popstation();
+            popstation.OnEvent = Notify;
 
-            popstation.Convert(info);
+            var cancelToken = new CancellationTokenSource();
+
+            popstation.Convert(info, cancelToken.Token).GetAwaiter().GetResult();
 
             var extractInfo = new ExtractIsoInfo()
             {
-                dstISO = @"C:\ROMS\PSX\test-test.img",
-                srcPBP = @"C:\ROMS\PSX\Breath of Fire IV - TEST.PBP",
+                DestinationIso = @"C:\ROMS\PSX\test-test.img",
+                SourcePbp = @"C:\ROMS\PSX\Breath of Fire IV - TEST.PBP",
             };
 
-            popstation.Extract(extractInfo);
+            popstation.Extract(extractInfo, cancelToken.Token).GetAwaiter().GetResult();
+
+
         }
+
+        private static void Notify(PopstationEventEnum @event, object value)
+        {
+            Console.WriteLine(Enum.GetName(typeof(PopstationEventEnum), @event));
+            //Console.WriteLine($"ISO Size: {isoSize} ({Math.Round((double)(isoSize / (1024 * 1024)), 2)}MB)");
+        }
+
     }
 }
