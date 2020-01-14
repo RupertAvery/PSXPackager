@@ -25,6 +25,8 @@
         ConvertProgress,
         ConvertSize,
         ConvertComplete,
-        ConvertStart
+        ConvertStart,
+        ExtractStart,
+        ExtractComplete
     }
 }

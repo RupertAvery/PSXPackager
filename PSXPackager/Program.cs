@@ -12,24 +12,30 @@ using System.Threading;
 
 namespace PSXPackager
 {
-
     class Program
     {
+        static bool IsValidArchiveFile(string filename)
+        {
+            return Path.GetExtension(filename).ToLower() == ".7z" ||
+            Path.GetExtension(filename).ToLower() == ".rar" ||
+            Path.GetExtension(filename).ToLower() == ".zip";
+        }
+
         static bool IsValidImageFile(Entry entry)
         {
             var filename = entry.FileName;
             return Path.GetExtension(filename).ToLower() == ".bin" ||
             Path.GetExtension(filename).ToLower() == ".img" ||
             Path.GetExtension(filename).ToLower() == ".iso";
-
         }
 
         static string Unzip(string file, string tempPath)
         {
             var path = "";
+
             using (ArchiveFile archiveFile = new ArchiveFile(file))
             {
-                if (archiveFile.Entries.Count(IsValidImageFile) == 1)
+                if (archiveFile.Entries.Count(IsValidImageFile) == 0)
                 {
                     Console.WriteLine("No valid image files found");
                 }
@@ -39,7 +45,7 @@ namespace PSXPackager
                     {
                         if (IsValidImageFile(entry))
                         {
-                            Console.WriteLine($"Decompressing {entry.FileName}");
+                            Console.WriteLine($"Decompressing {entry.FileName}...");
                             path = Path.Combine(tempPath, entry.FileName);
                             // extract to file
                             entry.Extract(path, false);
@@ -52,43 +58,41 @@ namespace PSXPackager
                     Console.WriteLine($"Multi-bin image was found!");
 
                     var files = new List<string>();
-                    var cueRegex = new Regex("FILE \"(.*?)\" BINARY");
-
                     try
                     {
                         foreach (Entry entry in archiveFile.Entries)
                         {
-                            Console.WriteLine($"Decompressing {entry.FileName}");
+                            Console.WriteLine($"Decompressing {entry.FileName}...");
                             path = Path.Combine(tempPath, entry.FileName);
                             // extract to file
                             entry.Extract(path, false);
                             files.Add(path);
                         }
 
-                        path = Path.Combine(tempPath, Path.GetFileNameWithoutExtension(file) + " - JOINED.bin");
-
-                        using (var joinedFile = new FileStream(path, FileMode.Create))
+                        var cue = files.FirstOrDefault(x => Path.GetExtension(x).ToLower() == ".cue");
+                        if (cue != null)
                         {
-                            var cue = files.FirstOrDefault(x => Path.GetExtension(x).ToLower() == ".cue");
-                            if (cue != null)
+                            var cueReader = new CueReader();
+                            var cueFiles = cueReader.Read(cue);
+
+                            Console.WriteLine($"Merging .bins...");
+
+                            path = Path.Combine(tempPath, Path.GetFileNameWithoutExtension(file) + " - JOINED.bin");
+                            using (var joinedFile = new FileStream(path, FileMode.Create))
                             {
-                                var cueLines = File.ReadAllLines(cue);
-                                foreach (var line in cueLines)
+                                foreach (var cueFile in cueFiles)
                                 {
-                                    var match = cueRegex.Match(line);
-                                    if (match.Success)
+                                    using (var srcStream = new FileStream(Path.Combine(tempPath, cueFile.FileName), FileMode.Open))
                                     {
-                                        Console.WriteLine($"Writing {match.Groups[1].Value}...");
-                                        using (var srcStream = new FileStream(Path.Combine(tempPath, match.Groups[1].Value), FileMode.Open))
-                                        {
-                                            srcStream.CopyTo(joinedFile);
-                                        }
+                                        srcStream.CopyTo(joinedFile);
                                     }
                                 }
                             }
                         }
-
-
+                        else
+                        {
+                            Console.WriteLine($"No cue sheet found!");
+                        }
                     }
                     finally
                     {
@@ -103,7 +107,7 @@ namespace PSXPackager
             return path;
         }
 
-        static void ConvertIso(string srcIso, string outpath)
+        static void ConvertIso(string srcIso, string outpath, int compressionLevel)
         {
             string path = System.Reflection.Assembly.GetExecutingAssembly().CodeBase.Replace("file:\\\\\\", "").Replace("file:///", "");
             var appPath = System.IO.Path.GetDirectoryName(path);
@@ -160,7 +164,7 @@ namespace PSXPackager
                 Pic1 = Path.Combine(appPath, "Resources", "PIC1.PNG"),
                 Icon0 = Path.Combine(appPath, "Resources", "ICON0.PNG"),
                 BasePbp = Path.Combine(appPath, "Resources", "BASE.PBP"),
-                CompressionLevel = 9
+                CompressionLevel = compressionLevel
             };
 
             var popstation = new Popstation.Popstation();
@@ -173,7 +177,7 @@ namespace PSXPackager
 
         static void ExtractPbp(string srcPbp, string outpath)
         {
-            var filename = "Dummy.img";
+            var filename = Path.GetFileNameWithoutExtension(srcPbp) + ".bin";
             var info = new ExtractIsoInfo()
             {
                 SourcePbp = srcPbp,
@@ -193,14 +197,17 @@ namespace PSXPackager
             [Option('v', "verbose", Required = false, HelpText = "Set output to verbose messages.")]
             public bool Verbose { get; set; }
 
+            [Option('l', "level", Required = false, HelpText = "Set compression level 0-9, default 9", Default = 9)]
+            public int CompressionLevel { get; set; }
+
             [Option('o', "output", Required = true
                 , HelpText = "The output path where the converted file will be written")]
             public string OutputPath { get; set; }
 
-            [Option('i', "input", Required = false, HelpText = "The input file to convert")]
+            [Option('i', "input", Group = "input", HelpText = "The input file to convert")]
             public string InputPath { get; set; }
 
-            [Option('b', "batch", Required = false, HelpText = "The path to batch process a set of files")]
+            [Option('b', "batch", Group = "input", HelpText = "The path to batch process a set of files")]
             public string Batch { get; set; }
 
             [Option('e', "ext", Required = false, HelpText = "The extension of the files to process in the batch folder, e.g. .7z")]
@@ -210,60 +217,88 @@ namespace PSXPackager
 
         static void Main(string[] args)
         {
+            var tempPath = Path.Combine(Path.GetTempPath(), "PSXPackager");
+
+            if (!Directory.Exists(tempPath))
+            {
+                Directory.CreateDirectory(tempPath);
+            }
+
             Parser.Default.ParseArguments<Options>(args)
                  .WithParsed<Options>(o =>
                  {
-                     var outpath = o.OutputPath;
+                     var outPath = o.OutputPath;
+
 
                      if (!string.IsNullOrEmpty(o.InputPath))
                      {
-                         if (Path.GetExtension(o.InputPath).ToLower() == ".pbp")
+                         if (o.CompressionLevel < 0 || o.CompressionLevel > 9)
                          {
-                             ExtractPbp(o.InputPath, outpath);
+                             Console.WriteLine($"Invalid compression level, please enter a value from 0 to 9");
+                             return;
                          }
-                         else
-                         {
-                             ConvertIso(o.InputPath, outpath);
-                         }
+                         Console.WriteLine($"Input: {o.InputPath}");
                      }
                      else if (!string.IsNullOrEmpty(o.Batch))
                      {
-                         var tempPath = Path.Combine(Path.GetTempPath(), "PSXPackager");
+                         Console.WriteLine($"Batch: {o.Batch}");
+                         Console.WriteLine($"Extension: {o.BatchExtension}");
+                     }
 
-                         if (!Directory.Exists(tempPath))
-                         {
-                             Directory.CreateDirectory(tempPath);
-                         }
+                     Console.WriteLine($"Output: {o.OutputPath}");
+                     Console.WriteLine($"Compression Level: {o.CompressionLevel}");
+                     Console.WriteLine();
 
+                     if (!string.IsNullOrEmpty(o.InputPath))
+                     {
+                         ProcessFile(o.InputPath, outPath, tempPath, o.CompressionLevel);
+                     }
+                     else if (!string.IsNullOrEmpty(o.Batch))
+                     {
                          var files = Directory.GetFiles(o.Batch, $"*{o.BatchExtension}");
 
                          foreach (var file in files)
                          {
-                             Console.WriteLine($"Converting {file}...");
-                             var binpath = Unzip(file, tempPath);
-                             if (!string.IsNullOrEmpty(binpath))
-                             {
-                                 try
-                                 {
-                                     if (Path.GetExtension(binpath).ToLower() == ".pbp")
-                                     {
-                                         ExtractPbp(binpath, outpath);
-                                     }
-                                     else
-                                     {
-                                         ConvertIso(binpath, outpath);
-                                     }
-                                 }
-                                 finally
-                                 {
-                                     File.Delete(binpath);
-                                 }
-                             }
+                             ProcessFile(file, outPath, tempPath, o.CompressionLevel);
                          }
                      }
                  });
+        }
 
+        static void ProcessFile(string file, string outPath, string tempPath, int compressionLevel)
+        {
+            Console.WriteLine($"Converting {file}...");
 
+            var binPath = file;
+            var isTempFile = false;
+
+            if (IsValidArchiveFile(file))
+            {
+                binPath = Unzip(file, tempPath);
+                isTempFile = true;
+            }
+
+            if (!string.IsNullOrEmpty(binPath))
+            {
+                try
+                {
+                    if (Path.GetExtension(binPath).ToLower() == ".pbp")
+                    {
+                        ExtractPbp(binPath, outPath);
+                    }
+                    else
+                    {
+                        ConvertIso(binPath, outPath, compressionLevel);
+                    }
+                }
+                finally
+                {
+                    if (isTempFile)
+                    {
+                        File.Delete(binPath);
+                    }
+                }
+            }
         }
 
         static int y;
@@ -274,6 +309,9 @@ namespace PSXPackager
         {
             switch (@event)
             {
+                case PopstationEventEnum.GetIsoSize:
+                    total = Convert.ToInt64(value);
+                    break;
                 case PopstationEventEnum.ConvertSize:
                     total = Convert.ToInt64(value);
                     break;
@@ -284,6 +322,20 @@ namespace PSXPackager
                     Console.WriteLine();
                     break;
                 case PopstationEventEnum.ConvertProgress:
+                    Console.SetCursorPosition(0, y);
+                    if (DateTime.Now.Ticks - lastTicks > 100000)
+                    {
+                        Console.Write($"Converting: {Math.Round(Convert.ToInt32(value) / (double)total * 100, 0) }%");
+                        lastTicks = DateTime.Now.Ticks;
+                    }
+                    break;
+                case PopstationEventEnum.ExtractStart:
+                    y = Console.CursorTop;
+                    break;
+                case PopstationEventEnum.ExtractComplete:
+                    Console.WriteLine();
+                    break;
+                case PopstationEventEnum.ExtractProgress:
                     Console.SetCursorPosition(0, y);
                     if (DateTime.Now.Ticks - lastTicks > 100000)
                     {

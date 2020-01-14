@@ -37,13 +37,14 @@ namespace Popstation
 
                 OnEvent?.Invoke(PopstationEventEnum.GetIsoSize, isoSize);
 
+                OnEvent?.Invoke(PopstationEventEnum.ExtractStart, null);
+
                 uint totSize = 0;
                 int i;
                 for (i = 0; i < iso_index.Count; i++)
                 {
                     byte[] buffer;
                     buffer = ReadBlock(extractInfo.SourcePbp, iso_index, i, out uint bufferSize);
-
 
                     totSize += bufferSize;
 
@@ -57,6 +58,9 @@ namespace Popstation
 
                     OnEvent?.Invoke(PopstationEventEnum.ExtractProgress, totSize);
                 }
+
+                OnEvent?.Invoke(PopstationEventEnum.ExtractComplete, null);
+
             }
         }
 
