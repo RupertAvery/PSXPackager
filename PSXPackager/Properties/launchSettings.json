@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "PSXPackager": {
+      "commandName": "Project",
+      "commandLineArgs": "-o C:\\ROMS\\PSX -b C:\\ROMS\\PSX -e .7z"
+    }
+  }
+}
