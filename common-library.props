@@ -1,0 +1,18 @@
+<Project>
+  <Import Project="..\Version.props" Condition="Exists('..\Version.props')"/>
+  
+  <!-- Package related stuff -->
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net45;net462</TargetFrameworks>
+  </PropertyGroup>
+    
+  <!-- Assembly stuff -->
+  <PropertyGroup>
+    <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <GenerateNeutralResourcesLanguageAttribute>false</GenerateNeutralResourcesLanguageAttribute>
+  </PropertyGroup>
+  
+</Project>

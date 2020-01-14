@@ -49,6 +49,7 @@ namespace Popstation
                 }
             }
         }
+
         public static void Write(this Stream stream, string buffer, int offset, int size)
         {
             var membuf = System.Text.Encoding.ASCII.GetBytes(buffer);
@@ -106,6 +107,28 @@ namespace Popstation
             stream.WriteByte((byte)value);
         }
 
+        public static void WriteShort(this Stream stream, ushort value, int count)
+        {
+            var p = 0;
+            while (p < count)
+            {
+                var tempBuffer = BitConverter.GetBytes(value);
+                stream.Write(tempBuffer, 0, sizeof(ushort));
+                p += 1;
+            }
+        }
+
+        public static void WriteShort(this Stream stream, short value, int count)
+        {
+            var p = 0;
+            while (p < count)
+            {
+                var tempBuffer = BitConverter.GetBytes(value);
+                stream.Write(tempBuffer, 0, sizeof(short));
+                p += 1;
+            }
+        }
+
         public static void WriteInteger(this Stream stream, uint value, int count)
         {
             var p = 0;
@@ -117,8 +140,6 @@ namespace Popstation
             }
         }
 
-
-
         public static void WriteInteger(this Stream stream, int value, int count)
         {
             var p = 0;
@@ -128,6 +149,58 @@ namespace Popstation
                 stream.Write(tempBuffer, 0, sizeof(int));
                 p += 1;
             }
+        }
+
+        public static void Write(this Stream stream, SFOData sfo)
+        {
+            stream.WriteInteger(sfo.Magic, 1);
+            stream.WriteInteger(sfo.Version, 1);
+            stream.WriteInteger(sfo.KeyTableOffset, 1);
+            stream.WriteInteger(sfo.DataTableOffset, 1);
+            stream.WriteInteger((ushort)sfo.Entries.Count, 1);
+
+            for (var i = 0; i < sfo.Entries.Count; i++)
+            {
+                var entry = sfo.Entries[i];
+                stream.WriteShort(entry.KeyOffset, 1);
+                stream.WriteShort(entry.Format, 1);
+                stream.WriteInteger(entry.Length, 1);
+                stream.WriteInteger(entry.MaxLength, 1);
+                stream.WriteInteger(entry.DataOffset, 1);
+            }
+
+            for (var i = 0; i < sfo.Entries.Count; i++)
+            {
+                var key = sfo.Entries[i].Key;
+                stream.Write(key, 0, key.Length);
+                stream.WriteByte(0);
+            }
+
+            for (var i = 0; i < sfo.Padding; i++)
+            {
+                stream.WriteByte(0);
+            }
+
+            for (var i = 0; i < sfo.Entries.Count; i++)
+            {
+                var entry = sfo.Entries[i];
+                var value = entry.Value;
+                switch (entry.Format)
+                {
+                    case 0x0204:
+                        stream.Write((string)value, 0, ((string)value).Length);
+                        stream.WriteByte(0);
+                        for (var j = 0; j < entry.MaxLength - entry.Length; j++)
+                        {
+                            stream.WriteByte(0);
+                        }
+                        break;
+                    case 0x0404:
+                        stream.WriteInteger(Convert.ToInt32(value), 1);
+                        break;
+                }
+            }
+
         }
 
     }

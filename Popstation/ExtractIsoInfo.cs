@@ -2,7 +2,7 @@
 {
     public class ExtractIsoInfo
     {
-        public string SourcePbp;
-        public string DestinationIso;
+        public string SourcePbp { get; set; }
+        public string DestinationIso { get; set; }
     }
 }

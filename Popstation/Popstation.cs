@@ -3,44 +3,19 @@ using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Popstation
 {
-    public enum PopstationEventEnum
-    {
-        WritePbpHeader,
-        WriteSfo,
-        WriteHeader,
-        WriteBootPng,
-        WriteIndex,
-        WriteIso,
-        WriteIcon0Png,
-        WriteIcon1Pmf,
-        WritePic0Png,
-        WritePic1Png,
-        WriteSnd0At3,
-        WriteDataPsp,
-        WritePsTitle,
-        WriteIsoHeader,
-        WriteProgress,
-        UpdateIndex,
-        WriteSpecialData,
-        WriteToc,
-        GetIsoSize,
-        ExtractProgress,
-        ConvertProgress
-    }
-
     public partial class Popstation
     {
+        const int BLOCK_SIZE = 0x9300;
+        
         public Action<PopstationEventEnum, object> OnEvent { get; set; }
 
-        //ConvertIsoInfo convertInfo;
-        //bool cancelConvert;
         int nextPatchPos;
 
         public Task Convert(ConvertIsoInfo convertInfo, CancellationToken cancellationToken)
@@ -74,132 +49,15 @@ namespace Popstation
             }
         }
 
-        private byte[] Compress(byte[] inbuf, int level)
-        {
-            using (var ms = new MemoryStream())
-            {
-                var deflater = new Deflater(level, true);
-                using (var outStream = new DeflaterOutputStream(ms, deflater))
-                {
-                    outStream.Write(inbuf, 0, inbuf.Length);
-                    outStream.Flush();
-                    outStream.Finish();
-                    return ms.ToArray();
-                }
-            }
-        }
-
-        void SetSFOTitle(byte[] sfo, string title)
-        {
-            SFOHeader header = new SFOHeader();
-            header.signature = BitConverter.ToUInt32(sfo, 0);
-            header.version = BitConverter.ToUInt32(sfo, 4);
-            header.fields_table_offs = BitConverter.ToUInt32(sfo, 8);
-            header.values_table_offs = BitConverter.ToUInt32(sfo, 12);
-            header.nitems = BitConverter.ToInt32(sfo, 16);
-
-            SFODir[] entries = new SFODir[header.nitems];
-            var offset = 0x14;
-
-            for (var i = 0; i < header.nitems; i++)
-            {
-
-                entries[i] = new SFODir()
-                {
-                    field_offs = BitConverter.ToUInt16(sfo, offset + 0),
-                    unk = sfo[offset + 2],
-                    type = sfo[offset + 3],
-                    length = BitConverter.ToUInt32(sfo, offset + 4),
-                    size = BitConverter.ToUInt32(sfo, offset + 8),
-                    val_offs = BitConverter.ToUInt16(sfo, offset + 12),
-                    unk4 = BitConverter.ToUInt16(sfo, offset + 16),
-                };
-
-                offset += 16;
-            }
-
-            for (var i = 0; i < header.nitems; i++)
-            {
-                var text = Encoding.ASCII.GetString(sfo, (int)(header.fields_table_offs + entries[i].field_offs), 5);
-
-                if (text == "TITLE")
-                {
-                    Array.Clear(sfo, (int)header.values_table_offs + entries[i].val_offs, (int)entries[i].size);
-                    var titleBytes = Encoding.ASCII.GetBytes(title);
-                    Array.Copy(titleBytes, 0, sfo, (int)header.values_table_offs + entries[i].val_offs, titleBytes.Length);
-
-                    if (title.Length + 1 > entries[i].size)
-                    {
-                        entries[i].length = entries[i].size;
-                    }
-                    else
-                    {
-                        entries[i].length = (uint)(title.Length + 1);
-                    }
-                }
-            }
-        }
-
-        private void SetSFOCode(byte[] sfo, string code)
-        {
-            SFOHeader header = new SFOHeader();
-            header.signature = BitConverter.ToUInt32(sfo, 0);
-            header.version = BitConverter.ToUInt32(sfo, 4);
-            header.fields_table_offs = BitConverter.ToUInt32(sfo, 8);
-            header.values_table_offs = BitConverter.ToUInt32(sfo, 12);
-            header.nitems = BitConverter.ToInt32(sfo, 16);
-
-            SFODir[] entries = new SFODir[header.nitems];
-            var offset = 0x14;
-
-            for (var i = 0; i < header.nitems; i++)
-            {
-
-                entries[i] = new SFODir()
-                {
-                    field_offs = BitConverter.ToUInt16(sfo, offset + 0),
-                    unk = sfo[offset + 2],
-                    type = sfo[offset + 3],
-                    length = BitConverter.ToUInt32(sfo, offset + 4),
-                    size = BitConverter.ToUInt32(sfo, offset + 8),
-                    val_offs = BitConverter.ToUInt16(sfo, offset + 12),
-                    unk4 = BitConverter.ToUInt16(sfo, offset + 16),
-                };
-
-                offset += 16;
-            }
-
-            for (var i = 0; i < header.nitems; i++)
-            {
-                var text = Encoding.ASCII.GetString(sfo, (int)(header.fields_table_offs + entries[i].field_offs), 7);
-
-                if (text == "DISC_ID")
-                {
-                    Array.Clear(sfo, (int)header.values_table_offs + entries[i].val_offs, (int)entries[i].size);
-                    var titleBytes = Encoding.ASCII.GetBytes(code);
-                    Array.Copy(titleBytes, 0, sfo, (int)header.values_table_offs + entries[i].val_offs, titleBytes.Length);
-
-                    if (code.Length + 1 > entries[i].size)
-                    {
-                        entries[i].length = entries[i].size;
-                    }
-                    else
-                    {
-                        entries[i].length = (uint)(code.Length + 1);
-                    }
-                }
-            }
-        }
-
 
         private void ConvertMultiIso(ConvertIsoInfo convertInfo, CancellationToken cancellationToken)
         {
             byte[] buffer = new byte[1 * 1048576];
-            byte[] buffer2 = new byte[0x9300];
+            byte[] buffer2 = new byte[BLOCK_SIZE];
             uint totSize;
 
             bool pic0 = false, pic1 = false, icon0 = false, icon1 = false, snd = false, toc = false, boot = false, prx = false;
-            uint sfo_size, pic0_size, pic1_size, icon0_size, icon1_size, snd_size, toc_size, boot_size, prx_size;
+            uint pic0_size, pic1_size, icon0_size, icon1_size, snd_size, toc_size, boot_size, prx_size;
 
             boot_size = 0;
 
@@ -220,14 +78,25 @@ namespace Popstation
             string title;
 
             string code;
-            string _sbase;
 
             output = convertInfo.DestinationPbp;
             title = convertInfo.MainGameTitle;
             code = convertInfo.MainGameID;
-            _sbase = convertInfo.BasePbp;
 
-            using (var _base = new FileStream(_sbase, FileMode.Open, FileAccess.Read, FileShare.Read))
+            var sfoBuilder = new SFOBuilder();
+            sfoBuilder.AddEntry(SFOKeys.BOOTABLE, 0x01);
+            sfoBuilder.AddEntry(SFOKeys.CATEGORY, SFOValues.PS1Category);
+            sfoBuilder.AddEntry(SFOKeys.DISC_ID, convertInfo.MainGameID);
+            sfoBuilder.AddEntry(SFOKeys.DISC_VERSION, "1.00");
+            sfoBuilder.AddEntry(SFOKeys.LICENSE, SFOValues.License);
+            sfoBuilder.AddEntry(SFOKeys.PARENTAL_LEVEL, 0x01);
+            sfoBuilder.AddEntry(SFOKeys.PSP_SYSTEM_VER, "3.01");
+            sfoBuilder.AddEntry(SFOKeys.REGION, 0x8000);
+            sfoBuilder.AddEntry(SFOKeys.TITLE, convertInfo.MainGameTitle);
+
+            var sfo = sfoBuilder.Build();
+
+            using (var _base = new FileStream(convertInfo.BasePbp, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 using (var _out = new FileStream(output, FileMode.Create, FileAccess.Write, FileShare.Write))
                 {
@@ -237,10 +106,8 @@ namespace Popstation
 
                     if (base_header[0] != 0x50425000)
                     {
-                        throw new Exception($"{_base} is not a PBP file.");
+                        throw new Exception($"{convertInfo.BasePbp} is not a PBP file.");
                     }
-
-                    sfo_size = base_header[3] - base_header[2];
 
                     if (File.Exists(convertInfo.Icon0))
                     {
@@ -331,7 +198,7 @@ namespace Popstation
 
                     header[2] = curoffs;
 
-                    curoffs += sfo_size;
+                    curoffs += sfo.Size;
                     header[3] = curoffs;
 
                     curoffs += icon0_size;
@@ -362,15 +229,7 @@ namespace Popstation
 
                     OnEvent?.Invoke(PopstationEventEnum.WriteSfo, null);
 
-                    _base.Seek(base_header[2], SeekOrigin.Begin);
-                    _base.Read(buffer, 0, (int)sfo_size);
-                    SetSFOTitle(buffer, title);
-                    //strcpy(buffer + 0x108, code);
-                    var codeBytes = Encoding.ASCII.GetBytes(code);
-                    Array.Copy(codeBytes, 0, buffer, 0x108, codeBytes.Length);
-
-
-                    _out.Write(buffer, 0, (int)sfo_size);
+                    _out.Write(sfo);
 
                     OnEvent?.Invoke(PopstationEventEnum.WriteIcon0Png, null);
 
@@ -543,9 +402,9 @@ namespace Popstation
                             isosize = (uint)t.Length;
                             isorealsize = isosize;
 
-                            if ((isosize % 0x9300) != 0)
+                            if ((isosize % BLOCK_SIZE) != 0)
                             {
-                                isosize = isosize + (0x9300 - (isosize % 0x9300));
+                                isosize = isosize + (BLOCK_SIZE - (isosize % BLOCK_SIZE));
                             }
 
                             offset = (uint)_out.Position;
@@ -560,6 +419,7 @@ namespace Popstation
 
                             OnEvent?.Invoke(PopstationEventEnum.WriteIsoHeader, ciso + 1);
 
+                            // Write DATA.PSAR
                             _out.Write("PSISOIMG0000", 0, 12);
 
                             _out.WriteInteger(0, 0xFD);
@@ -594,21 +454,21 @@ namespace Popstation
 
                             if (convertInfo.CompressionLevel == 0)
                             {
-                                x = 0x9300;
+                                x = BLOCK_SIZE;
                             }
                             else
                             {
                                 x = 0;
                             }
 
-                            for (i = 0; i < isosize / 0x9300; i++)
+                            for (i = 0; i < isosize / BLOCK_SIZE; i++)
                             {
                                 _out.WriteInteger(offset, 1);
                                 _out.WriteInteger(x, 1);
                                 _out.Write(dummy, 0, sizeof(uint) * dummy.Length);
 
                                 if (convertInfo.CompressionLevel == 0)
-                                    offset += 0x9300;
+                                    offset += BLOCK_SIZE;
                             }
 
                             offset = (uint)_out.Position;
@@ -643,72 +503,45 @@ namespace Popstation
                             }
                             else
                             {
-                                indexes = new IsoIndex[(isosize / 0x9300)];
-
-                                //if (!indexes)
-                                //{
-                                //    fclose(_in);
-                                //    fclose(_out);
-                                //    fclose(_base);
-
-                                //     throw new Exception("Cannot alloc memory for indexes!\n");
-                                //}
+                                indexes = new IsoIndex[(isosize / BLOCK_SIZE)];
 
                                 i = 0;
                                 offset = 0;
 
-                                while ((x = (uint)_in.Read(buffer2, 0, 0x9300)) > 0)
+                                while ((x = (uint)_in.Read(buffer2, 0, BLOCK_SIZE)) > 0)
                                 {
                                     totSize += x;
 
-                                    if (x < 0x9300)
+                                    if (x < BLOCK_SIZE)
                                     {
-                                        for (var j = 0; j < 0x9300 - x; j++)
+                                        for (var j = 0; j < BLOCK_SIZE - x; j++)
                                         {
                                             buffer2[j + x] = 0;
                                         }
-                                        //memset(buffer2 + x, 0, 0x9300 - x);
+                                        //memset(buffer2 + x, 0, BlockSize - x);
                                     }
 
-                                    var cbuffer = Compress(buffer2, convertInfo.CompressionLevel);
+                                    var bufferSize = (uint)Compression.Compress(buffer2, buffer, convertInfo.CompressionLevel);
 
-                                    //if (bytesc < 0)
-                                    //{
-                                    //    //fclose(_in);
-                                    //    //fclose(_out);
-                                    //    //fclose(_base);
-                                    //    //free(indexes);
+                                    x = bufferSize;
 
-                                    //    throw new Exception("Error _in compression!");
-                                    //}
-
-                                    x = (uint)cbuffer.Length;
-
-                                    //memset(&indexes[i], 0, sizeof(IsoIndex));
                                     indexes[i] = new IsoIndex();
                                     indexes[i].Offset = offset;
 
-                                    if (x >= 0x9300) /* Block didn't compress */
+                                    if (x >= BLOCK_SIZE) /* Block didn't compress */
                                     {
-                                        indexes[i].Length = 0x9300;
-                                        _out.Write(buffer2, 0, 0x9300);
-                                        offset += 0x9300;
+                                        indexes[i].Length = BLOCK_SIZE;
+                                        _out.Write(buffer2, 0, BLOCK_SIZE);
+                                        offset += BLOCK_SIZE;
                                     }
                                     else
                                     {
                                         indexes[i].Length = x;
-                                        _out.Write(cbuffer, 0, (int)x);
+                                        _out.Write(buffer, 0, (int)x);
                                         offset += x;
                                     }
 
-                                    // PostMessage(convertInfo.callback, WM_CONVERT_PROGRESS, 0, totSize);
                                     OnEvent?.Invoke(PopstationEventEnum.WriteProgress, ciso + 1);
-
-                                    //if (DateTime.Now.Ticks - lastTicks > 500000)
-                                    //{
-                                    //    //Console.WriteLine($"{totSize} of {isosize} - {Math.Round((double)totSize / isosize * 100, 0)}%");
-                                    //    lastTicks = DateTime.Now.Ticks;
-                                    //}
 
                                     if (cancellationToken.IsCancellationRequested)
                                     {
@@ -718,7 +551,7 @@ namespace Popstation
                                     i++;
                                 }
 
-                                if (i != (isosize / 0x9300))
+                                if (i != (isosize / BLOCK_SIZE))
                                 {
                                     throw new Exception("Some error happened.\n");
                                 }
@@ -735,7 +568,7 @@ namespace Popstation
 
                             _out.Seek(index_offset, SeekOrigin.Begin);
                             //TODO: 
-                            _out.Write(indexes, 0, (int)(4 + 4 + (6 * 4) * (isosize / 0x9300)));
+                            _out.Write(indexes, 0, (int)(4 + 4 + (6 * 4) * (isosize / BLOCK_SIZE)));
 
                             _out.Seek(offset, SeekOrigin.Begin);
                         }
@@ -776,7 +609,7 @@ namespace Popstation
 
                     if (tempstr != "STARTDAT")
                     {
-                        throw new Exception($"Cannot find STARTDAT _in {_sbase}. Not a valid PSX eboot.pbp");
+                        throw new Exception($"Cannot find STARTDAT _in {convertInfo.BasePbp}. Not a valid PSX eboot.pbp");
                     }
 
                     _base.Seek(x + 16, SeekOrigin.Begin);
@@ -835,6 +668,8 @@ namespace Popstation
 
         }
 
+
+
         private void ConvertIso(ConvertIsoInfo convertInfo, CancellationToken cancellationToken)
         {
             uint i, j, offset, isosize, isorealsize, x;
@@ -847,11 +682,11 @@ namespace Popstation
             int complevel;
 
             byte[] buffer = new byte[1 * 1048576];
-            byte[] buffer2 = new byte[0x9300];
+            byte[] buffer2 = new byte[BLOCK_SIZE];
             uint totSize;
 
             bool pic0 = false, pic1 = false, icon0 = false, icon1 = false, snd = false, toc = false, boot = false, prx = false;
-            uint sfo_size, pic0_size, pic1_size, icon0_size, icon1_size, snd_size, toc_size, boot_size, prx_size;
+            uint pic0_size, pic1_size, icon0_size, icon1_size, snd_size, toc_size, boot_size, prx_size;
 
             boot_size = 0;
 
@@ -891,13 +726,26 @@ namespace Popstation
                 isorealsize = isosize;
 
                 //PostMessage(convertInfo.callback, WM_CONVERT_SIZE, 0, isosize);
+                OnEvent?.Invoke(PopstationEventEnum.ConvertSize, isosize);
 
-                if ((isosize % 0x9300) != 0)
+                if ((isosize % BLOCK_SIZE) != 0)
                 {
-                    isosize = isosize + (0x9300 - (isosize % 0x9300));
+                    isosize = isosize + (BLOCK_SIZE - (isosize % BLOCK_SIZE));
                 }
 
                 //Console.WriteLine("isosize, isorealsize %08X  %08X\n", isosize, isorealsize);
+                var sfoBuilder = new SFOBuilder();
+                sfoBuilder.AddEntry(SFOKeys.BOOTABLE, 0x01);
+                sfoBuilder.AddEntry(SFOKeys.CATEGORY, SFOValues.PS1Category);
+                sfoBuilder.AddEntry(SFOKeys.DISC_ID, convertInfo.MainGameID);
+                sfoBuilder.AddEntry(SFOKeys.DISC_VERSION, "1.00");
+                sfoBuilder.AddEntry(SFOKeys.LICENSE, SFOValues.License);
+                sfoBuilder.AddEntry(SFOKeys.PARENTAL_LEVEL, 0x01);
+                sfoBuilder.AddEntry(SFOKeys.PSP_SYSTEM_VER, "3.01");
+                sfoBuilder.AddEntry(SFOKeys.REGION, 0x8000);
+                sfoBuilder.AddEntry(SFOKeys.TITLE, convertInfo.MainGameTitle);
+
+                var sfo = sfoBuilder.Build();
 
                 using (var _base = new FileStream(convertInfo.BasePbp, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
@@ -912,7 +760,7 @@ namespace Popstation
                             throw new Exception($"{convertInfo.BasePbp} is not a PBP file.");
                         }
 
-                        sfo_size = base_header[3] - base_header[2];
+                        //sfo_size = base_header[3] - base_header[2];
 
                         if (File.Exists(convertInfo.Icon0))
                         {
@@ -1002,7 +850,7 @@ namespace Popstation
 
                         header[2] = curoffs;
 
-                        curoffs += sfo_size;
+                        curoffs += sfo.Size;
                         header[3] = curoffs;
 
                         curoffs += icon0_size;
@@ -1033,18 +881,15 @@ namespace Popstation
 
                         OnEvent?.Invoke(PopstationEventEnum.WriteSfo, null);
 
-                        _base.Seek(base_header[2], SeekOrigin.Begin);
-                        _base.Read(buffer, 0, (int)sfo_size);
+                        //_base.Seek(base_header[2], SeekOrigin.Begin);
+                        //_base.Read(buffer, 0, (int)sfo_size);
 
-                        SetSFOTitle(buffer, convertInfo.SaveTitle);
-                        SetSFOCode(buffer, convertInfo.SaveID);
-                        // AS IS
-                        //strcpy(buffer+0x108, code);
+                        //SetSFOTitle(buffer, convertInfo.SaveTitle);
+                        //SetSFOCode(buffer, convertInfo.SaveID);
 
-                        _out.Write(buffer, 0, (int)sfo_size);
+                        _out.Write(sfo);
 
                         OnEvent?.Invoke(PopstationEventEnum.WriteIcon0Png, null);
-
 
                         if (!icon0)
                         {
@@ -1209,21 +1054,21 @@ namespace Popstation
 
                         if (complevel == 0)
                         {
-                            x = 0x9300;
+                            x = BLOCK_SIZE;
                         }
                         else
                         {
                             x = 0;
                         }
 
-                        for (i = 0; i < isosize / 0x9300; i++)
+                        for (i = 0; i < isosize / BLOCK_SIZE; i++)
                         {
                             _out.WriteInteger(offset, 1);
                             _out.WriteInteger(x, 1);
                             _out.Write(dummy, 0, sizeof(uint) * dummy.Length);
 
                             if (complevel == 0)
-                                offset += 0x9300;
+                                offset += BLOCK_SIZE;
                         }
 
                         offset = (uint)_out.Position;
@@ -1234,6 +1079,8 @@ namespace Popstation
                         }
 
                         OnEvent?.Invoke(PopstationEventEnum.WriteIso, null);
+
+                        OnEvent?.Invoke(PopstationEventEnum.ConvertStart, null);
 
                         totSize = 0;
                         uint bufferSize;
@@ -1250,7 +1097,9 @@ namespace Popstation
                                     //bufferSize = (uint)buffer2.Length;
 
                                     if (convertInfo.Patches?.Count > 0) PatchData(convertInfo, buffer2, (int)bufferSize, (int)totSize);
+
                                     totSize += bufferSize;
+
                                     if (totSize > isorealsize)
                                     {
                                         bufferSize = bufferSize - (totSize - isorealsize);
@@ -1259,7 +1108,6 @@ namespace Popstation
 
                                     _out.Write(buffer2, 0, (int)bufferSize);
 
-                                    //PostMessage(convertInfo.callback, WM_CONVERT_PROGRESS, 0, totSize);
                                     OnEvent?.Invoke(PopstationEventEnum.ConvertProgress, totSize);
 
                                     if (cancellationToken.IsCancellationRequested)
@@ -1273,6 +1121,7 @@ namespace Popstation
                                 while ((x = (uint)_in.Read(buffer, 0, 1048576)) > 0)
                                 {
                                     if (convertInfo.Patches?.Count > 0) PatchData(convertInfo, buffer, (int)x, (int)i);
+
                                     _out.Write(buffer, 0, (int)x);
 
                                     i += x;
@@ -1294,7 +1143,7 @@ namespace Popstation
 
                         else
                         {
-                            indexes = new IsoIndex[isosize / 0x9300];
+                            indexes = new IsoIndex[isosize / BLOCK_SIZE];
 
                             //if (!indexes)
                             //{
@@ -1325,7 +1174,7 @@ namespace Popstation
                                 }
                                 else
                                 {
-                                    x = (uint)_in.Read(buffer2, 0, 0x9300);
+                                    x = (uint)_in.Read(buffer2, 0, BLOCK_SIZE);
                                 }
                                 if (x == 0) break;
                                 if (convertInfo.Patches?.Count > 0) PatchData(convertInfo, buffer2, (int)x, (int)j);
@@ -1341,13 +1190,14 @@ namespace Popstation
                                     return;
                                 }
 
-                                if (x < 0x9300)
+                                if (x < BLOCK_SIZE)
                                 {
-                                    Array.Clear(buffer2, (int)x, (int)(0x9300 - x));
-                                    //memset(buffer2 + x, 0, 0x9300 - x);
+                                    Array.Clear(buffer2, (int)x, (int)(BLOCK_SIZE - x));
+                                    //memset(buffer2 + x, 0, BlockSize - x);
                                 }
 
-                                var cbuffer = Compress(buffer2, complevel);
+                                //var cbuffer = Compress(buffer2, complevel);
+                                bufferSize = (uint)Compression.Compress(buffer2, buffer, complevel);
 
                                 //if (x < 0)
                                 //{
@@ -1355,31 +1205,29 @@ namespace Popstation
                                 //    throw new Exception("Error _in compression!\n");
                                 //}
 
-                                //memset(&indexes[i], 0, sizeof(IsoIndex));
-
-                                x = (uint)cbuffer.Length;
+                                //x = (uint)cbuffer.Length;
+                                x = bufferSize;
 
                                 indexes[i] = new IsoIndex();
-
                                 indexes[i].Offset = offset;
 
-                                if (x >= 0x9300) /* Block didn't compress */
+                                if (x >= BLOCK_SIZE) /* Block didn't compress */
                                 {
-                                    indexes[i].Length = 0x9300;
-                                    _out.Write(buffer2, 0, 0x9300);
-                                    offset += 0x9300;
+                                    indexes[i].Length = BLOCK_SIZE;
+                                    _out.Write(buffer2, 0, BLOCK_SIZE);
+                                    offset += BLOCK_SIZE;
                                 }
                                 else
                                 {
                                     indexes[i].Length = x;
-                                    _out.Write(cbuffer, 0, (int)x);
+                                    _out.Write(buffer, 0, (int)x);
                                     offset += x;
                                 }
 
                                 i++;
                             }
 
-                            if (i != (isosize / 0x9300))
+                            if (i != (isosize / BLOCK_SIZE))
                             {
                                 throw new Exception("Some error happened.\n");
                             }
@@ -1402,6 +1250,8 @@ namespace Popstation
 
                             end_offset -= header[9];
                         }
+
+                        OnEvent?.Invoke(PopstationEventEnum.ConvertComplete, null);
 
                         OnEvent?.Invoke(PopstationEventEnum.WriteSpecialData, null);
 
@@ -1481,7 +1331,7 @@ namespace Popstation
                             _out.WriteInteger(end_offset, 1);
 
                             _out.Seek(index_offset, SeekOrigin.Begin);
-                            _out.Write(indexes, 0, (int)(4 + 4 + (6 * 4) * (isosize / 0x9300)));
+                            _out.Write(indexes, 0, (int)(4 + 4 + (6 * 4) * (isosize / BLOCK_SIZE)));
                         }
 
                     }

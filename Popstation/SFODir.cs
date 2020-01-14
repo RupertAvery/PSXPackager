@@ -2,12 +2,12 @@
 {
     public class SFODir
     {
-        public ushort field_offs;
-        public byte unk;
-        public byte type; // 0x2 -> string, 0x4 -> number
-        public uint length;
-        public uint size;
-        public ushort val_offs;
-        public ushort unk4;
+        public ushort KeyOffset { get; set; }
+        public ushort Format { get; set; }
+        public uint Length { get; set; }
+        public uint MaxLength { get; set; }
+        public uint DataOffset { get; set; }
+        public string Key { get; set; }
+        public object Value { get; set; }
     }
 }

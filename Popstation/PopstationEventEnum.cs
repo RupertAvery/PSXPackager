@@ -1,0 +1,30 @@
+﻿namespace Popstation
+{
+    public enum PopstationEventEnum
+    {
+        WritePbpHeader,
+        WriteSfo,
+        WriteHeader,
+        WriteBootPng,
+        WriteIndex,
+        WriteIso,
+        WriteIcon0Png,
+        WriteIcon1Pmf,
+        WritePic0Png,
+        WritePic1Png,
+        WriteSnd0At3,
+        WriteDataPsp,
+        WritePsTitle,
+        WriteIsoHeader,
+        WriteProgress,
+        UpdateIndex,
+        WriteSpecialData,
+        WriteToc,
+        GetIsoSize,
+        ExtractProgress,
+        ConvertProgress,
+        ConvertSize,
+        ConvertComplete,
+        ConvertStart
+    }
+}

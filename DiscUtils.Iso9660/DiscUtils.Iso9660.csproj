@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../common-library.props" />
+
+  <PropertyGroup>
+    <Description>DiscUtils Iso9660</Description>
+    <Authors>Kenneth Bell;LordMike</Authors>
+    <PackageTags>DiscUtils;Optical;Iso9660</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DiscUtils.Core\DiscUtils.Core.csproj" />
+  </ItemGroup>
+
+</Project>

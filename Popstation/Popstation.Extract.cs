@@ -1,6 +1,4 @@
-﻿using ICSharpCode.SharpZipLib.Zip.Compression;
-using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -10,8 +8,6 @@ namespace Popstation
 {
     public partial class Popstation
     {
-
-
         // The maximum possible number of ISO indexes
         const int MAX_INDEXES = 0x7E00;
         //The location of the PSAR offset in the PBP header
@@ -106,9 +102,9 @@ namespace Popstation
                     {
                         var index = new INDEX();
                         // Store the block offset
-                        index.offset = offset;
+                        index.Offset = offset;
                         // Store the block length
-                        index.length = length;
+                        index.Length = length;
                         iso_index.Add(index);
                         count++;
                         if (count >= MAX_INDEXES)
@@ -121,27 +117,6 @@ namespace Popstation
             }
 
             return iso_index;
-        }
-
-        private byte[] Decompress(byte[] bytes)
-        {
-            using (var stream = new InflaterInputStream(new MemoryStream(bytes), new Inflater(true)))
-            {
-                MemoryStream memory = new MemoryStream();
-                byte[] writeData = new byte[4096];
-                int size;
-
-                while (true)
-                {
-                    size = stream.Read(writeData, 0, writeData.Length);
-                    if (size > 0)
-                    {
-                        memory.Write(writeData, 0, size);
-                    }
-                    else break;
-                }
-                return memory.ToArray();
-            }
         }
 
         private byte[] ReadBlock(string pbpFile, List<INDEX> iso_index, int blockNo, out uint datalength)
@@ -159,14 +134,14 @@ namespace Popstation
                 psar_offset = pbp_stream.ReadInteger();
 
                 // Go to the offset specified in the index
-                this_offset = psar_offset + PSAR_ISO_OFFSET + iso_index[blockNo].offset;
+                this_offset = psar_offset + PSAR_ISO_OFFSET + iso_index[blockNo].Offset;
                 pbp_stream.Seek(this_offset, SeekOrigin.Begin);
 
                 // Allocate memory for our output buffer
                 out_buffer = new byte[16 * ISO_BLOCK_SIZE];
 
                 // Check if this block isn't compressed
-                if (iso_index[blockNo].length == 16 * ISO_BLOCK_SIZE)
+                if (iso_index[blockNo].Length == 16 * ISO_BLOCK_SIZE)
                 {
 
                     // It's not compressed, make an exact copy
@@ -177,15 +152,19 @@ namespace Popstation
                 }
                 else
                 {
-                    in_buffer = new byte[iso_index[blockNo].length];
-                    pbp_stream.Read(in_buffer, 0, iso_index[blockNo].length);
+                    in_buffer = new byte[iso_index[blockNo].Length];
+                    pbp_stream.Read(in_buffer, 0, iso_index[blockNo].Length);
                     var totalBytes = in_buffer.Length;
 
-                    out_buffer = Decompress(in_buffer);
-                    out_length = out_buffer.Length;
+                    //out_buffer = Decompress(in_buffer);
+                    var bufferSize = Compression.Decompress(in_buffer, out_buffer);
+
+                    //out_length = out_buffer.Length;
+                    out_length = bufferSize;
                 }
 
                 datalength = (uint)out_length;
+
                 return out_buffer;
             }
         }
