@@ -28,7 +28,7 @@ Since the 7zip library is being used, .7z, .rar, and .zip files are supported as
 
 If the compressed file has multiple .bin files, PSXPackager will look for a .cue file and merge them into a single .bin file.
 
-Set the compression level to a value from 0 to 9, with 0 being no compression and 9 being the highest compression level.
+Set the compression level to a value from 0 to 9, with 0 being no compression and 9 being the highest compression level. If not specified, it will default to 5.
 
 ## Convert a .PBP to a .BIN
 

@@ -197,7 +197,7 @@ namespace PSXPackager
             [Option('v', "verbose", Required = false, HelpText = "Set output to verbose messages.")]
             public bool Verbose { get; set; }
 
-            [Option('l', "level", Required = false, HelpText = "Set compression level 0-9, default 9", Default = 9)]
+            [Option('l', "level", Required = false, HelpText = "Set compression level 0-9, default 5", Default = 5)]
             public int CompressionLevel { get; set; }
 
             [Option('o', "output", Required = true
