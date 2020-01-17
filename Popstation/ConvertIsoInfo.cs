@@ -19,7 +19,6 @@ namespace Popstation
         public string MainGameID { get; set; }
         public string SaveID { get; set; }
         public int CompressionLevel { get; set; }
-        public int TocSize { get; set; }
         public byte[] TocData { get; set; }
         public List<DiscInfo> DiscInfos { get; set; }
         public List<PatchData> Patches { get; set; }

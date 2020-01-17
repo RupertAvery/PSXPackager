@@ -57,6 +57,11 @@ namespace Popstation
                     iso_stream.Write(buffer, 0, (int)bufferSize);
 
                     OnEvent?.Invoke(PopstationEventEnum.ExtractProgress, totSize);
+
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        break;
+                    }
                 }
 
                 OnEvent?.Invoke(PopstationEventEnum.ExtractComplete, null);

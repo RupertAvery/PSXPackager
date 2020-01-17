@@ -1,4 +1,4 @@
-﻿namespace PSXPackager
+﻿namespace Popstation
 {
     public class CueIndex
     {

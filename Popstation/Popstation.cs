@@ -1,16 +1,44 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Popstation
 {
+    public static class Helper
+    {
+        public static byte ToBinaryDecimal(int value)
+        {
+            var ones = value % 10;
+            var tens = value / 10;
+            return (byte)(tens * 0x10 + ones);
+        }
+
+        public static IndexPosition PositionFromFrames(long frames)
+        {
+            int totalSeconds = (int)(frames / 75);
+            int minutes = totalSeconds / 60;
+            int seconds = totalSeconds % 60;
+            frames = frames % 75;
+
+            var position = new IndexPosition()
+            {
+                Minutes = minutes,
+                Seconds = seconds,
+                Frames = (int)frames,
+            };
+
+            return position;
+        }
+    }
+
     public partial class Popstation
     {
         const int BLOCK_SIZE = 0x9300;
-        
+
         public Action<PopstationEventEnum, object> OnEvent { get; set; }
 
         int nextPatchPos;
@@ -665,6 +693,17 @@ namespace Popstation
 
         }
 
+        private byte GetTrackType(string trackType)
+        {
+            switch (trackType)
+            {
+                case "MODE2/2352":
+                    return 0x41;
+                case "AUDIO":
+                    return 0x01;
+            }
+            throw new ArgumentOutOfRangeException();
+        }
 
 
         private void ConvertIso(ConvertIsoInfo convertInfo, CancellationToken cancellationToken)
@@ -697,6 +736,7 @@ namespace Popstation
             //uint index_offset, p1_offset, p2_offset, m_offset, end_offset;
 
             var disc = convertInfo.DiscInfos[0];
+
             complevel = convertInfo.CompressionLevel;
 
 
@@ -721,6 +761,81 @@ namespace Popstation
                 }
 
                 isorealsize = isosize;
+
+                if (!string.IsNullOrEmpty(disc.SourceToc))
+                {
+
+                    var reader = new CueReader();
+                    var cueFiles = reader.Read(disc.SourceToc);
+                    var tracks = cueFiles.SelectMany(cf => cf.Tracks).ToList();
+
+                    convertInfo.TocData = new byte[0xA * (tracks.Count + 3)];
+
+                    var trackBuffer = new byte[0xA];
+
+                    var frames = isosize / 2352;
+                    var position = Helper.PositionFromFrames(frames);
+
+                    var ctr = 0;
+
+                    trackBuffer[0] = GetTrackType(tracks.First().DataType);
+                    trackBuffer[1] = 0x00;
+                    trackBuffer[2] = 0xA0;
+                    trackBuffer[3] = 0x00;
+                    trackBuffer[4] = 0x00;
+                    trackBuffer[5] = 0x00;
+                    trackBuffer[6] = 0x00;
+                    trackBuffer[7] = Helper.ToBinaryDecimal(tracks.First().Number);
+                    trackBuffer[8] = Helper.ToBinaryDecimal(0x20);
+                    trackBuffer[9] = 0x00;
+
+                    Array.Copy(trackBuffer, 0, convertInfo.TocData, ctr, 0xA);
+                    ctr += 0xA;
+
+                    trackBuffer[0] = GetTrackType(tracks.Last().DataType);
+                    trackBuffer[2] = 0xA1;
+                    trackBuffer[7] = Helper.ToBinaryDecimal(tracks.Last().Number);
+                    trackBuffer[8] = 0x00;
+
+                    Array.Copy(trackBuffer, 0, convertInfo.TocData, ctr, 0xA);
+                    ctr += 0xA;
+
+                    trackBuffer[0] = 0x01;
+                    trackBuffer[2] = 0xA2;
+                    trackBuffer[7] = Helper.ToBinaryDecimal(position.Minutes);
+                    trackBuffer[8] = Helper.ToBinaryDecimal(position.Seconds);
+                    trackBuffer[9] = Helper.ToBinaryDecimal(position.Frames);
+
+                    Array.Copy(trackBuffer, 0, convertInfo.TocData, ctr, 0xA);
+                    ctr += 0xA;
+
+                    foreach (var track in tracks)
+                    {
+                        trackBuffer[0] = GetTrackType(track.DataType);
+                        trackBuffer[1] = 0x00;
+                        trackBuffer[2] = Helper.ToBinaryDecimal(track.Number);
+                        var pos = track.Indexes.First(idx => idx.Number == 1).Position;
+                        trackBuffer[3] = Helper.ToBinaryDecimal(pos.Minutes);
+                        trackBuffer[4] = Helper.ToBinaryDecimal(pos.Seconds);
+                        trackBuffer[5] = Helper.ToBinaryDecimal(pos.Frames);
+                        trackBuffer[6] = 0x00;
+                        trackBuffer[7] = Helper.ToBinaryDecimal(pos.Minutes);
+                        trackBuffer[8] = Helper.ToBinaryDecimal(pos.Seconds + 2);
+                        trackBuffer[9] = Helper.ToBinaryDecimal(pos.Frames);
+
+                        Array.Copy(trackBuffer, 0, convertInfo.TocData, ctr, 0xA);
+                        ctr += 0xA;
+                    }
+
+                    //0x00    1 byte Track type - 0x41 = data track, 0x01 = audio track
+                    //0x01    1 byte Always null
+                    //0x02    1 byte The track number in "binary decimal"
+                    //0x03    3 bytes The absolute track start address in "binary decimal" - first byte is minutes, second is seconds, third is frames
+                    //0x06    1 byte Always null
+                    //0x07    3 bytes The "relative" track address -same as before, and uses MM: SS: FF format
+
+                }
+
 
                 //PostMessage(convertInfo.callback, WM_CONVERT_SIZE, 0, isosize);
                 OnEvent?.Invoke(PopstationEventEnum.ConvertSize, isosize);
@@ -1018,11 +1133,11 @@ namespace Popstation
                             data1[0x41c] = bcd(sec);
                             data1[0x41d] = bcd(frm);
                         */
-                        if (convertInfo.TocSize > 0)
+                        if (convertInfo.TocData?.Length > 0)
                         {
                             OnEvent?.Invoke(PopstationEventEnum.WriteToc, null);
                             // TODO?
-                            Array.Copy(convertInfo.TocData, 0, data1, 1024, convertInfo.TocSize);
+                            Array.Copy(convertInfo.TocData, 0, data1, 1024, convertInfo.TocData.Length);
                             // memcpy(data1 + 1024, convertInfo.tocData, convertInfo.tocSize);
 
                         }
@@ -1184,6 +1299,7 @@ namespace Popstation
                                 if (cancellationToken.IsCancellationRequested)
                                 {
                                     //if (convertInfo.srcIsPbp) popstripFinal(&iso_index);
+                                    OnEvent?.Invoke(PopstationEventEnum.ConvertComplete, null);
                                     return;
                                 }
 

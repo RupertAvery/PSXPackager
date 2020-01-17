@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using Popstation;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace PSXPackager
+namespace Popstation
 {
 
     public class CueReader
@@ -11,13 +12,12 @@ namespace PSXPackager
         Regex trackRegex = new Regex("^\\s*TRACK (\\d+) (.*?)\\s*$");
         Regex indexRegex = new Regex("^\\s*INDEX (\\d+) (\\d+:\\d+:\\d+)\\s*$");
 
-
-        public IEnumerable<CueFile> Read(string file)
+        public List<CueFile> Read(string file)
         {
             var cueFiles = new List<CueFile>();
-            var cueLines = File.ReadAllLines(file);
             CueFile cueFile = null;
             CueTrack cueTrack = null;
+            var cueLines = File.ReadAllLines(file);
             foreach (var line in cueLines)
             {
                 var fileMatch = fileRegex.Match(line);
@@ -67,9 +67,9 @@ namespace PSXPackager
                         Number = int.Parse(indexMatch.Groups[1].Value),
                         Position = new IndexPosition()
                         {
-                            Hours = int.Parse(positionMatch[0]),
-                            Minutes = int.Parse(positionMatch[1]),
-                            Seconds = int.Parse(positionMatch[2])
+                            Minutes = int.Parse(positionMatch[0]),
+                            Seconds = int.Parse(positionMatch[1]),
+                            Frames = int.Parse(positionMatch[2]),
                         }
                     };
                     cueTrack.Indexes.Add(cueIndex);
