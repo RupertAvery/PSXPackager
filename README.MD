@@ -9,9 +9,10 @@ Feel free to take the Popstation library and use it as you like.
 # Features
 
 * Supports direct conversion of .7z files using SevenZipExtractor  
-* Supports joining multi-track images (multiple bin files) 
+* Supports merging multi-track .BIN + .CUE
+* Supports writing track information to PBP for audio 
 * Convert .BIN or .IMG to .PBP
-* Extract .IMG file from .PBP
+* Extract .BIN file from .PBP
 * PBP Compression levels from 0 to 9
 * Uses SharpZipLib for compression
 * Uses a modified DiscUtil for ISO reading to auto-detect the Disc ID
@@ -29,6 +30,11 @@ Since the 7zip library is being used, .7z, .rar, and .zip files are supported as
 If the compressed file has multiple .bin files, PSXPackager will look for a .cue file and merge them into a single .bin file.
 
 Set the compression level to a value from 0 to 9, with 0 being no compression and 9 being the highest compression level. If not specified, it will default to 5.
+
+## Convert multi-track .CUE file to .PBP
+
+If the file is a CUE file with multiple .BIN files, the files are merged into one .BIN, and the tracks are updated to point to locations in the single .BIN.  The track 
+information is used to build a TOC (table of contents) for the PBP ISO.
 
 ## Convert a .PBP to a .BIN
 

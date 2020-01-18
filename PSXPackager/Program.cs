@@ -3,6 +3,7 @@ using DiscUtils.Iso9660;
 using Popstation;
 using SevenZipExtractor;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -118,6 +119,7 @@ namespace PSXPackager
 
             using (ArchiveFile archiveFile = new ArchiveFile(file))
             {
+                var unpackTasks = new List<Task>();
                 foreach (Entry entry in archiveFile.Entries)
                 {
                     if (IsImageFile(entry.FileName) || IsCue(entry.FileName))
@@ -133,7 +135,10 @@ namespace PSXPackager
                         return files;
                     }
                 }
+
+
             }
+
             return files;
         }
 
@@ -143,8 +148,8 @@ namespace PSXPackager
             var appPath = System.IO.Path.GetDirectoryName(path);
 
 
-            var regex = new Regex("(S[LC]\\w{2})_(\\d{3})\\.(\\d{2})");
-            var bootRegex = new Regex("BOOT = cdrom:\\\\?(?:.*?\\\\)?(S[LC]\\w{2}_\\d{3}\\.\\d{2});1");
+            var regex = new Regex("(S[LC]\\w{2})[_-](\\d{3})\\.(\\d{2})");
+            var bootRegex = new Regex("BOOT\\s*=\\s*cdrom:\\\\?(?:.*?\\\\)?(S[LC]\\w{2}[_-]?\\d{3}\\.\\d{2});1");
             GameEntry game = null;
 
 
@@ -164,12 +169,14 @@ namespace PSXPackager
                 //        break;
                 //    }
                 //}
+                var syscnfFound = false;
 
                 foreach (var file in cdReader.GetFiles("\\"))
                 {
                     var filename = file.Substring(1, file.LastIndexOf(";") - 1);
                     if (filename == "SYSTEM.CNF")
                     {
+                        syscnfFound = true;
                         using (var datastream = cdReader.OpenFile(file, FileMode.Open))
                         {
                             datastream.Seek(24, SeekOrigin.Begin);
@@ -189,14 +196,26 @@ namespace PSXPackager
                     }
                 }
 
-                var gameDB = new GameDB(Path.Combine(appPath, "Resources", "gameinfo.db"));
-
-                game = gameDB.GetEntryByScannerID(gameId);
-
-                if (game != null)
+                if (syscnfFound)
                 {
-                    Console.WriteLine($"Found {game.GameName}!");
+                    var gameDB = new GameDB(Path.Combine(appPath, "Resources", "gameinfo.db"));
+
+                    game = gameDB.GetEntryByScannerID(gameId);
+
+                    if (game != null)
+                    {
+                        Console.WriteLine($"Found {game.GameName}!");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Could not find gameId {gameId}!");
+                    }
                 }
+                else
+                {
+                    Console.WriteLine($"Could not find SYSTEM.CNF!");
+                }
+
             }
 
             if (cancellationToken.IsCancellationRequested) return Task.FromCanceled(cancellationToken);
@@ -333,7 +352,7 @@ namespace PSXPackager
                          foreach (var file in files)
                          {
                              ProcessFile(file, o.OutputPath, tempPath, o.CompressionLevel, cancelToken.Token).GetAwaiter().GetResult();
-                             if(cancelToken.Token.IsCancellationRequested)
+                             if (cancelToken.Token.IsCancellationRequested)
                              {
                                  break;
                              }
