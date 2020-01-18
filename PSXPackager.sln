@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DiscUtils.Iso9660", "DiscUt
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DiscUtils.Streams", "DiscUtils.Streams\DiscUtils.Streams.csproj", "{C76270B7-9FF7-400C-9A0C-D6A910C2B21D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTestProject", "UnitTestProject\UnitTestProject.csproj", "{477347DA-4397-413B-B3AB-F13200D31543}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{C76270B7-9FF7-400C-9A0C-D6A910C2B21D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C76270B7-9FF7-400C-9A0C-D6A910C2B21D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C76270B7-9FF7-400C-9A0C-D6A910C2B21D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{477347DA-4397-413B-B3AB-F13200D31543}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{477347DA-4397-413B-B3AB-F13200D31543}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{477347DA-4397-413B-B3AB-F13200D31543}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{477347DA-4397-413B-B3AB-F13200D31543}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

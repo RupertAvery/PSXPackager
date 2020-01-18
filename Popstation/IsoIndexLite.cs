@@ -1,7 +1,7 @@
 ﻿namespace Popstation
 {
     // Struct to store an ISO index
-    public class INDEX
+    public class IsoIndexLite
     {
         public int Offset { get; set; }
         public int Length { get; set; }

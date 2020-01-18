@@ -2,7 +2,7 @@
   "profiles": {
     "PSXPackager": {
       "commandName": "Project",
-      "commandLineArgs": "-o C:\\ROMS\\PSX -b C:\\ROMS\\PSX -e .7z"
+      "commandLineArgs": "-i \"C:\\ROMS\\PSX\\Twisted Metal III.PBP\""
     }
   }
 }

@@ -8,32 +8,6 @@ using System.Threading.Tasks;
 
 namespace Popstation
 {
-    public static class Helper
-    {
-        public static byte ToBinaryDecimal(int value)
-        {
-            var ones = value % 10;
-            var tens = value / 10;
-            return (byte)(tens * 0x10 + ones);
-        }
-
-        public static IndexPosition PositionFromFrames(long frames)
-        {
-            int totalSeconds = (int)(frames / 75);
-            int minutes = totalSeconds / 60;
-            int seconds = totalSeconds % 60;
-            frames = frames % 75;
-
-            var position = new IndexPosition()
-            {
-                Minutes = minutes,
-                Seconds = seconds,
-                Frames = (int)frames,
-            };
-
-            return position;
-        }
-    }
 
     public partial class Popstation
     {
@@ -693,17 +667,6 @@ namespace Popstation
 
         }
 
-        private byte GetTrackType(string trackType)
-        {
-            switch (trackType)
-            {
-                case "MODE2/2352":
-                    return 0x41;
-                case "AUDIO":
-                    return 0x01;
-            }
-            throw new ArgumentOutOfRangeException();
-        }
 
 
         private void ConvertIso(ConvertIsoInfo convertInfo, CancellationToken cancellationToken)
@@ -734,7 +697,7 @@ namespace Popstation
 
             var disc = convertInfo.DiscInfos[0];
 
-            var iso_index = new List<INDEX>();
+            var iso_index = new List<IsoIndexLite>();
 
             using (var _in = new FileStream(disc.SourceIso, FileMode.Open, FileAccess.Read))
             {
@@ -758,9 +721,7 @@ namespace Popstation
 
                 if (!string.IsNullOrEmpty(disc.SourceToc))
                 {
-
-                    var reader = new CueReader();
-                    var cueFiles = reader.Read(disc.SourceToc);
+                    var cueFiles = CueReader.Read(disc.SourceToc);
                     var tracks = cueFiles.SelectMany(cf => cf.Tracks).ToList();
 
                     convertInfo.TocData = new byte[0xA * (tracks.Count + 3)];
@@ -772,7 +733,7 @@ namespace Popstation
 
                     var ctr = 0;
 
-                    trackBuffer[0] = GetTrackType(tracks.First().DataType);
+                    trackBuffer[0] = (byte)Helper.GetTrackType(tracks.First().DataType);
                     trackBuffer[1] = 0x00;
                     trackBuffer[2] = 0xA0;
                     trackBuffer[3] = 0x00;
@@ -786,7 +747,7 @@ namespace Popstation
                     Array.Copy(trackBuffer, 0, convertInfo.TocData, ctr, 0xA);
                     ctr += 0xA;
 
-                    trackBuffer[0] = GetTrackType(tracks.Last().DataType);
+                    trackBuffer[0] = (byte)Helper.GetTrackType(tracks.Last().DataType);
                     trackBuffer[2] = 0xA1;
                     trackBuffer[7] = Helper.ToBinaryDecimal(tracks.Last().Number);
                     trackBuffer[8] = 0x00;
@@ -805,7 +766,7 @@ namespace Popstation
 
                     foreach (var track in tracks)
                     {
-                        trackBuffer[0] = GetTrackType(track.DataType);
+                        trackBuffer[0] = (byte)Helper.GetTrackType(track.DataType);
                         trackBuffer[1] = 0x00;
                         trackBuffer[2] = Helper.ToBinaryDecimal(track.Number);
                         var pos = track.Indexes.First(idx => idx.Number == 1).Position;

@@ -6,13 +6,13 @@ using System.Text.RegularExpressions;
 namespace Popstation
 {
 
-    public class CueReader
+    public static class CueReader
     {
-        Regex fileRegex = new Regex("^FILE \"(.*?)\" (.*?)\\s*$");
-        Regex trackRegex = new Regex("^\\s*TRACK (\\d+) (.*?)\\s*$");
-        Regex indexRegex = new Regex("^\\s*INDEX (\\d+) (\\d+:\\d+:\\d+)\\s*$");
+        static Regex fileRegex = new Regex("^FILE \"(.*?)\" (.*?)\\s*$");
+        static Regex trackRegex = new Regex("^\\s*TRACK (\\d+) (.*?)\\s*$");
+        static Regex indexRegex = new Regex("^\\s*INDEX (\\d+) (\\d+:\\d+:\\d+)\\s*$");
 
-        public List<CueFile> Read(string file)
+        public static List<CueFile> Read(string file)
         {
             var cueFiles = new List<CueFile>();
             CueFile cueFile = null;
