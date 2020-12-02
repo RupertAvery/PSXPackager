@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Linq;
 using Popstation.Cue;
 using Popstation.Pbp;
 
@@ -10,7 +11,7 @@ namespace Popstation
     public partial class Popstation
     {
         public void Extract(ExtractIsoInfo extractInfo, CancellationToken cancellationToken)
-        {
+        { 
             ExtractIso(extractInfo, cancellationToken);
         }
 
@@ -72,9 +73,11 @@ namespace Popstation
 
             byte[] out_buffer = new byte[16 * PbpStream.ISO_BLOCK_SIZE];
 
+            OnEvent?.Invoke(PopstationEventEnum.Info, $"Writing {isoPath}...");
+
             OnEvent?.Invoke(PopstationEventEnum.GetIsoSize, disc.IsoSize);
 
-            OnEvent?.Invoke(PopstationEventEnum.ExtractStart, null);
+            OnEvent?.Invoke(PopstationEventEnum.ExtractStart, disc.Index);
 
             for (i = 0; i < disc.IsoIndex.Count; i++)
             {
@@ -111,7 +114,7 @@ namespace Popstation
                     CueFileWriter.Write(cueFile, Path.Combine(path, filename));
                 }
             }
-
+            OnEvent?.Invoke(PopstationEventEnum.ExtractComplete, null);
         }
 
         private void ExtractIso(ExtractIsoInfo extractInfo, CancellationToken cancellationToken)
@@ -123,16 +126,33 @@ namespace Popstation
                     var ext = Path.GetExtension(extractInfo.DestinationIso);
                     var fileName = Path.GetFileNameWithoutExtension(extractInfo.DestinationIso);
                     var path = Path.GetDirectoryName(extractInfo.DestinationIso);
-                    var i = 1;
 
-                    foreach (var disc in stream.Discs)
+                    foreach (var disc in stream.Discs.Where(d => extractInfo.Discs.Contains(d.Index)))
                     {
-                        var isoPath = Path.Combine(path, $"{fileName} - [Disc {i}]{ext}");
+                        var discName = extractInfo.DiscName.Replace("{0}", disc.Index.ToString());
+                        var isoPath = Path.Combine(path, $"{fileName} {discName}{ext}");
+
+                        if (extractInfo.CheckIfFileExists && File.Exists(isoPath))
+                        {
+                            var response = ActionIfFileExists(isoPath);
+                            if (response == ActionIfFileExistsEnum.OverwriteAll)
+                            {
+                                extractInfo.CheckIfFileExists = false;
+                            }
+                            else if (response == ActionIfFileExistsEnum.Skip)
+                            {
+                                continue;
+                            }
+                            else if (response == ActionIfFileExistsEnum.Abort)
+                            {
+                                throw new CancellationException("Operation was aborted");
+                            }
+                        }
+
                         using (var iso_stream = new FileStream(isoPath, FileMode.Create, FileAccess.Write))
                         {
                             ReadIso(disc, iso_stream, isoPath, extractInfo.CreateCuesheet, cancellationToken);
                         }
-                        i++;
 
                         if (cancellationToken.IsCancellationRequested)
                         {
@@ -142,6 +162,23 @@ namespace Popstation
                 }
                 else
                 {
+                    if (extractInfo.CheckIfFileExists && File.Exists(extractInfo.DestinationIso))
+                    {
+                        var response = ActionIfFileExists(extractInfo.DestinationIso);
+                        if (response == ActionIfFileExistsEnum.OverwriteAll)
+                        {
+                            extractInfo.CheckIfFileExists = false;
+                        }
+                        else if (response == ActionIfFileExistsEnum.Skip)
+                        {
+                            return;
+                        }
+                        else if (response == ActionIfFileExistsEnum.Abort)
+                        {
+                            throw new CancellationException("Operation was aborted");
+                        }
+                    }
+
                     using (var iso_stream = new FileStream(extractInfo.DestinationIso, FileMode.Create, FileAccess.Write))
                     {
                         ReadIso(stream.Discs[0], iso_stream, extractInfo.DestinationIso, extractInfo.CreateCuesheet, cancellationToken);

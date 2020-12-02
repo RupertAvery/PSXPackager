@@ -21,5 +21,6 @@ namespace Popstation
         public int CompressionLevel { get; set; }
         public List<DiscInfo> DiscInfos { get; set; }
         public List<PatchData> Patches { get; set; }
+        public bool CheckIfFileExists { get; set; }
     };
 }

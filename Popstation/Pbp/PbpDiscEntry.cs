@@ -25,10 +25,12 @@ namespace Popstation.Pbp
         public List<IsoIndexLite> IsoIndex { get; set; }
         public List<TOCEntry> TOC { get; set; }
         public uint IsoSize { get; }
+        public int Index { get; set; }
 
-        public PbpDiscEntry(Stream stream, int psarOffset)
+        public PbpDiscEntry(Stream stream, int psarOffset, int index)
         {
             this.stream = stream;
+            Index = index;
             psar_offset = psarOffset;
             TOC = ReadTOC();
             IsoIndex = ReadIsoIndexes();

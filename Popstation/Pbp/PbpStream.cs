@@ -45,7 +45,7 @@ namespace Popstation.Pbp
             {
                 Discs = new List<PbpDiscEntry>()
                 {
-                    new PbpDiscEntry(stream, psar_offset)
+                    new PbpDiscEntry(stream, psar_offset, 1)
                 };
             }
             else
@@ -75,11 +75,11 @@ namespace Popstation.Pbp
                 //stream.WriteInteger(0, 0x76);
 
                 uint[] iso_positions = new uint[5];
-                stream.Read(iso_positions, 0, 5);
+                stream.Read(iso_positions, 0, sizeof(uint) * 5);
 
                 Discs = iso_positions
                     .Where(x => x > 0)
-                    .Select(x => new PbpDiscEntry(stream, psar_offset + (int)x)).ToList();
+                    .Select((x, i) => new PbpDiscEntry(stream, psar_offset + (int)x, i + 1)).ToList();
 
             }
 

@@ -2,7 +2,7 @@
   "profiles": {
     "PSXPackager": {
       "commandName": "Project",
-      "commandLineArgs": "-i \"C:\\roms\\Lunar.m3u\""
+      "commandLineArgs": "-i \"C:\\roms\\Legend of Dragoon, The.PBP\""
     }
   }
 }

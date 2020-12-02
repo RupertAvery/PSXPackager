@@ -30,6 +30,8 @@
         ConvertStart,
         ExtractStart,
         ExtractComplete,
-        WriteEnd
+        WriteComplete,
+        Warning,
+        Info
     }
 }

@@ -20,18 +20,20 @@ Feel free to take the Popstation library and use it as you like.
 
 # Usage
 
+There are updates to batch conversion, please see the Batch section.
+
 ## Convert a .7z, .BIN, .CUE, .ISO or .IMG to a .PBP
 
 PSXPackager supports several input formats. Simply pass the path to the archive, CUE sheet, or image with the `-i` parameter.
 ```
-psxpackager -i <path_to_file> [-o <output_path>] [-l <compression_level>] 
+psxpackager -i <path_to_file> [-o <output_path>] [-l <compression_level>] [-y]
 ```
 
  Since 7z is used for decompression, any format the 7z supports, such as `.rar` or `.zip` can be used as an input, so long as PSXPackager can find an image or CUE sheet within.
 
 The output path is optional. If not specified the path of the input file will be used.
 
-Any files in the output path will be overwritten.
+PSXPackager will prompt if a file exists before overwriting it. Use the `-y` argument to overwrite all files in the output directory.
 
 Set the compression level to a value from 0 to 9, with 0 being no compression and 9 being the highest compression level. If not specified, it will default to 5.
 
@@ -41,13 +43,15 @@ Archives will be decompressed to a temporary folder in `%TEMP%\PSXPackager`, and
 
 PSXPackager checks the file extension to decide whether to extract or convert, so the syntax remains the same. The output will always be a `.bin` + `.cue`.
 
+Multi-disc PBPs are supported. If no disc is specified, all discs will be extracted. Specify the discs to extract with the `-d` or `--disc` option, which takes a comma-separated list of disc numbers to extract, e.g. `-d 1,2`
+
 ```
-psxpackager -i <path_to_pbp> [-o <output_path>]
+psxpackager -i <path_to_pbp> [-o <output_path>] [-d <list_of_discs>]
 ```
 
 ## Convert multiple .BIN files to a multi-disc .PBP
 
-Multiple-disc PBPs are supported by PSXPackager.
+Multi-disc PBPs are supported by PSXPackager.
 
 First, create an `.m3u` file containing a list of the discs in the order you wish them to appear in the PBP.
 
@@ -73,18 +77,46 @@ You can also use `.cue` files in the `.m3u`. If the `.cue` contains a single `.b
 
 ## Batch Conversion
 
-To Convert all files in a folder to .PBP
+Wildcards are now supported using the `-i` argument
+
+```
+psxpackager -i <path_containing_files>\<wildcard_filter> [-o <output_path>]
+```
+
+This will process all supported files in the folder `C:\Roms`. Use with caution, as you may be overwriting files that exist.
+
+```
+psxpackager -i "C:\Roms\*.*"
+```
+
+This will extract all PBP files in the folder `C:\Roms` to BIN+CUE.
+
+```
+psxpackager -i "C:\Roms\*.PBP"
+```
+
+This will convert all files matching `Legend of Dragoon - Disc ?.bin` in the folder `C:\Roms` to PBP.
+
+```
+psxpackager -i "C:\Roms\Legend of Dragoon - Disc ?.bin"
+```
+
+## Batch Conversion (Old method)
+
+**NOTE:** This option will eventually be removed.
+
+To convert several files in a folder to .PBP
 
 ```
 psxpackager -b <path_containing_files> -e <extension> [-o <output_path>]
 ```
 
-The `extension` parameter should be the extension you wish to search in the containing folder. 
+The `-e` or `--extension` parameter should be a comma-separated list of extensions you wish to search in the containing folder. 
 
-The following command will convert all .7z files to .pbp
+The following command will convert all .7z and .iso files to .pbp
 
 ```
-psxpackager -b C:\ROMS\PSX -e .7z -o C:\ROMS\PSX\Converted
+psxpackager -b C:\ROMS\PSX -e .7z,.iso -o C:\ROMS\PSX\Converted
 ```
 
 # Multi-track .CUE files (Audio tracks)

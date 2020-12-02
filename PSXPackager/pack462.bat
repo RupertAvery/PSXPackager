@@ -21,6 +21,7 @@ SET ILMERGE_PATH=%USERPROFILE%\.nuget\packages\ilmerge\%ILMERGE_VERSION%\tools\n
 
 
 XCOPY /Y /S /E Bin\%ILMERGE_BUILD%\%ILMERGE_PLATFORM%\ Bin\ILMerge\
+XCOPY /Y ..\README.MD Bin\ILMerge\
 DEL Bin\ILMerge\*.pdb
 
 echo Merging %APP_NAME% ...
