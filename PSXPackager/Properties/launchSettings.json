@@ -2,7 +2,7 @@
   "profiles": {
     "PSXPackager": {
       "commandName": "Project",
-      "commandLineArgs": "-i \"C:\\ROMS\\PSX\\Twisted Metal III.PBP\""
+      "commandLineArgs": "-i \"C:\\roms\\Lunar.m3u\""
     }
   }
 }

@@ -1,38 +1,38 @@
-﻿using Popstation;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Text.RegularExpressions;
 
 namespace Popstation
 {
-
-    public static class CueReader
+    public class CueFileReader
     {
-        static Regex fileRegex = new Regex("^FILE \"(.*?)\" (.*?)\\s*$");
-        static Regex trackRegex = new Regex("^\\s*TRACK (\\d+) (.*?)\\s*$");
-        static Regex indexRegex = new Regex("^\\s*INDEX (\\d+) (\\d+:\\d+:\\d+)\\s*$");
+        private static readonly Regex FileRegex = new Regex("^FILE \"(.*?)\" (.*?)\\s*$");
+        private static readonly Regex TrackRegex = new Regex("^\\s*TRACK (\\d+) (.*?)\\s*$");
+        private static readonly Regex IndexRegex = new Regex("^\\s*INDEX (\\d+) (\\d+:\\d+:\\d+)\\s*$");
 
-        public static List<CueFile> Read(string file)
+        public static CueFile Read(string file)
         {
-            var cueFiles = new List<CueFile>();
-            CueFile cueFile = null;
+            var cueFile = new CueFile();
+
+            CueFileEntry cueFileEntry = null;
             CueTrack cueTrack = null;
             var cueLines = File.ReadAllLines(file);
             foreach (var line in cueLines)
             {
-                var fileMatch = fileRegex.Match(line);
-                var trackMatch = trackRegex.Match(line);
-                var indexMatch = indexRegex.Match(line);
+                var fileMatch = FileRegex.Match(line);
+                var trackMatch = TrackRegex.Match(line);
+                var indexMatch = IndexRegex.Match(line);
 
                 if (fileMatch.Success)
                 {
-                    cueFile = new CueFile
+                    cueFileEntry = new CueFileEntry
                     {
                         FileName = fileMatch.Groups[1].Value,
                         FileType = fileMatch.Groups[2].Value,
                         Tracks = new List<CueTrack>()
                     };
-                    cueFiles.Add(cueFile);
+                    cueFile.FileEntries.Add(cueFileEntry);
                 }
                 else if (trackMatch.Success)
                 {
@@ -46,7 +46,7 @@ namespace Popstation
                         DataType = trackMatch.Groups[2].Value,
                         Indexes = new List<CueIndex>()
                     };
-                    cueFile.Tracks.Add(cueTrack);
+                    cueFileEntry.Tracks.Add(cueTrack);
                 }
                 else if (indexMatch.Success)
                 {
@@ -76,8 +76,10 @@ namespace Popstation
                 }
 
             }
-            return cueFiles;
+
+            return cueFile;
         }
+
 
     }
 }

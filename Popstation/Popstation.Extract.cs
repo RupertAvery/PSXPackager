@@ -7,14 +7,14 @@ namespace Popstation
 {
     public partial class Popstation
     {
-        public Task Extract(ExtractIsoInfo extractInfo, CancellationToken cancellationToken)
+        public void Extract(ExtractIsoInfo extractInfo, CancellationToken cancellationToken)
         {
-            return Task.Run(() => ExtractIso(extractInfo, cancellationToken));
+            ExtractIso(extractInfo, cancellationToken);
         }
 
-        private CueFile ExtractTOC(ExtractIsoInfo extractInfo, PbpStream stream)
+        private CueFileEntry ExtractTOC(ExtractIsoInfo extractInfo, PbpStream stream)
         {
-            var cueFile = new CueFile()
+            var cueFile = new CueFileEntry()
             {
                 FileName = Path.GetFileName(extractInfo.DestinationIso),
                 Tracks = new List<CueTrack>(),
@@ -106,7 +106,9 @@ namespace Popstation
 
                         var path = Path.GetDirectoryName(extractInfo.DestinationIso);
 
-                        CueWriter.Write(Path.Combine(path, filename), new CueFile[] { ExtractTOC(extractInfo, stream) });
+                        var cueFile = new CueFile(new[] { ExtractTOC(extractInfo, stream) });
+
+                        CueFileWriter.Write(cueFile, Path.Combine(path, filename));
                     }
 
                 }

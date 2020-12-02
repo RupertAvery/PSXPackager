@@ -51,12 +51,12 @@ namespace DiscUtils.Iso9660
             : base(new VfsCDReader(data, joliet, hideVersions, 2048)) { }
 
 
-
         /// <summary>
         /// Initializes a new instance of the CDReader class.
         /// </summary>
         /// <param name="data">The stream to read the ISO image from.</param>
         /// <param name="joliet">Whether to read Joliet extensions.</param>
+        /// <param name="sectorSize">The size of a sector</param>
         public CDReader(Stream data, bool joliet, int sectorSize)
             : base(new VfsCDReader(data, joliet, false, sectorSize)) {
         }

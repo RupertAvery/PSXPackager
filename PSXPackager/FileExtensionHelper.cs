@@ -14,6 +14,11 @@ namespace PSXPackager
             return Path.GetExtension(filename).ToLower() == ".pbp";
         }
 
+        public static bool IsM3u(string filename)
+        {
+            return Path.GetExtension(filename).ToLower() == ".m3u";
+        }
+
         public static bool IsArchive(string filename)
         {
             return Path.GetExtension(filename).ToLower() == ".7z" ||

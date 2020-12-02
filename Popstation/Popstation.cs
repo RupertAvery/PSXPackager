@@ -11,13 +11,14 @@ namespace Popstation
 
     public partial class Popstation
     {
+        // 2352 bytes / sector * 16 sectors / block
         const int BLOCK_SIZE = 0x9300;
 
         public Action<PopstationEventEnum, object> OnEvent { get; set; }
 
         int nextPatchPos;
 
-        public Task Convert(ConvertIsoInfo convertInfo, CancellationToken cancellationToken)
+        public void Convert(ConvertIsoInfo convertInfo, CancellationToken cancellationToken)
         {
             if (convertInfo.Patches?.Count > 0)
             {
@@ -26,11 +27,11 @@ namespace Popstation
 
             if (convertInfo.DiscInfos.Count == 1)
             {
-                return Task.Run(() => ConvertIso(convertInfo, cancellationToken));
+                ConvertIso(convertInfo, cancellationToken);
             }
             else
             {
-                return Task.Run(() => ConvertMultiIso(convertInfo, cancellationToken));
+                ConvertMultiIso(convertInfo, cancellationToken);
             }
         }
 
@@ -81,6 +82,16 @@ namespace Popstation
             output = convertInfo.DestinationPbp;
             title = convertInfo.MainGameTitle;
             code = convertInfo.MainGameID;
+
+            foreach (var disc in convertInfo.DiscInfos)
+            {
+                if (File.Exists(disc.SourceIso))
+                {
+                    var t = new FileInfo(disc.SourceIso);
+                    isosize = (uint)t.Length;
+                    disc.TocData = ProcessToc(disc, isosize);
+                }
+            }
 
             var sfoBuilder = new SFOBuilder();
             sfoBuilder.AddEntry(SFOKeys.BOOTABLE, 0x01);
@@ -371,10 +382,12 @@ namespace Popstation
                     totSize = 0;
                     for (ciso = 0; ciso < convertInfo.DiscInfos.Count; ciso++)
                     {
-                        if (File.Exists(convertInfo.DiscInfos[ciso].SourceIso))
+                        var disc = convertInfo.DiscInfos[ciso];
+                        if (File.Exists(disc.SourceIso))
                         {
                             var t = new FileInfo(convertInfo.DiscInfos[ciso].SourceIso);
                             isosize = (uint)t.Length;
+                            disc.IsoSize = isosize;
                             totSize += isosize;
                         }
                     }
@@ -388,6 +401,8 @@ namespace Popstation
                     for (ciso = 0; ciso < convertInfo.DiscInfos.Count; ciso++)
                     {
                         var disc = convertInfo.DiscInfos[ciso];
+
+                        OnEvent?.Invoke(PopstationEventEnum.WriteSize, disc.IsoSize);
 
                         if (!File.Exists(disc.SourceIso))
                         {
@@ -430,6 +445,14 @@ namespace Popstation
                             titleBytes = Encoding.ASCII.GetBytes(disc.GameID);
                             Array.Copy(titleBytes, 4, data1, 6, 5);
 
+                            if (disc.TocData?.Length > 0)
+                            {
+                                OnEvent?.Invoke(PopstationEventEnum.WriteToc, null);
+                                // TODO?
+                                Array.Copy(disc.TocData, 0, data1, 1024, disc.TocData.Length);
+                                // memcpy(data1 + 1024, convertInfo.tocData, convertInfo.tocSize);
+                            }
+
                             //memcpy(data1, 1, codes[ciso], 4);
                             //memcpy(data1, 6, codes[ciso] + 4, 5);
                             _out.Write(data1, 0, data1.Length);
@@ -444,7 +467,7 @@ namespace Popstation
 
                             index_offset = (uint)_out.Position;
 
-                            Console.WriteLine("Writing indexes (iso #%d)...\n", ciso + 1);
+                            //Console.WriteLine("Writing indexes (iso #%d)...\n", ciso + 1);
                             OnEvent?.Invoke(PopstationEventEnum.WriteIndex, ciso + 1);
 
                             //memset(dummy, 0, sizeof(dummy));
@@ -540,7 +563,7 @@ namespace Popstation
                                         offset += x;
                                     }
 
-                                    OnEvent?.Invoke(PopstationEventEnum.WriteProgress, ciso + 1);
+                                    OnEvent?.Invoke(PopstationEventEnum.WriteProgress, totSize);
 
                                     if (cancellationToken.IsCancellationRequested)
                                     {
@@ -667,7 +690,79 @@ namespace Popstation
 
         }
 
+        private byte[] ProcessToc(DiscInfo disc, uint isosize)
+        {
+            var cue = CueFileReader.Read(disc.SourceToc);
+            var tracks = cue.FileEntries.SelectMany(cf => cf.Tracks).ToList();
 
+            byte[] tocData = new byte[0xA * (tracks.Count + 3)];
+
+            var trackBuffer = new byte[0xA];
+
+            var frames = isosize / 2352;
+            var position = Helper.PositionFromFrames(frames);
+
+            var ctr = 0;
+
+            trackBuffer[0] = (byte)Helper.GetTrackType(tracks.First().DataType);
+            trackBuffer[1] = 0x00;
+            trackBuffer[2] = 0xA0;
+            trackBuffer[3] = 0x00;
+            trackBuffer[4] = 0x00;
+            trackBuffer[5] = 0x00;
+            trackBuffer[6] = 0x00;
+            trackBuffer[7] = Helper.ToBinaryDecimal(tracks.First().Number);
+            trackBuffer[8] = Helper.ToBinaryDecimal(0x20);
+            trackBuffer[9] = 0x00;
+
+            Array.Copy(trackBuffer, 0, tocData, ctr, 0xA);
+            ctr += 0xA;
+
+            trackBuffer[0] = (byte)Helper.GetTrackType(tracks.Last().DataType);
+            trackBuffer[2] = 0xA1;
+            trackBuffer[7] = Helper.ToBinaryDecimal(tracks.Last().Number);
+            trackBuffer[8] = 0x00;
+
+            Array.Copy(trackBuffer, 0, tocData, ctr, 0xA);
+            ctr += 0xA;
+
+            trackBuffer[0] = 0x01;
+            trackBuffer[2] = 0xA2;
+            trackBuffer[7] = Helper.ToBinaryDecimal(position.Minutes);
+            trackBuffer[8] = Helper.ToBinaryDecimal(position.Seconds);
+            trackBuffer[9] = Helper.ToBinaryDecimal(position.Frames);
+
+            Array.Copy(trackBuffer, 0, tocData, ctr, 0xA);
+            ctr += 0xA;
+
+            foreach (var track in tracks)
+            {
+                trackBuffer[0] = (byte)Helper.GetTrackType(track.DataType);
+                trackBuffer[1] = 0x00;
+                trackBuffer[2] = Helper.ToBinaryDecimal(track.Number);
+                var pos = track.Indexes.First(idx => idx.Number == 1).Position;
+                trackBuffer[3] = Helper.ToBinaryDecimal(pos.Minutes);
+                trackBuffer[4] = Helper.ToBinaryDecimal(pos.Seconds);
+                trackBuffer[5] = Helper.ToBinaryDecimal(pos.Frames);
+                trackBuffer[6] = 0x00;
+                pos = pos + (2 * 75); // add 2 seconds for lead in (75 frames / second)
+                trackBuffer[7] = Helper.ToBinaryDecimal(pos.Minutes);
+                trackBuffer[8] = Helper.ToBinaryDecimal(pos.Seconds);
+                trackBuffer[9] = Helper.ToBinaryDecimal(pos.Frames);
+
+                Array.Copy(trackBuffer, 0, tocData, ctr, 0xA);
+                ctr += 0xA;
+            }
+
+            //0x00    1 byte Track type - 0x41 = data track, 0x01 = audio track
+            //0x01    1 byte Always null
+            //0x02    1 byte The track number in "binary decimal"
+            //0x03    3 bytes The absolute track start address in "binary decimal" - first byte is minutes, second is seconds, third is frames
+            //0x06    1 byte Always null
+            //0x07    3 bytes The "relative" track address -same as before, and uses MM: SS: FF format
+
+            return tocData;
+        }
 
         private void ConvertIso(ConvertIsoInfo convertInfo, CancellationToken cancellationToken)
         {
@@ -719,79 +814,10 @@ namespace Popstation
 
                 isorealsize = isosize;
 
-                if (!string.IsNullOrEmpty(disc.SourceToc))
+                if (!string.IsNullOrEmpty(disc.SourceToc) && File.Exists(disc.SourceToc))
                 {
-                    var cueFiles = CueReader.Read(disc.SourceToc);
-                    var tracks = cueFiles.SelectMany(cf => cf.Tracks).ToList();
-
-                    convertInfo.TocData = new byte[0xA * (tracks.Count + 3)];
-
-                    var trackBuffer = new byte[0xA];
-
-                    var frames = isosize / 2352;
-                    var position = Helper.PositionFromFrames(frames);
-
-                    var ctr = 0;
-
-                    trackBuffer[0] = (byte)Helper.GetTrackType(tracks.First().DataType);
-                    trackBuffer[1] = 0x00;
-                    trackBuffer[2] = 0xA0;
-                    trackBuffer[3] = 0x00;
-                    trackBuffer[4] = 0x00;
-                    trackBuffer[5] = 0x00;
-                    trackBuffer[6] = 0x00;
-                    trackBuffer[7] = Helper.ToBinaryDecimal(tracks.First().Number);
-                    trackBuffer[8] = Helper.ToBinaryDecimal(0x20);
-                    trackBuffer[9] = 0x00;
-
-                    Array.Copy(trackBuffer, 0, convertInfo.TocData, ctr, 0xA);
-                    ctr += 0xA;
-
-                    trackBuffer[0] = (byte)Helper.GetTrackType(tracks.Last().DataType);
-                    trackBuffer[2] = 0xA1;
-                    trackBuffer[7] = Helper.ToBinaryDecimal(tracks.Last().Number);
-                    trackBuffer[8] = 0x00;
-
-                    Array.Copy(trackBuffer, 0, convertInfo.TocData, ctr, 0xA);
-                    ctr += 0xA;
-
-                    trackBuffer[0] = 0x01;
-                    trackBuffer[2] = 0xA2;
-                    trackBuffer[7] = Helper.ToBinaryDecimal(position.Minutes);
-                    trackBuffer[8] = Helper.ToBinaryDecimal(position.Seconds);
-                    trackBuffer[9] = Helper.ToBinaryDecimal(position.Frames);
-
-                    Array.Copy(trackBuffer, 0, convertInfo.TocData, ctr, 0xA);
-                    ctr += 0xA;
-
-                    foreach (var track in tracks)
-                    {
-                        trackBuffer[0] = (byte)Helper.GetTrackType(track.DataType);
-                        trackBuffer[1] = 0x00;
-                        trackBuffer[2] = Helper.ToBinaryDecimal(track.Number);
-                        var pos = track.Indexes.First(idx => idx.Number == 1).Position;
-                        trackBuffer[3] = Helper.ToBinaryDecimal(pos.Minutes);
-                        trackBuffer[4] = Helper.ToBinaryDecimal(pos.Seconds);
-                        trackBuffer[5] = Helper.ToBinaryDecimal(pos.Frames);
-                        trackBuffer[6] = 0x00;
-                        pos = pos + (2 * 75); // add 2 seconds for lead in (75 frames / second)
-                        trackBuffer[7] = Helper.ToBinaryDecimal(pos.Minutes);
-                        trackBuffer[8] = Helper.ToBinaryDecimal(pos.Seconds);
-                        trackBuffer[9] = Helper.ToBinaryDecimal(pos.Frames);
-
-                        Array.Copy(trackBuffer, 0, convertInfo.TocData, ctr, 0xA);
-                        ctr += 0xA;
-                    }
-
-                    //0x00    1 byte Track type - 0x41 = data track, 0x01 = audio track
-                    //0x01    1 byte Always null
-                    //0x02    1 byte The track number in "binary decimal"
-                    //0x03    3 bytes The absolute track start address in "binary decimal" - first byte is minutes, second is seconds, third is frames
-                    //0x06    1 byte Always null
-                    //0x07    3 bytes The "relative" track address -same as before, and uses MM: SS: FF format
-
+                    disc.TocData = ProcessToc(disc, isosize);
                 }
-
 
                 //PostMessage(convertInfo.callback, WM_CONVERT_SIZE, 0, isosize);
                 OnEvent?.Invoke(PopstationEventEnum.ConvertSize, isosize);
@@ -1087,14 +1113,14 @@ namespace Popstation
                             data1[0x41c] = bcd(sec);
                             data1[0x41d] = bcd(frm);
                         */
-                        if (convertInfo.TocData?.Length > 0)
+                        if (disc.TocData?.Length > 0)
                         {
                             OnEvent?.Invoke(PopstationEventEnum.WriteToc, null);
                             // TODO?
-                            Array.Copy(convertInfo.TocData, 0, data1, 1024, convertInfo.TocData.Length);
+                            Array.Copy(disc.TocData, 0, data1, 1024, disc.TocData.Length);
                             // memcpy(data1 + 1024, convertInfo.tocData, convertInfo.tocSize);
-
                         }
+
                         _out.Write(data1, 0, data1.Length);
 
                         p2_offset = (uint)_out.Position;
@@ -1213,7 +1239,6 @@ namespace Popstation
                                 _out.WriteByte(0);
                             }
                         }
-
                         else
                         {
                             indexes = new IsoIndex[isosize / BLOCK_SIZE];
@@ -1232,7 +1257,7 @@ namespace Popstation
 
                                 if (Path.GetExtension(disc.SourceIso).ToLower() == ".pbp")
                                 {
-                                    using(var pbpStream = new PbpStream(disc.SourceIso, FileMode.Open, FileAccess.Read))
+                                    using (var pbpStream = new PbpStream(disc.SourceIso, FileMode.Open, FileAccess.Read))
                                     {
                                         if (block >= pbpStream.IsoIndex.Count) break;
                                         bufferSize = pbpStream.ReadBlock((int)block, buffer2);
@@ -1391,7 +1416,7 @@ namespace Popstation
                             //fread(buffer, 1, header[1], _base);
                         }
 
-                        var bytesRead2 = 0; 
+                        var bytesRead2 = 0;
                         while ((bytesRead2 = _base.Read(buffer, 0, 1048576)) > 0)
                         {
                             _out.Write(buffer, 0, bytesRead2);

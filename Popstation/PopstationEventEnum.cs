@@ -17,6 +17,8 @@
         WritePsTitle,
         WriteIsoHeader,
         WriteProgress,
+        WriteSize,
+        WriteStart,
         UpdateIndex,
         WriteSpecialData,
         WriteToc,
@@ -27,6 +29,6 @@
         ConvertComplete,
         ConvertStart,
         ExtractStart,
-        ExtractComplete
+        ExtractComplete,
     }
 }

@@ -1,20 +1,20 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 
 namespace Popstation
 {
-    public static class CueWriter
+    public class CueFileWriter
     {
-        public static void Write(string file, IEnumerable<CueFile> cueFiles)
+
+        public static void Write(CueFile cueFile, string file)
         {
             using (var stream = new FileStream(file, FileMode.Create))
             {
                 using (var writer = new StreamWriter(stream))
                 {
-                    foreach (var cueFile in cueFiles)
+                    foreach (var entry in cueFile.FileEntries)
                     {
-                        writer.WriteLine($"FILE \"{cueFile.FileName}\" {cueFile.FileType}");
-                        foreach (var cueTrack in cueFile.Tracks)
+                        writer.WriteLine($"FILE \"{entry.FileName}\" {entry.FileType}");
+                        foreach (var cueTrack in entry.Tracks)
                         {
                             writer.WriteLine($"  TRACK {cueTrack.Number:00} {cueTrack.DataType}");
 
@@ -25,6 +25,7 @@ namespace Popstation
                             }
                         }
                     }
+
                     writer.Flush();
                 }
             }
