@@ -1,4 +1,4 @@
-﻿namespace Popstation
+﻿namespace Popstation.Iso
 {
     public class IsoIndex
     {

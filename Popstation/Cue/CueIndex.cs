@@ -1,4 +1,4 @@
-﻿namespace Popstation
+﻿namespace Popstation.Cue
 {
     public class CueIndex
     {

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Popstation
+namespace Popstation.M3u
 {
     public class M3uFile
     {

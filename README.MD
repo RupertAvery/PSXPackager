@@ -10,23 +10,24 @@ Feel free to take the Popstation library and use it as you like.
 
 * Supports direct conversion of .7z files using SevenZipExtractor
 * Supports merging multi-track .BIN + .CUE
-* Supports writing CUE tracks to PBP TOC (audio tracks now work)
-* Supports writing track information to PBP for audio 
+* Supports writing multi-track CUE information to PBP for audio 
 * Convert .BIN or .IMG to .PBP
 * Extract .BIN file from .PBP
 * PBP Compression levels from 0 to 9
 * Uses SharpZipLib for compression
-* Uses a modified DiscUtil for ISO reading to auto-detect the Disc ID
+* Supports writing multi-disc PBP using .m3u files
+* Supports extracting multi-disc PBP
 
 # Usage
 
-## Convert a .7z, .BIN, .CUE, .IMG to a .PBP
+## Convert a .7z, .BIN, .CUE, .ISO or .IMG to a .PBP
 
+PSXPackager supports several input formats. Simply pass the path to the archive, CUE sheet, or image with the `-i` parameter.
 ```
 psxpackager -i <path_to_file> [-o <output_path>] [-l <compression_level>] 
 ```
 
-Since the 7zip library is being used, .7z, .rar, and .zip files are supported as inputs. The file only needs to contain a .iso, .img or .bin file.
+ Since 7z is used for decompression, any format the 7z supports, such as `.rar` or `.zip` can be used as an input, so long as PSXPackager can find an image or CUE sheet within.
 
 The output path is optional. If not specified the path of the input file will be used.
 
@@ -34,15 +35,41 @@ Any files in the output path will be overwritten.
 
 Set the compression level to a value from 0 to 9, with 0 being no compression and 9 being the highest compression level. If not specified, it will default to 5.
 
-## Convert a .PBP to a .BIN + .CUE
+Archives will be decompressed to a temporary folder in `%TEMP%\PSXPackager`, and will be cleaned up on exit.
 
-PSXPackager checks the file extension to decide whether to extract or convert
+## Extract a .PBP to a .BIN + .CUE
+
+PSXPackager checks the file extension to decide whether to extract or convert, so the syntax remains the same. The output will always be a `.bin` + `.cue`.
 
 ```
-psxpackager -i <path_to_file> [-o <output_path>]
+psxpackager -i <path_to_pbp> [-o <output_path>]
 ```
 
-The PBP ISO Table of Contents will be saved as a .cue file.
+## Convert multiple .BIN files to a multi-disc .PBP
+
+Multiple-disc PBPs are supported by PSXPackager.
+
+First, create an `.m3u` file containing a list of the discs in the order you wish them to appear in the PBP.
+
+For example, create a text file with the following contents and save as `Final Fantasy VIII.m3u`
+
+```
+Final Fantasy VIII - Disc 1.bin
+Final Fantasy VIII - Disc 2.bin
+Final Fantasy VIII - Disc 3.bin
+```
+
+Call `psxpackager` with the `.m3u` as the input file.
+
+```
+psxpackager -i "Final Fantasy VIII.m3u" [-o <output_path>]
+```
+
+The file  `Final Fantasy VIII.PBP` will be created which contains the three discs in one file.
+
+## Convert multiple .CUE files to a multi-disc .PBP
+
+You can also use `.cue` files in the `.m3u`. If the `.cue` contains a single `.bin` track, it will use the `.bin` as the source image. If the `.cue` file contains mulitple tracks, such as audio tracks, the files will be merged into a single `.bin`. 
 
 ## Batch Conversion
 
@@ -60,13 +87,17 @@ The following command will convert all .7z files to .pbp
 psxpackager -b C:\ROMS\PSX -e .7z -o C:\ROMS\PSX\Converted
 ```
 
-# Multi-bin .cue files (Audio tracks)
+# Multi-track .CUE files (Audio tracks)
 
-If the input or compressed file has a .cue with multiple .bin files, PSXPackager will merge the .bin into a single file.
+If the input or compressed file has a `.cue` with multiple tracks, PSXPackager will merge the `.bins` into a single file in a temporary folder.
 
-The a new cue sheet will be created with all tracks under the merged .bin, and index positions will be updated.
+A new CUE sheet will also be created with all tracks under the merged `.bin`, and index positions will be updated.
 
-This merged .cue file will be used to create a TOC (Table of Contents) for the PBP ISO. This allows audio tracks to be read from the PBP.
+This merged `.cue` file will be used to create a TOC (Table of Contents) for the PBP ISO. This allows audio tracks to be correctly read from the PBP.
+
+Temporary files will be deleted when conversion is complete, if the conversion is cancelled, or if an error occurs.
+
+The temporary folder location is `%TEMP%\PSXPackager`.
 
 # Buy me a beer?
 
@@ -80,6 +111,5 @@ and I will raise one to you! Much appreciated!
 
 # TODO
 
-* Multi-disc PBP support
 * Get DiscID from ISO in PBP
 * Add support for external tools - ECM and CHDMAN

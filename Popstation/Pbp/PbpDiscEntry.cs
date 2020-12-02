@@ -1,29 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Popstation.Iso;
 
-namespace Popstation
+namespace Popstation.Pbp
 {
-    public enum TrackTypeEnum
-    {
-        Data = 0x41,
-        Audio = 0x01
-    }
-
-    public class TOCEntry
-    {
-        public TrackTypeEnum TrackType { get; set; }
-        public int TrackNo { get; set; }
-        public int Minutes { get; set; }
-        public int Seconds { get; set; }
-        public int Frames { get; set; }
-    }
-    public class PbpStream : IDisposable
+    public class PbpDiscEntry
     {
         // The maximum possible number of ISO indexes
         const int MAX_INDEXES = 0x7E00;
-        //The location of the PSAR offset in the PBP header
-        const int HEADER_PSAR_OFFSET = 0x24;
+
         // The location of the ISO indexes in the PSAR
         const int PSAR_GAMEID_OFFSET = 0x400;
         const int PSAR_TOC_OFFSET = 0x800;
@@ -35,20 +21,17 @@ namespace Popstation
         public const int ISO_BLOCK_SIZE = 0x930;
 
         private readonly Stream stream;
-
+        private readonly int psar_offset;
+        public List<IsoIndexLite> IsoIndex { get; set; }
+        public List<TOCEntry> TOC { get; set; }
         public uint IsoSize { get; }
 
-        public List<IsoIndexLite> IsoIndex { get; private set; }
-        public List<TOCEntry> TOC { get; private set; }
-
-        public PbpStream(string path, FileMode mode, FileAccess access)
+        public PbpDiscEntry(Stream stream, int psarOffset)
         {
-            stream = new FileStream(path, mode, access);
+            this.stream = stream;
+            psar_offset = psarOffset;
             TOC = ReadTOC();
             IsoIndex = ReadIsoIndexes();
-
-            if (IsoIndex.Count == 0) throw new Exception("No iso index was found.");
-
             IsoSize = GetIsoSize();
         }
 
@@ -59,13 +42,9 @@ namespace Popstation
             var entries = new List<TOCEntry>();
 
             // Read in the offset of the PSAR file
-            stream.Seek(HEADER_PSAR_OFFSET, SeekOrigin.Begin);
-            var psar_offset = stream.ReadInteger();
+            //stream.Seek(HEADER_PSAR_OFFSET, SeekOrigin.Begin);
+            //var psar_offset = stream.ReadInteger();
 
-            if (psar_offset == 0 || stream.Position != HEADER_PSAR_OFFSET + sizeof(int))
-            {
-                throw new Exception("Invalid PSAR offset or corrupted file");
-            }
 
             stream.Seek(psar_offset + PSAR_TOC_OFFSET, SeekOrigin.Begin);
 
@@ -83,7 +62,7 @@ namespace Popstation
             //var frames = mm * 60 * 75 + ss * 75 + ff;
             //var size = 2352 * frames;
 
-            for(var c = startTrack; c <= endTrack; c++)
+            for (var c = startTrack; c <= endTrack; c++)
             {
                 stream.Read(buffer, 0, 0xA);
                 var trackNo = Helper.FromBinaryDecimal(buffer[2]);
@@ -107,7 +86,7 @@ namespace Popstation
 
         private List<IsoIndexLite> ReadIsoIndexes()
         {
-            int psar_offset;
+            //int psar_offset;
             int this_offset;
             int count = 0;
             int offset;
@@ -117,13 +96,10 @@ namespace Popstation
             var iso_index = new List<IsoIndexLite>();
 
             // Read in the offset of the PSAR file
-            stream.Seek(HEADER_PSAR_OFFSET, SeekOrigin.Begin);
-            psar_offset = stream.ReadInteger();
+            //stream.Seek(HEADER_PSAR_OFFSET, SeekOrigin.Begin);
+            //psar_offset = stream.ReadInteger();
 
-            if(psar_offset == 0 || stream.Position != HEADER_PSAR_OFFSET + sizeof(int))
-            {
-                throw new Exception("Invalid PSAR offset or corrupted file");
-            }
+
 
             // Go to the location of the ISO indexes in the PSAR
             stream.Seek(psar_offset + PSAR_INDEX_OFFSET, SeekOrigin.Begin);
@@ -164,19 +140,21 @@ namespace Popstation
                 }
             }
 
+            if (iso_index.Count == 0) throw new Exception("No iso index was found.");
+
             return iso_index;
         }
 
         public uint ReadBlock(int blockNo, byte[] buffer)
         {
             byte[] in_buffer;
-            int psar_offset;
+            //int psar_offset;
             int this_offset;
             uint out_length;
 
-            // Read in the offset of the PSAR file
-            stream.Seek(HEADER_PSAR_OFFSET, SeekOrigin.Begin);
-            psar_offset = stream.ReadInteger();
+            //// Read in the offset of the PSAR file
+            //stream.Seek(HEADER_PSAR_OFFSET, SeekOrigin.Begin);
+            //psar_offset = stream.ReadInteger();
 
             // Go to the offset specified in the index
             this_offset = psar_offset + PSAR_ISO_OFFSET + IsoIndex[blockNo].Offset;
@@ -217,11 +195,6 @@ namespace Popstation
             ReadBlock(1, out_buffer);
 
             return (uint)((out_buffer[104] + (out_buffer[105] << 8) + (out_buffer[106] << 16) + (out_buffer[107] << 24)) * ISO_BLOCK_SIZE);
-        }
-
-        public void Dispose()
-        {
-            stream?.Dispose();
         }
     }
 }

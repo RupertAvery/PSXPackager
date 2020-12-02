@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using Popstation.Iso;
+using Popstation.Pbp;
 
 namespace Popstation
 {

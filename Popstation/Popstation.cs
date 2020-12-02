@@ -4,7 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
+using Popstation.Cue;
+using Popstation.Iso;
+using Popstation.Pbp;
 
 namespace Popstation
 {
@@ -380,6 +382,7 @@ namespace Popstation
                     Stream _in;
                     //Get size of all isos
                     totSize = 0;
+
                     for (ciso = 0; ciso < convertInfo.DiscInfos.Count; ciso++)
                     {
                         var disc = convertInfo.DiscInfos[ciso];
@@ -396,12 +399,15 @@ namespace Popstation
                     //PostMessage(convertInfo.callback, WM_CONVERT_SIZE, 0, totSize);
 
                     totSize = 0;
+
                     var lastTicks = DateTime.Now.Ticks;
 
                     for (ciso = 0; ciso < convertInfo.DiscInfos.Count; ciso++)
                     {
                         var disc = convertInfo.DiscInfos[ciso];
+                        uint curSize = 0;
 
+                        OnEvent?.Invoke(PopstationEventEnum.WriteStart, ciso + 1);
                         OnEvent?.Invoke(PopstationEventEnum.WriteSize, disc.IsoSize);
 
                         if (!File.Exists(disc.SourceIso))
@@ -439,22 +445,21 @@ namespace Popstation
                             _out.WriteInteger(0, 0xFD);
 
                             //TODO??
+                            //memcpy(data1, 1, codes[ciso], 4);
                             var titleBytes = Encoding.ASCII.GetBytes(disc.GameID);
                             Array.Copy(titleBytes, 0, data1, 1, 4);
 
+                            //memcpy(data1, 6, codes[ciso] + 4, 5);
                             titleBytes = Encoding.ASCII.GetBytes(disc.GameID);
                             Array.Copy(titleBytes, 4, data1, 6, 5);
 
                             if (disc.TocData?.Length > 0)
                             {
                                 OnEvent?.Invoke(PopstationEventEnum.WriteToc, null);
-                                // TODO?
-                                Array.Copy(disc.TocData, 0, data1, 1024, disc.TocData.Length);
                                 // memcpy(data1 + 1024, convertInfo.tocData, convertInfo.tocSize);
+                                Array.Copy(disc.TocData, 0, data1, 1024, disc.TocData.Length);
                             }
 
-                            //memcpy(data1, 1, codes[ciso], 4);
-                            //memcpy(data1, 6, codes[ciso] + 4, 5);
                             _out.Write(data1, 0, data1.Length);
 
                             _out.WriteInteger(0, 1);
@@ -467,7 +472,6 @@ namespace Popstation
 
                             index_offset = (uint)_out.Position;
 
-                            //Console.WriteLine("Writing indexes (iso #%d)...\n", ciso + 1);
                             OnEvent?.Invoke(PopstationEventEnum.WriteIndex, ciso + 1);
 
                             //memset(dummy, 0, sizeof(dummy));
@@ -509,8 +513,9 @@ namespace Popstation
                                 {
                                     _out.Write(buffer, 0, (int)x);
                                     totSize += x;
+                                    curSize += x;
                                     // PostMessage(convertInfo.callback, WM_CONVERT_PROGRESS, 0, totSize);
-                                    OnEvent?.Invoke(PopstationEventEnum.ConvertProgress, totSize);
+                                    OnEvent?.Invoke(PopstationEventEnum.ConvertProgress, curSize);
 
                                     if (cancellationToken.IsCancellationRequested)
                                     {
@@ -533,6 +538,7 @@ namespace Popstation
                                 while ((x = (uint)_in.Read(buffer2, 0, BLOCK_SIZE)) > 0)
                                 {
                                     totSize += x;
+                                    curSize += x;
 
                                     if (x < BLOCK_SIZE)
                                     {
@@ -563,7 +569,7 @@ namespace Popstation
                                         offset += x;
                                     }
 
-                                    OnEvent?.Invoke(PopstationEventEnum.WriteProgress, totSize);
+                                    OnEvent?.Invoke(PopstationEventEnum.WriteProgress, curSize);
 
                                     if (cancellationToken.IsCancellationRequested)
                                     {
@@ -594,6 +600,8 @@ namespace Popstation
 
                             _out.Seek(offset, SeekOrigin.Begin);
                         }
+
+                        OnEvent?.Invoke(PopstationEventEnum.WriteEnd, null);
                     }
 
                     x = (uint)_out.Position;
@@ -802,7 +810,8 @@ namespace Popstation
                 {
                     using (var pbp = new PbpStream(disc.SourceIso, FileMode.Open, FileAccess.Read))
                     {
-                        isosize = pbp.IsoSize;
+                        // TODO: Multi-disc support
+                        isosize = pbp.Discs[0].IsoSize;
                     }
                 }
                 else
@@ -1186,28 +1195,33 @@ namespace Popstation
 
                                 using (var pbpStream = new PbpStream(disc.SourceIso, FileMode.Open, FileAccess.Read))
                                 {
-                                    for (var i = 0; i < pbpStream.IsoIndex.Count; i++)
+                                    foreach (var iso_disc in pbpStream.Discs)
                                     {
-                                        bufferSize = pbpStream.ReadBlock(i, buffer2);
-
-                                        if (convertInfo.Patches?.Count > 0) PatchData(convertInfo, buffer2, (int)bufferSize, (int)totSize);
-
-                                        totSize += bufferSize;
-
-                                        if (totSize > isorealsize)
+                                        
+                                        for (var i = 0; i < iso_disc.IsoIndex.Count; i++)
                                         {
-                                            bufferSize = bufferSize - (totSize - isorealsize);
-                                            totSize = isorealsize;
+                                            bufferSize = iso_disc.ReadBlock(i, buffer2);
+
+                                            if (convertInfo.Patches?.Count > 0) PatchData(convertInfo, buffer2, (int)bufferSize, (int)totSize);
+
+                                            totSize += bufferSize;
+
+                                            if (totSize > isorealsize)
+                                            {
+                                                bufferSize = bufferSize - (totSize - isorealsize);
+                                                totSize = isorealsize;
+                                            }
+
+                                            _out.Write(buffer2, 0, (int)bufferSize);
+
+                                            OnEvent?.Invoke(PopstationEventEnum.ConvertProgress, totSize);
+
+                                            if (cancellationToken.IsCancellationRequested)
+                                            {
+                                                return;
+                                            }
                                         }
 
-                                        _out.Write(buffer2, 0, (int)bufferSize);
-
-                                        OnEvent?.Invoke(PopstationEventEnum.ConvertProgress, totSize);
-
-                                        if (cancellationToken.IsCancellationRequested)
-                                        {
-                                            return;
-                                        }
                                     }
 
                                 }
@@ -1259,8 +1273,9 @@ namespace Popstation
                                 {
                                     using (var pbpStream = new PbpStream(disc.SourceIso, FileMode.Open, FileAccess.Read))
                                     {
-                                        if (block >= pbpStream.IsoIndex.Count) break;
-                                        bufferSize = pbpStream.ReadBlock((int)block, buffer2);
+                                        //TODO: Multi-Disc support
+                                        if (block >= pbpStream.Discs[0].IsoIndex.Count) break;
+                                        bufferSize = pbpStream.Discs[0].ReadBlock((int)block, buffer2);
 
                                         totSize += bufferSize;
                                         if (totSize > isorealsize)

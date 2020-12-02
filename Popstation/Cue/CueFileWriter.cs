@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace Popstation
+namespace Popstation.Cue
 {
     public class CueFileWriter
     {

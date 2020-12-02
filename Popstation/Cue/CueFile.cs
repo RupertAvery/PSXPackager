@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Popstation
+namespace Popstation.Cue
 {
     public class CueFile
     {

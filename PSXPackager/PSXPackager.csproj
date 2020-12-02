@@ -18,4 +18,24 @@
     <ProjectReference Include="..\Popstation\Popstation.csproj" />
   </ItemGroup>
 
+
+  <ItemGroup>
+    <PackageReference Include="ILMerge" Version="3.0.29" />
+  </ItemGroup>
+
+  <Target Name="ILMerge">
+    <!-- the ILMergePath property points to the location of ILMerge.exe console application -->
+    <Exec Command="$(ILMergeConsolePath) bin\Debug\netcoreapp3.1\PSXPackager.exe ^
+/out:PSXPackager2.exe ^
+bin\Debug\netcoreapp3.1\CommandLine.dll ^
+bin\Debug\netcoreapp3.1\DiscUtils.Core.dll ^
+bin\Debug\netcoreapp3.1\DiscUtils.Iso9660.dll ^
+bin\Debug\netcoreapp3.1\DiscUtils.Streams.dll ^
+bin\Debug\netcoreapp3.1\ICSharpCode.SharpZipLib.dll ^
+bin\Debug\netcoreapp3.1\Popstation.dll ^
+bin\Debug\netcoreapp3.1\PSXPackager.dll ^
+bin\Debug\netcoreapp3.1\SevenZipExtractor.dll ^
+bin\Debug\netcoreapp3.1\System.ValueTuple.dll" />
+  </Target>
+
 </Project>

@@ -2,6 +2,8 @@
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Popstation.Cue;
+using Popstation.Pbp;
 
 namespace Popstation
 {
@@ -12,18 +14,18 @@ namespace Popstation
             ExtractIso(extractInfo, cancellationToken);
         }
 
-        private CueFileEntry ExtractTOC(ExtractIsoInfo extractInfo, PbpStream stream)
+        private CueFileEntry ExtractTOC(string isoPath, PbpDiscEntry disc)
         {
             var cueFile = new CueFileEntry()
             {
-                FileName = Path.GetFileName(extractInfo.DestinationIso),
+                FileName = Path.GetFileName(isoPath),
                 Tracks = new List<CueTrack>(),
                 FileType = "BINARY"
             };
 
             var audioLeadin = new IndexPosition { Seconds = 2 };
 
-            foreach (var track in stream.TOC)
+            foreach (var track in disc.TOC)
             {
                 var position = new IndexPosition
                 {
@@ -63,58 +65,90 @@ namespace Popstation
             return cueFile;
         }
 
+        private void ReadIso(PbpDiscEntry disc, Stream destination, string isoPath, bool createCuesheet, CancellationToken cancellationToken)
+        {
+            uint totSize = 0;
+            int i;
+
+            byte[] out_buffer = new byte[16 * PbpStream.ISO_BLOCK_SIZE];
+
+            OnEvent?.Invoke(PopstationEventEnum.GetIsoSize, disc.IsoSize);
+
+            OnEvent?.Invoke(PopstationEventEnum.ExtractStart, null);
+
+            for (i = 0; i < disc.IsoIndex.Count; i++)
+            {
+                uint bufferSize = disc.ReadBlock(i, out_buffer);
+
+                totSize += bufferSize;
+
+                if (totSize > disc.IsoSize)
+                {
+                    bufferSize = bufferSize - (totSize - disc.IsoSize);
+                    totSize = disc.IsoSize;
+                }
+
+                destination.Write(out_buffer, 0, (int)bufferSize);
+
+                OnEvent?.Invoke(PopstationEventEnum.ExtractProgress, totSize);
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+            }
+
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                if (createCuesheet)
+                {
+                    var filename = Path.GetFileNameWithoutExtension(isoPath) + ".cue";
+
+                    var path = Path.GetDirectoryName(isoPath);
+
+                    var cueFile = new CueFile(new[] { ExtractTOC(isoPath, disc) });
+
+                    CueFileWriter.Write(cueFile, Path.Combine(path, filename));
+                }
+            }
+
+        }
+
         private void ExtractIso(ExtractIsoInfo extractInfo, CancellationToken cancellationToken)
         {
-            using (var iso_stream = new FileStream(extractInfo.DestinationIso, FileMode.Create, FileAccess.Write))
+            using (var stream = new PbpStream(extractInfo.SourcePbp, FileMode.Open, FileAccess.Read))
             {
-                using (var stream = new PbpStream(extractInfo.SourcePbp, FileMode.Open, FileAccess.Read))
+                if (stream.Discs.Count > 1)
                 {
-                    OnEvent?.Invoke(PopstationEventEnum.GetIsoSize, stream.IsoSize);
+                    var ext = Path.GetExtension(extractInfo.DestinationIso);
+                    var fileName = Path.GetFileNameWithoutExtension(extractInfo.DestinationIso);
+                    var path = Path.GetDirectoryName(extractInfo.DestinationIso);
+                    var i = 1;
 
-                    OnEvent?.Invoke(PopstationEventEnum.ExtractStart, null);
-
-                    uint totSize = 0;
-                    int i;
-
-                    byte[] out_buffer = new byte[16 * PbpStream.ISO_BLOCK_SIZE];
-
-                    for (i = 0; i < stream.IsoIndex.Count; i++)
+                    foreach (var disc in stream.Discs)
                     {
-                        uint bufferSize = stream.ReadBlock(i, out_buffer);
-
-                        totSize += bufferSize;
-
-                        if (totSize > stream.IsoSize)
+                        var isoPath = Path.Combine(path, $"{fileName} - [Disc {i}]{ext}");
+                        using (var iso_stream = new FileStream(isoPath, FileMode.Create, FileAccess.Write))
                         {
-                            bufferSize = bufferSize - (totSize - stream.IsoSize);
-                            totSize = stream.IsoSize;
+                            ReadIso(disc, iso_stream, isoPath, extractInfo.CreateCuesheet, cancellationToken);
                         }
-
-                        iso_stream.Write(out_buffer, 0, (int)bufferSize);
-
-                        OnEvent?.Invoke(PopstationEventEnum.ExtractProgress, totSize);
+                        i++;
 
                         if (cancellationToken.IsCancellationRequested)
                         {
                             break;
                         }
                     }
-
-                    if (extractInfo.CreateCuesheet)
+                }
+                else
+                {
+                    using (var iso_stream = new FileStream(extractInfo.DestinationIso, FileMode.Create, FileAccess.Write))
                     {
-                        var filename = Path.GetFileNameWithoutExtension(extractInfo.DestinationIso) + ".cue";
-
-                        var path = Path.GetDirectoryName(extractInfo.DestinationIso);
-
-                        var cueFile = new CueFile(new[] { ExtractTOC(extractInfo, stream) });
-
-                        CueFileWriter.Write(cueFile, Path.Combine(path, filename));
+                        ReadIso(stream.Discs[0], iso_stream, extractInfo.DestinationIso, extractInfo.CreateCuesheet, cancellationToken);
                     }
-
                 }
 
                 OnEvent?.Invoke(PopstationEventEnum.ExtractComplete, null);
-
             }
         }
     }

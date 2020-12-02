@@ -30,5 +30,6 @@
         ConvertStart,
         ExtractStart,
         ExtractComplete,
+        WriteEnd
     }
 }

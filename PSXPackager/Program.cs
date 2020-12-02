@@ -9,6 +9,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Popstation.Cue;
+using Popstation.M3u;
 
 namespace PSXPackager
 {
@@ -19,6 +21,8 @@ namespace PSXPackager
         Converting,
         Writing
     }
+
+
 
     class Program
     {
@@ -40,7 +44,7 @@ namespace PSXPackager
             Parser.Default.ParseArguments<Options>(args)
                  .WithParsed<Options>(o =>
                  {
-                     Console.WriteLine($"PSXPackager v1.0 by rupertavery\r\n");
+                     Console.WriteLine($"PSXPackager v1.1 by rupertavery\r\n");
 
                      if (o.CompressionLevel < 0 || o.CompressionLevel > 9)
                      {
@@ -518,14 +522,9 @@ namespace PSXPackager
 
                     game = gameDB.GetEntryByScannerID(gameId);
 
-                    if (game != null)
-                    {
-                        Console.WriteLine($"Found {game.GameName}!");
-                    }
-                    else
+                    if(game == null)
                     {
                         Console.WriteLine($"Could not find gameId {gameId}!");
-                        return null;
                     }
                 }
                 else
@@ -543,14 +542,21 @@ namespace PSXPackager
             CancellationToken cancellationToken)
         {
             var game = FindGameInfo(srcIsos[0]);
+
+            if (game != null)
+            {
+                Console.WriteLine($"Found \"{game.SaveDescription}\"");
+            }
+
+
             var appPath = ApplicationInfo.AppPath;
 
             var info = new ConvertIsoInfo()
             {
 
-                DestinationPbp = Path.Combine(outpath, $"{game.GameName}.PBP"),
+                DestinationPbp = Path.Combine(outpath, $"{game.SaveDescription}.PBP"),
                 DiscInfos = new List<DiscInfo>(),
-                MainGameTitle = game.GameName,
+                MainGameTitle = game.SaveDescription,
                 MainGameID = game.SaveFolderName,
                 SaveTitle = game.SaveDescription,
                 SaveID = game.SaveFolderName,
@@ -584,6 +590,11 @@ namespace PSXPackager
         {
             var game = FindGameInfo(srcIso);
             var appPath = ApplicationInfo.AppPath;
+
+            if (game != null)
+            {
+                Console.WriteLine($"Found \"{game.SaveDescription}\"");
+            }
 
             var info = new ConvertIsoInfo()
             {
@@ -653,8 +664,13 @@ namespace PSXPackager
                     break;
                 case PopstationEventEnum.ConvertStart:
                 case PopstationEventEnum.WriteStart:
+                    Console.WriteLine($"Writing Disc {value}");
                     y = Console.CursorTop;
                     Console.CursorVisible = false;
+                    break;
+                case PopstationEventEnum.WriteEnd:
+                    Console.WriteLine();
+                    Console.CursorVisible = true;
                     break;
                 case PopstationEventEnum.ConvertComplete:
                     Console.CursorVisible = true;
@@ -664,7 +680,7 @@ namespace PSXPackager
                     Console.SetCursorPosition(0, y);
                     if (DateTime.Now.Ticks - lastTicks > 100000)
                     {
-                        Console.Write($"Converting: {Math.Round(Convert.ToInt32(value) / (double)total * 100, 0) }%");
+                        Console.Write($"Converting: {Math.Round(Convert.ToInt32(value) / (double)total * 100, 0) }%  ");
                         lastTicks = DateTime.Now.Ticks;
                     }
                     break;
@@ -672,7 +688,7 @@ namespace PSXPackager
                     Console.SetCursorPosition(0, y);
                     if (DateTime.Now.Ticks - lastTicks > 100000)
                     {
-                        Console.Write($"Writing: {Math.Round(Convert.ToInt32(value) / (double)total * 100, 0) }%");
+                        Console.Write($"Writing: {Math.Round(Convert.ToInt32(value) / (double)total * 100, 0) }%  ");
                         lastTicks = DateTime.Now.Ticks;
                     }
                     break;
@@ -688,7 +704,7 @@ namespace PSXPackager
                     Console.SetCursorPosition(0, y);
                     if (DateTime.Now.Ticks - lastTicks > 100000)
                     {
-                        Console.Write($"Converting: {Math.Round(Convert.ToInt32(value) / (double)total * 100, 0) }%");
+                        Console.Write($"Extracting: {Math.Round(Convert.ToInt32(value) / (double)total * 100, 0) }%  ");
                         lastTicks = DateTime.Now.Ticks;
                     }
                     break;

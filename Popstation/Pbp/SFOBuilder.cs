@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Popstation
+namespace Popstation.Pbp
 {
     public class SFOBuilder
     {

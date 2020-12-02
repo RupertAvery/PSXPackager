@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Popstation;
+using Popstation.Cue;
 
 namespace UnitTestProject
 {

@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace Popstation
+namespace Popstation.Cue
 {
     public class CueFileReader
     {

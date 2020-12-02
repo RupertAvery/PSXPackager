@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 
-namespace Popstation
+namespace Popstation.M3u
 {
     public class M3uFileReader
     {

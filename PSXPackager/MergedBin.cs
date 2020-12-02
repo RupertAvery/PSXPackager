@@ -1,5 +1,6 @@
 ﻿using Popstation;
 using System.Collections.Generic;
+using Popstation.Cue;
 
 namespace PSXPackager
 {

@@ -1,4 +1,4 @@
-﻿namespace Popstation
+﻿namespace Popstation.Pbp
 {
     public class SFOValues
     {

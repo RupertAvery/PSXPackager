@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace Popstation
+namespace Popstation.Cue
 {
     [DebuggerDisplay("{Minutes}:{Seconds}:{Frames}")]
     public partial class IndexPosition

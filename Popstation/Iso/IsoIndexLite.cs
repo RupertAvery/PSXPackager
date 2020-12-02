@@ -1,4 +1,4 @@
-﻿namespace Popstation
+﻿namespace Popstation.Iso
 {
     // Struct to store an ISO index
     public class IsoIndexLite

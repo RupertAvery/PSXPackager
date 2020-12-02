@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Popstation
+namespace Popstation.Pbp
 {
     public class SFOData
     {
