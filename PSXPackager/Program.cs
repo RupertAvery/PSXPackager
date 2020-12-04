@@ -87,8 +87,6 @@ namespace PSXPackager
                      }
                      Console.WriteLine();
 
-
-
                      var files = new List<string>();
 
                      if (!string.IsNullOrEmpty(o.InputPath))
@@ -101,19 +99,27 @@ namespace PSXPackager
                          {
                              var filename = Path.GetFileName(o.InputPath);
                              var path = Path.GetDirectoryName(o.InputPath);
-                             if (PathIsDirectory(path) && ContainsWildCards(filename))
+                             if (!string.IsNullOrEmpty(path) && PathIsDirectory(path) && ContainsWildCards(filename))
                              {
                                  files.AddRange(GetFilesFromDirectory(path, filename));
                              }
                              else
                              {
-                                 files.Add(o.InputPath);
+                                 if (ContainsWildCards(filename))
+                                 {
+                                     files.AddRange(GetFilesFromDirectory(".", filename));
+                                 }
+                                 else
+                                 {
+                                     files.Add(o.InputPath);
+                                 }
                              }
                          }
 
                      }
                      else if (!string.IsNullOrEmpty(o.Batch))
                      {
+                         Console.WriteLine($"WARNING: Use of -b is deprecated. Use -i with wildcards instead.");
                          files.AddRange(GetFilesFromDirectory(o.InputPath, o.Filters));
                      }
 
@@ -166,6 +172,12 @@ namespace PSXPackager
                 {
                     foreach (var file in files)
                     {
+                        if (!File.Exists(file))
+                        {
+                            Console.WriteLine($"Could not find file '{file}'");
+                            continue;
+                        }
+
                         Console.WriteLine($"Processing {i} of {files.Count}:  {file}");
                         var result = processing.ProcessFile(file, outputPath, tempPath, discs, compressionLevel, checkIfFileExists, _cancellationTokenSource.Token);
                         if (_cancellationTokenSource.Token.IsCancellationRequested || processing.Cancelled)

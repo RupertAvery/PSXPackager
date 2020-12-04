@@ -17,7 +17,7 @@
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup> 
     <ProjectReference Include="..\DiscUtils.Iso9660\DiscUtils.Iso9660.csproj" />
     <ProjectReference Include="..\Popstation\Popstation.csproj" />
   </ItemGroup>
