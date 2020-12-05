@@ -25,6 +25,8 @@ namespace PSXPackager
 
         static void Main(string[] args)
         {
+            SevenZip.SevenZipBase.SetLibraryPath("x64/7z.dll");
+
             _cancellationTokenSource = new CancellationTokenSource();
 
             Console.CancelKeyPress += CancelEventHandler;
@@ -49,7 +51,7 @@ namespace PSXPackager
 
                      if (!string.IsNullOrEmpty(o.Discs))
                      {
-                         if (!Regex.IsMatch(o.Discs, "\\d(,\\d)+"))
+                         if (!Regex.IsMatch(o.Discs, "\\d(,\\d)*"))
                          {
                              Console.WriteLine($"Invalid discs specification, please enter a comma separated list of values from 1-5");
                              return;

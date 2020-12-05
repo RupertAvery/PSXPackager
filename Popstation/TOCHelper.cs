@@ -11,7 +11,7 @@ namespace Popstation
     }
 
 
-    public static class Helper
+    public static class TOCHelper
     {
         public static string GetDataType(TrackTypeEnum trackType)
         {

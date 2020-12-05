@@ -6,53 +6,42 @@ using System.Text;
 
 namespace Popstation.Pbp
 {
-    public class PbpStream : IDisposable
+    public class PbpStreamReader 
     {
         //The location of the PSAR offset in the PBP header
         const int HEADER_PSAR_OFFSET = 0x24;
-
         // The size of one "block" of the ISO
         public const int ISO_BLOCK_SIZE = 0x930;
 
-        private readonly Stream stream;
-
-        public bool MultiDisc { get; private set; }
-        public int TotalDiscs { get; private set; }
-
         public List<PbpDiscEntry> Discs { get; }
 
-
-        private int psar_offset;
-
-        public PbpStream(string path, FileMode mode, FileAccess access)
+        public PbpStreamReader(Stream stream)
         {
-            stream = new FileStream(path, mode, access);
-
             stream.Seek(HEADER_PSAR_OFFSET, SeekOrigin.Begin);
-            psar_offset = stream.ReadInteger();
+            var psarOffset = stream.ReadInteger();
 
-            if (psar_offset == 0 || stream.Position != HEADER_PSAR_OFFSET + sizeof(int))
+            if (psarOffset == 0 || stream.Position != HEADER_PSAR_OFFSET + sizeof(int))
             {
                 throw new Exception("Invalid PSAR offset or corrupted file");
             }
 
-            stream.Seek(psar_offset, SeekOrigin.Begin);
+            stream.Seek(psarOffset, SeekOrigin.Begin);
             var buffer = new byte[16];
             stream.Read(buffer, 0, 12);
-            var header = ASCIIEncoding.ASCII.GetString(buffer);
+            var header = Encoding.ASCII.GetString(buffer);
 
             if (header.Substring(0, 12) == "PSISOIMG0000")
             {
                 Discs = new List<PbpDiscEntry>()
                 {
-                    new PbpDiscEntry(stream, psar_offset, 1)
+                    new PbpDiscEntry(stream, psarOffset, 1)
                 };
             }
             else
             {
                 stream.Read(buffer, 12, 4);
-                header = ASCIIEncoding.ASCII.GetString(buffer);
-                MultiDisc = true;
+                header = Encoding.ASCII.GetString(buffer);
+
                 //stream.WriteInteger(0, 2);
                 stream.ReadInteger();
                 stream.ReadInteger();
@@ -79,16 +68,10 @@ namespace Popstation.Pbp
 
                 Discs = iso_positions
                     .Where(x => x > 0)
-                    .Select((x, i) => new PbpDiscEntry(stream, psar_offset + (int)x, i + 1)).ToList();
+                    .Select((x, i) => new PbpDiscEntry(stream, psarOffset + (int)x, i + 1)).ToList();
 
             }
 
-        }
-
-
-        public void Dispose()
-        {
-            stream?.Dispose();
         }
     }
 }

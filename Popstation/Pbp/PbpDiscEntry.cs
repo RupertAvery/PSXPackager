@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using Popstation.Iso;
 
 namespace Popstation.Pbp
@@ -11,14 +12,16 @@ namespace Popstation.Pbp
         const int MAX_INDEXES = 0x7E00;
 
         // The location of the ISO indexes in the PSAR
-        const int PSAR_GAMEID_OFFSET = 0x400;
-        const int PSAR_TOC_OFFSET = 0x800;
+        const uint PSAR_GAMEID_OFFSET = 0x400;
+        const uint PSAR_TOC_OFFSET = 0x800;
 
-        const int PSAR_INDEX_OFFSET = 0x4000;
+        const uint PSAR_INDEX_OFFSET = 0x4000;
         // The location of the ISO data in the PSAR
-        const int PSAR_ISO_OFFSET = 0x100000;
+        const uint PSAR_ISO_OFFSET = 0x100000;
         // The size of one "block" of the ISO
         public const int ISO_BLOCK_SIZE = 0x930;
+
+        public Action<uint> ProgressEvent { get; set; }
 
         private readonly Stream stream;
         private readonly int psar_offset;
@@ -52,31 +55,31 @@ namespace Popstation.Pbp
 
             stream.Read(buffer, 0, 0xA);
             if (buffer[2] != 0xA0) throw new Exception("Invalid TOC!");
-            int startTrack = Helper.FromBinaryDecimal(buffer[7]);
+            int startTrack = TOCHelper.FromBinaryDecimal(buffer[7]);
             stream.Read(buffer, 0, 0xA);
             if (buffer[2] != 0xA1) throw new Exception("Invalid TOC!");
-            int endTrack = Helper.FromBinaryDecimal(buffer[7]);
+            int endTrack = TOCHelper.FromBinaryDecimal(buffer[7]);
             stream.Read(buffer, 0, 0xA);
             if (buffer[2] != 0xA2) throw new Exception("Invalid TOC!");
-            int mm = Helper.FromBinaryDecimal(buffer[7]);
-            int ss = Helper.FromBinaryDecimal(buffer[8]);
-            int ff = Helper.FromBinaryDecimal(buffer[9]);
+            int mm = TOCHelper.FromBinaryDecimal(buffer[7]);
+            int ss = TOCHelper.FromBinaryDecimal(buffer[8]);
+            int ff = TOCHelper.FromBinaryDecimal(buffer[9]);
             //var frames = mm * 60 * 75 + ss * 75 + ff;
             //var size = 2352 * frames;
 
             for (var c = startTrack; c <= endTrack; c++)
             {
                 stream.Read(buffer, 0, 0xA);
-                var trackNo = Helper.FromBinaryDecimal(buffer[2]);
+                var trackNo = TOCHelper.FromBinaryDecimal(buffer[2]);
                 if (trackNo != c) throw new Exception("Invalid TOC!");
 
                 var entry = new TOCEntry
                 {
                     TrackType = (TrackTypeEnum)buffer[0],
                     TrackNo = trackNo,
-                    Minutes = Helper.FromBinaryDecimal(buffer[3]),
-                    Seconds = Helper.FromBinaryDecimal(buffer[4]),
-                    Frames = Helper.FromBinaryDecimal(buffer[5])
+                    Minutes = TOCHelper.FromBinaryDecimal(buffer[3]),
+                    Seconds = TOCHelper.FromBinaryDecimal(buffer[4]),
+                    Frames = TOCHelper.FromBinaryDecimal(buffer[5])
                 };
 
                 entries.Add(entry);
@@ -89,9 +92,9 @@ namespace Popstation.Pbp
         private List<IsoIndexLite> ReadIsoIndexes()
         {
             //int psar_offset;
-            int this_offset;
+            uint this_offset;
             int count = 0;
-            int offset;
+            uint offset;
             int length;
             int[] dummy = new int[6];
 
@@ -107,7 +110,7 @@ namespace Popstation.Pbp
             stream.Seek(psar_offset + PSAR_INDEX_OFFSET, SeekOrigin.Begin);
 
             // Store the current location in the PBP
-            this_offset = (int)stream.Position;
+            this_offset = (uint)stream.Position;
 
             // Reset the counter variable
             count = 0;
@@ -115,12 +118,12 @@ namespace Popstation.Pbp
             // Read indexes until the start of the ISO file
             while (this_offset < psar_offset + PSAR_ISO_OFFSET)
             {
-                offset = stream.ReadInteger();
+                offset = (uint)stream.ReadInteger();
                 length = stream.ReadInteger();
                 stream.Read(dummy, 6);
 
                 // Record our current location in the PBP
-                this_offset = (int)stream.Position;
+                this_offset = (uint)stream.Position;
 
                 // Check if this looks like a valid offset
                 if (offset != 0 || length != 0)
@@ -151,7 +154,7 @@ namespace Popstation.Pbp
         {
             byte[] in_buffer;
             //int psar_offset;
-            int this_offset;
+            long this_offset;
             uint out_length;
 
             //// Read in the offset of the PSAR file
@@ -176,12 +179,9 @@ namespace Popstation.Pbp
             {
                 in_buffer = new byte[IsoIndex[blockNo].Length];
                 stream.Read(in_buffer, 0, IsoIndex[blockNo].Length);
-                var totalBytes = in_buffer.Length;
 
-                //out_buffer = Decompress(in_buffer);
                 var bufferSize = Compression.Decompress(in_buffer, buffer);
 
-                //out_length = out_buffer.Length;
                 out_length = (uint)bufferSize;
             }
 
@@ -197,6 +197,37 @@ namespace Popstation.Pbp
             ReadBlock(1, out_buffer);
 
             return (uint)((out_buffer[104] + (out_buffer[105] << 8) + (out_buffer[106] << 16) + (out_buffer[107] << 24)) * ISO_BLOCK_SIZE);
+        }
+
+        public void CopyTo(Stream destination, CancellationToken cancellationToken)
+        {
+            uint totSize = 0;
+            int i;
+
+            byte[] outBuffer = new byte[16 * PbpStreamReader.ISO_BLOCK_SIZE];
+
+            for (i = 0; i < IsoIndex.Count; i++)
+            {
+                uint bufferSize = ReadBlock(i, outBuffer);
+
+                totSize += bufferSize;
+
+                if (totSize > IsoSize)
+                {
+                    bufferSize = bufferSize - (totSize - IsoSize);
+                    totSize = IsoSize;
+                }
+
+                destination.Write(outBuffer, 0, (int)bufferSize);
+
+                ProgressEvent?.Invoke(totSize);
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+            }
+
         }
     }
 }

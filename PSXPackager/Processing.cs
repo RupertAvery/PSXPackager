@@ -8,7 +8,7 @@ using DiscUtils.Iso9660;
 using Popstation;
 using Popstation.Cue;
 using Popstation.M3u;
-using SevenZipExtractor;
+using SevenZip;
 
 namespace PSXPackager
 {
@@ -104,6 +104,20 @@ namespace PSXPackager
                             var files = new List<string>();
                             var tocs = new List<string>();
                             var m3UFile = M3uFileReader.Read(file);
+
+                            if (m3UFile.FileEntries.Count == 0)
+                            {
+                                _notifications?.Notify(PopstationEventEnum.Info, $"Invalid number of entries, found {m3UFile.FileEntries.Count}");
+                                return false;
+                            }
+                            else if (m3UFile.FileEntries.Count > 5)
+                            {
+                                _notifications?.Notify(PopstationEventEnum.Info, $"Invalid number of entries, found {m3UFile.FileEntries.Count}, max is 5");
+                                return false;
+                            }
+
+                            _notifications?.Notify(PopstationEventEnum.Info, $"Found {m3UFile.FileEntries.Count} entries");
+
                             foreach (var fileEntry in m3UFile.FileEntries)
                             {
                                 if (FileExtensionHelper.IsCue(fileEntry))
@@ -112,9 +126,15 @@ namespace PSXPackager
                                     files.Add(outfile);
                                     tocs.Add(srcToc);
                                 }
-                                else
+                                else if (FileExtensionHelper.IsImageFile(fileEntry))
                                 {
                                     files.Add(Path.Combine(filePath, fileEntry));
+                                }
+                                else 
+                                {
+                                    _notifications?.Notify(PopstationEventEnum.Info, $"Unsupported playlist entry '{fileEntry}'");
+                                    _notifications?.Notify(PopstationEventEnum.Info, "Only the following are supported: .cue .img .bin .iso");
+                                    return false;
                                 }
                             }
                             result = ConvertIsos(files.ToArray(), tocs.ToArray(), outPath, compressionLevel, checkIfFileExists, cancellationToken);
@@ -149,7 +169,7 @@ namespace PSXPackager
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                throw;
+                //throw;
             }
             finally
             {
@@ -239,7 +259,7 @@ namespace PSXPackager
                                 var newIndex = new CueIndex
                                 {
                                     Number = idx.Number,
-                                    Position = idx.Position + Helper.PositionFromFrames(currentFrame)
+                                    Position = idx.Position + TOCHelper.PositionFromFrames(currentFrame)
                                 };
                                 indexes.Add(newIndex);
                             }
@@ -275,40 +295,65 @@ namespace PSXPackager
             }
         }
 
-        static List<string> Unpack(string file, string tempPath, CancellationToken cancellationToken)
+        List<string> Unpack(string file, string tempPath, CancellationToken cancellationToken)
         {
-            var files = new List<string>();
+            List<string> files;
 
-            using (ArchiveFile archiveFile = new ArchiveFile(file))
+            using (var archiveFile = new SevenZipExtractor(file))
             {
-                //var unpackTasks = new List<Task>();
-                foreach (Entry entry in archiveFile.Entries)
-                {
-                    if (FileExtensionHelper.IsImageFile(entry.FileName) || FileExtensionHelper.IsCue(entry.FileName))
-                    {
-                        Console.WriteLine($"Extracting {entry.FileName} ({Shorten(entry.Size)})");
-                        var path = Path.Combine(tempPath, entry.FileName);
-                        // extract to file
-                        files.Add(path);
-                        entry.Extract(path, false);
+                var archiveFiles = archiveFile.ArchiveFileData.Select(x => x.FileName).ToList();
 
-                        //unpackTasks.Add(Task.Run(() =>
-                        //{
-                        //    entry.Extract(path, false);
-                        //    files.Add(path);
-                        //}, cancellationToken));
-                    }
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        return files;
-                    }
-                }
+                archiveFile.FileExtractionStarted += (sender, args) => _notifications.Notify(PopstationEventEnum.DecompressStart, args.FileInfo.FileName);
+                archiveFile.Extracting += ArchiveFileOnExtracting;
+                archiveFile.FileExtractionFinished += (sender, args) => _notifications.Notify(PopstationEventEnum.DecompressComplete, null);
+                //archiveFile.BeginExtractFiles(ExtractFileCallback);
+                //var unpackTasks = new List<Task>();
+                archiveFile.ExtractFiles(tempPath, archiveFiles.ToArray());
+
+                files = archiveFiles.Select(x => Path.Combine(tempPath, x)).ToList();
+
+                //foreach (var entry in archiveFile.ArchiveFileData)
+                //{
+                //    if (FileExtensionHelper.IsImageFile(entry.FileName) || FileExtensionHelper.IsCue(entry.FileName))
+                //    {
+                //        //Console.WriteLine($"Extracting {entry.FileName} ({Shorten(entry.Size)})");
+                //        var path = Path.Combine(tempPath, entry.FileName);
+                //        // extract to file
+                //        files.Add(path);
+
+                //        _notifications.Notify(PopstationEventEnum.DecompressStart, entry.FileName);
+                //        _notifications.Notify(PopstationEventEnum.DecompressComplete, null);
+
+                //        using (var stream = new FileStream(path, FileMode.Create, FileAccess.Write))
+                //        {
+                //            _notifications.Notify(PopstationEventEnum.DecompressStart, entry.FileName);
+                //            archiveFile.ExtractFile(entry.FileName, stream);
+                //            _notifications.Notify(PopstationEventEnum.DecompressComplete, null);
+                //        }
+
+                //    }
+                //    if (cancellationToken.IsCancellationRequested)
+                //    {
+                //        return files;
+                //    }
+                //}
 
                 //Task.WaitAll(unpackTasks.ToArray());
+                archiveFile.Extracting -= ArchiveFileOnExtracting;
 
             }
 
             return files;
+        }
+
+        //private void ExtractFileCallback(ExtractFileCallbackArgs extractfilecallbackargs)
+        //{
+        //    extractfilecallbackargs.CancelExtraction
+        //}
+
+        private void ArchiveFileOnExtracting(object sender, ProgressEventArgs e)
+        {
+            _notifications.Notify(PopstationEventEnum.DecompressProgress, e.PercentDone);
         }
 
         private const int RING_BUFFER_SIZE = 14;
@@ -529,9 +574,11 @@ namespace PSXPackager
                 });
             }
 
-            var popstation = new Popstation.Popstation();
-            popstation.ActionIfFileExists = _notifications.ActionIfFileExists;
-            popstation.OnEvent = _notifications.Notify;
+            var popstation = new Popstation.Popstation
+            {
+                ActionIfFileExists = _notifications.ActionIfFileExists,
+                OnEvent = _notifications.Notify
+            };
 
             return popstation.Convert(info, cancellationToken);
         }
@@ -577,9 +624,11 @@ namespace PSXPackager
                 CheckIfFileExists = checkIfFileExists
             };
 
-            var popstation = new Popstation.Popstation();
-            popstation.ActionIfFileExists = _notifications.ActionIfFileExists;
-            popstation.OnEvent = _notifications.Notify;
+            var popstation = new Popstation.Popstation
+            {
+                ActionIfFileExists = _notifications.ActionIfFileExists,
+                OnEvent = _notifications.Notify
+            };
 
             return popstation.Convert(info, cancellationToken);
         }
@@ -603,9 +652,11 @@ namespace PSXPackager
                 CheckIfFileExists = checkIfFileExists
             };
 
-            var popstation = new Popstation.Popstation();
-            popstation.ActionIfFileExists = _notifications.ActionIfFileExists;
-            popstation.OnEvent = _notifications.Notify;
+            var popstation = new Popstation.Popstation
+            {
+                ActionIfFileExists = _notifications.ActionIfFileExists,
+                OnEvent = _notifications.Notify
+            };
 
             popstation.Extract(info, cancellationToken);
         }

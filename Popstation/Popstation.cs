@@ -749,27 +749,27 @@ namespace Popstation
             var trackBuffer = new byte[0xA];
 
             var frames = isosize / 2352;
-            var position = Helper.PositionFromFrames(frames);
+            var position = TOCHelper.PositionFromFrames(frames);
 
             var ctr = 0;
 
-            trackBuffer[0] = (byte)Helper.GetTrackType(tracks.First().DataType);
+            trackBuffer[0] = (byte)TOCHelper.GetTrackType(tracks.First().DataType);
             trackBuffer[1] = 0x00;
             trackBuffer[2] = 0xA0;
             trackBuffer[3] = 0x00;
             trackBuffer[4] = 0x00;
             trackBuffer[5] = 0x00;
             trackBuffer[6] = 0x00;
-            trackBuffer[7] = Helper.ToBinaryDecimal(tracks.First().Number);
-            trackBuffer[8] = Helper.ToBinaryDecimal(0x20);
+            trackBuffer[7] = TOCHelper.ToBinaryDecimal(tracks.First().Number);
+            trackBuffer[8] = TOCHelper.ToBinaryDecimal(0x20);
             trackBuffer[9] = 0x00;
 
             Array.Copy(trackBuffer, 0, tocData, ctr, 0xA);
             ctr += 0xA;
 
-            trackBuffer[0] = (byte)Helper.GetTrackType(tracks.Last().DataType);
+            trackBuffer[0] = (byte)TOCHelper.GetTrackType(tracks.Last().DataType);
             trackBuffer[2] = 0xA1;
-            trackBuffer[7] = Helper.ToBinaryDecimal(tracks.Last().Number);
+            trackBuffer[7] = TOCHelper.ToBinaryDecimal(tracks.Last().Number);
             trackBuffer[8] = 0x00;
 
             Array.Copy(trackBuffer, 0, tocData, ctr, 0xA);
@@ -777,27 +777,27 @@ namespace Popstation
 
             trackBuffer[0] = 0x01;
             trackBuffer[2] = 0xA2;
-            trackBuffer[7] = Helper.ToBinaryDecimal(position.Minutes);
-            trackBuffer[8] = Helper.ToBinaryDecimal(position.Seconds);
-            trackBuffer[9] = Helper.ToBinaryDecimal(position.Frames);
+            trackBuffer[7] = TOCHelper.ToBinaryDecimal(position.Minutes);
+            trackBuffer[8] = TOCHelper.ToBinaryDecimal(position.Seconds);
+            trackBuffer[9] = TOCHelper.ToBinaryDecimal(position.Frames);
 
             Array.Copy(trackBuffer, 0, tocData, ctr, 0xA);
             ctr += 0xA;
 
             foreach (var track in tracks)
             {
-                trackBuffer[0] = (byte)Helper.GetTrackType(track.DataType);
+                trackBuffer[0] = (byte)TOCHelper.GetTrackType(track.DataType);
                 trackBuffer[1] = 0x00;
-                trackBuffer[2] = Helper.ToBinaryDecimal(track.Number);
+                trackBuffer[2] = TOCHelper.ToBinaryDecimal(track.Number);
                 var pos = track.Indexes.First(idx => idx.Number == 1).Position;
-                trackBuffer[3] = Helper.ToBinaryDecimal(pos.Minutes);
-                trackBuffer[4] = Helper.ToBinaryDecimal(pos.Seconds);
-                trackBuffer[5] = Helper.ToBinaryDecimal(pos.Frames);
+                trackBuffer[3] = TOCHelper.ToBinaryDecimal(pos.Minutes);
+                trackBuffer[4] = TOCHelper.ToBinaryDecimal(pos.Seconds);
+                trackBuffer[5] = TOCHelper.ToBinaryDecimal(pos.Frames);
                 trackBuffer[6] = 0x00;
                 pos = pos + (2 * 75); // add 2 seconds for lead in (75 frames / second)
-                trackBuffer[7] = Helper.ToBinaryDecimal(pos.Minutes);
-                trackBuffer[8] = Helper.ToBinaryDecimal(pos.Seconds);
-                trackBuffer[9] = Helper.ToBinaryDecimal(pos.Frames);
+                trackBuffer[7] = TOCHelper.ToBinaryDecimal(pos.Minutes);
+                trackBuffer[8] = TOCHelper.ToBinaryDecimal(pos.Seconds);
+                trackBuffer[9] = TOCHelper.ToBinaryDecimal(pos.Frames);
 
                 Array.Copy(trackBuffer, 0, tocData, ctr, 0xA);
                 ctr += 0xA;
@@ -849,10 +849,11 @@ namespace Popstation
                 //Check if input is pbp
                 if (Path.GetExtension(disc.SourceIso).ToLower() == ".pbp")
                 {
-                    using (var pbp = new PbpStream(disc.SourceIso, FileMode.Open, FileAccess.Read))
+                    using (var stream = new FileStream(disc.SourceIso, FileMode.Open, FileAccess.Read))
                     {
+                        var pbpStream = new PbpStreamReader(stream);
                         // TODO: Multi-disc support
-                        isosize = pbp.Discs[0].IsoSize;
+                        isosize = pbpStream.Discs[0].IsoSize;
                     }
                 }
                 else
@@ -1253,8 +1254,9 @@ namespace Popstation
                                 uint bufferSize;
                                 uint totSize = 0;
 
-                                using (var pbpStream = new PbpStream(disc.SourceIso, FileMode.Open, FileAccess.Read))
+                                using (var stream = new FileStream(disc.SourceIso, FileMode.Open, FileAccess.Read))
                                 {
+                                    var pbpStream = new PbpStreamReader(stream);
                                     foreach (var iso_disc in pbpStream.Discs)
                                     {
 
@@ -1331,8 +1333,9 @@ namespace Popstation
 
                                 if (Path.GetExtension(disc.SourceIso).ToLower() == ".pbp")
                                 {
-                                    using (var pbpStream = new PbpStream(disc.SourceIso, FileMode.Open, FileAccess.Read))
+                                    using (var stream = new FileStream(disc.SourceIso, FileMode.Open, FileAccess.Read))
                                     {
+                                        var pbpStream = new PbpStreamReader(stream);
                                         //TODO: Multi-Disc support
                                         if (block >= pbpStream.Discs[0].IsoIndex.Count) break;
                                         bufferSize = pbpStream.Discs[0].ReadBlock((int)block, buffer2);

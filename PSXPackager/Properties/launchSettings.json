@@ -2,7 +2,7 @@
   "profiles": {
     "PSXPackager": {
       "commandName": "Project",
-      "commandLineArgs": "-i \"C:\\roms\\Legend of Dragoon, The.PBP\""
+      "commandLineArgs": "-i \"C:\\roms\\Riven - The Sequel to Myst.PBP\" -o \"C:\\roms\" -d 5"
     }
   }
 }

@@ -28,6 +28,7 @@ namespace PSXPackager
                     _total = Convert.ToInt64(value);
                     break;
                 case PopstationEventEnum.ConvertSize:
+                case PopstationEventEnum.ExtractSize:
                 case PopstationEventEnum.WriteSize:
                     _total = Convert.ToInt64(value);
                     break;
@@ -47,10 +48,15 @@ namespace PSXPackager
                     _cursorYPos = Console.CursorTop;
                     Console.CursorVisible = false;
                     break;
-
+                case PopstationEventEnum.DecompressStart:
+                    Console.Write($"Decompressing file {value} - ");
+                    _cursorYPos = Console.CursorTop;
+                    Console.CursorVisible = false;
+                    break;
                 case PopstationEventEnum.ConvertComplete:
                 case PopstationEventEnum.ExtractComplete:
                 case PopstationEventEnum.WriteComplete:
+                case PopstationEventEnum.DecompressComplete:
                     _charsToDelete = 0;
                     Console.CursorVisible = true;
                     Console.WriteLine();
@@ -63,6 +69,14 @@ namespace PSXPackager
                     if (DateTime.Now.Ticks - _lastTicks > 100000)
                     {
                         Overwrite($"{Math.Round(Convert.ToInt32(value) / (double)_total * 100, 0) }%");
+                        _lastTicks = DateTime.Now.Ticks;
+                    }
+                    break;
+                case PopstationEventEnum.DecompressProgress:
+                    //Console.SetCursorPosition(0, _cursorYPos);
+                    if (DateTime.Now.Ticks - _lastTicks > 100000)
+                    {
+                        Overwrite($"{value}%");
                         _lastTicks = DateTime.Now.Ticks;
                     }
                     break;
