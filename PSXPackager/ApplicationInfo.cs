@@ -5,8 +5,10 @@
         public static string AppPath { get; private set; }
         static ApplicationInfo()
         {
-            string path = System.Reflection.Assembly.GetExecutingAssembly().CodeBase.Replace("file:\\\\\\", "").Replace("file:///", "");
-            AppPath = System.IO.Path.GetDirectoryName(path);
+            // Not working in WSL/Mono
+            //string path = System.Reflection.Assembly.GetExecutingAssembly().CodeBase.Replace("file:\\\\\\", "").Replace("file:///", "");
+            //AppPath = System.IO.Path.GetDirectoryName(path);
+            AppPath = ".";
         }
 
     }

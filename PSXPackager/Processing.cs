@@ -16,7 +16,7 @@ namespace PSXPackager
     {
         private readonly INotifier _notifier;
         private readonly IEventHandler _eventHandler;
-        private readonly GameDB _gameDb = new GameDB(Path.Combine(ApplicationInfo.AppPath, "Resources", "gameinfo.db"));
+        private readonly GameDB _gameDb = new GameDB(Path.Combine(ApplicationInfo.AppPath, "Resources", "gameInfo.db"));
 
         private List<string> tempFiles = new List<string>();
 
