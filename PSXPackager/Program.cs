@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Popstation;
 
 namespace PSXPackager
 {
@@ -41,7 +42,7 @@ namespace PSXPackager
             Parser.Default.ParseArguments<Options>(args)
                  .WithParsed<Options>(o =>
                  {
-                     Console.WriteLine($"PSXPackager v1.3 by RupertAvery\r\n");
+                     Console.WriteLine($"PSXPackager v1.4 by RupertAvery\r\n");
 
                      if (o.CompressionLevel < 0 || o.CompressionLevel > 9)
                      {
@@ -60,7 +61,6 @@ namespace PSXPackager
 
                      if (!string.IsNullOrEmpty(o.InputPath))
                      {
-                         Console.WriteLine($"Converting single file");
                          Console.WriteLine($"Input : {o.InputPath}");
                      }
                      else if (!string.IsNullOrEmpty(o.Batch))
@@ -125,7 +125,24 @@ namespace PSXPackager
                          files.AddRange(GetFilesFromDirectory(o.InputPath, o.Filters));
                      }
 
-                     ProcessFiles(files, o.OutputPath, tempPath, o.Discs, !o.OverwriteIfExists, o.CompressionLevel);
+                     var discs = string.IsNullOrEmpty(o.Discs)
+                         ? Enumerable.Range(1, 5).ToList()
+                         : o.Discs.Split(new char[] {','}).Select(int.Parse).ToList();
+
+                     var options = new ProcessOptions()
+                     {
+                         Files = files,
+                         OutputPath = o.OutputPath,
+                         TempPath = tempPath,
+                         Discs = discs,
+                         CheckIfFileExists = !o.OverwriteIfExists,
+                         FileNameFormat = o.FileNameFormat,
+                         CompressionLevel = o.CompressionLevel,
+                         Verbosity = o.Verbosity,
+                         Log = o.Log
+                     };
+
+                     ProcessFiles(options);
                  });
         }
 
@@ -160,47 +177,85 @@ namespace PSXPackager
             return (File.GetAttributes(path) & FileAttributes.Directory) == FileAttributes.Directory;
         }
 
-        private static void ProcessFiles(IReadOnlyList<string> files, string outputPath, string tempPath, string discs, bool checkIfFileExists, int compressionLevel)
+        private static void ProcessFiles(ProcessOptions options)
         {
-            var processing = new Processing();
+            var eventHandler = new EventHandler();
+            var notifier = new AggregateNotifier();
 
-            if (files.Count > 1)
+            var consoleNotifer = new ConsoleNotifier(options.Verbosity);
+            notifier.Add(consoleNotifer);
+
+            if (options.Log)
             {
-                Console.WriteLine($"Matched {files.Count} files");
+                var logNotifier = new LogNotifier(DateTime.Now.ToString("yyyyMMdd-hhmmss") + ".log");
+                notifier.Add(logNotifier);
+            }
+
+            var processing = new Processing(notifier, eventHandler);
+
+            notifier.Notify(PopstationEventEnum.ProcessingStart, null);
+
+            if (options.Files.Count == 0)
+            {
+                notifier.Notify(PopstationEventEnum.Error, "No files matched!");
+            }
+            else if (options.Files.Count > 1)
+            {
+                notifier.Notify(PopstationEventEnum.Info, $"Matched {options.Files.Count} files");
 
                 var i = 1;
                 var processed = 0;
+
                 try
                 {
-                    foreach (var file in files)
+                    foreach (var file in options.Files)
                     {
                         if (!File.Exists(file))
                         {
-                            Console.WriteLine($"Could not find file '{file}'");
+                            notifier.Notify(PopstationEventEnum.Error, $"Could not find file '{file}'");
                             continue;
                         }
 
-                        Console.WriteLine($"Processing {i} of {files.Count}:  {file}");
-                        var result = processing.ProcessFile(file, outputPath, tempPath, discs, compressionLevel, checkIfFileExists, _cancellationTokenSource.Token);
-                        if (_cancellationTokenSource.Token.IsCancellationRequested || processing.Cancelled)
+                        notifier.Notify(PopstationEventEnum.Info, $"Processing {i} of {options.Files.Count}");
+                        notifier.Notify(PopstationEventEnum.FileName, $"Processing {file}");
+
+                        var result = processing.ProcessFile(file,
+                            options,
+                            _cancellationTokenSource.Token);
+
+                        if (_cancellationTokenSource.Token.IsCancellationRequested || eventHandler.Cancelled)
                         {
                             break;
                         }
+
                         processed += result ? 1 : 0;
+                        
                         i++;
                     }
 
                 }
                 finally
                 {
-                    Console.WriteLine($"{i - 1} files processed");
+                    notifier.Notify(PopstationEventEnum.Info, $"{i - 1} files processed");
                 }
 
             }
             else
             {
-                processing.ProcessFile(files[0], outputPath, tempPath, discs, compressionLevel, checkIfFileExists, _cancellationTokenSource.Token);
+                var file = options.Files[0];
+
+                if (!File.Exists(file))
+                {
+                    notifier.Notify(PopstationEventEnum.Error, $"Could not find file '{file}'");
+                    return;
+                }
+
+                notifier.Notify(PopstationEventEnum.FileName, $"Processing {file}");
+
+                processing.ProcessFile(file, options, _cancellationTokenSource.Token);
             }
+
+            notifier.Notify(PopstationEventEnum.ProcessingComplete, null);
 
         }
 

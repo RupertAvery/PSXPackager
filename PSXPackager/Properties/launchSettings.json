@@ -2,7 +2,7 @@
   "profiles": {
     "PSXPackager": {
       "commandName": "Project",
-      "commandLineArgs": "-i \"C:\\roms\\Riven - The Sequel to Myst.PBP\" -o \"C:\\roms\" -d 5"
+      "commandLineArgs": "-i \"C:\\Roms\\Parasite Eve.PBP\" -o \"E:\\Roms\\PSX\" -g -v 3"
     }
   }
 }

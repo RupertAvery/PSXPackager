@@ -9,7 +9,7 @@ SET APP_NAME=PSXPackager.exe
 SET ILMERGE_BUILD=Release
 
 :: Set platform, typically x64
-SET ILMERGE_PLATFORM=48
+SET ILMERGE_PLATFORM=net48
 :: set your NuGet ILMerge Version, this is the number from the package manager install, for example:
 :: PM> Install-Package ilmerge -Version 3.0.29
 :: to confirm it is installed for a given project, see the packages.config file
@@ -21,6 +21,7 @@ SET ILMERGE_PATH=%USERPROFILE%\.nuget\packages\ilmerge\%ILMERGE_VERSION%\tools\n
 
 
 XCOPY /Y /S /E Bin\%ILMERGE_BUILD%\%ILMERGE_PLATFORM%\ Bin\ILMerge\
+XCOPY /Y ..\README.MD Bin\ILMerge\
 DEL Bin\ILMerge\*.pdb
 
 echo Merging %APP_NAME% ...
@@ -35,7 +36,7 @@ echo Merging %APP_NAME% ...
   DiscUtils.Streams.dll ^
   ICSharpCode.SharpZipLib.dll ^
   Popstation.dll ^
-  SevenZipExtractor.dll ^
+  SevenZipSharp.dll ^
   System.ValueTuple.dll
 
 echo Cleaning up...

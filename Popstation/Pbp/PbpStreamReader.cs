@@ -9,16 +9,36 @@ namespace Popstation.Pbp
     public class PbpStreamReader 
     {
         //The location of the PSAR offset in the PBP header
-        const int HEADER_PSAR_OFFSET = 0x24;
+        private const int HEADER_SFO_OFFSET = 0x08;
+        private const int HEADER_ICON0_OFFSET = 0x0C;
+        private const int HEADER_ICON1_OFFSET = 0x10;
+        private const int HEADER_PIC0_OFFSET = 0x14;
+        private const int HEADER_PIC1_OFFSET = 0x18;
+        private const int HEADER_SND0_OFFSET = 0x1C;
+        private const int HEADER_PSP_OFFSET = 0x20;
+        private const int HEADER_PSAR_OFFSET = 0x24;
         // The size of one "block" of the ISO
         public const int ISO_BLOCK_SIZE = 0x930;
+
+        public SFOData SFOData { get; }
 
         public List<PbpDiscEntry> Discs { get; }
 
         public PbpStreamReader(Stream stream)
         {
+            var buffer = new byte[16];
+            stream.Read(buffer, 0, 4);
+
+            stream.Seek(HEADER_SFO_OFFSET, SeekOrigin.Begin);
+            var sfoOffset = stream.ReadUInteger();
+
+            stream.Seek(sfoOffset, SeekOrigin.Begin);
+            SFOData = stream.ReadSFO(sfoOffset);
+
             stream.Seek(HEADER_PSAR_OFFSET, SeekOrigin.Begin);
             var psarOffset = stream.ReadInteger();
+
+
 
             if (psarOffset == 0 || stream.Position != HEADER_PSAR_OFFSET + sizeof(int))
             {
@@ -26,7 +46,6 @@ namespace Popstation.Pbp
             }
 
             stream.Seek(psarOffset, SeekOrigin.Begin);
-            var buffer = new byte[16];
             stream.Read(buffer, 0, 12);
             var header = Encoding.ASCII.GetString(buffer);
 
@@ -36,6 +55,7 @@ namespace Popstation.Pbp
                 {
                     new PbpDiscEntry(stream, psarOffset, 1)
                 };
+
             }
             else
             {

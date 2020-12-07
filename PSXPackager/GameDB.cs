@@ -6,16 +6,16 @@ namespace PSXPackager
 {
     public class GameDB
     {
-        private List<GameEntry> gameEntries;
+        private readonly List<GameEntry> _gameEntries;
 
         public GameDB(string path)
         {
-            gameEntries = new List<GameEntry>();
+            _gameEntries = new List<GameEntry>();
 
             foreach (var item in File.ReadAllLines(path))
             {
                 var parts = item.Split(new char[] { ';' });
-                gameEntries.Add(new GameEntry()
+                _gameEntries.Add(new GameEntry()
                 {
                     GameID = parts[0],
                     SaveFolderName = parts[1],
@@ -29,7 +29,7 @@ namespace PSXPackager
 
         public GameEntry GetEntryByScannerID(string scannerID)
         {
-            return gameEntries.FirstOrDefault(x => x.ScannerID == scannerID);
+            return _gameEntries.FirstOrDefault(x => x.ScannerID == scannerID);
         }
 
     }

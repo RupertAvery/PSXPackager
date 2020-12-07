@@ -14,43 +14,37 @@ namespace PSXPackager
 {
     public class Processing
     {
-        private readonly ConsoleNotifications _notifications;
-        private bool _overwriteIfExists;
-        private bool _cancelled;
+        private readonly INotifier _notifier;
+        private readonly IEventHandler _eventHandler;
+        private readonly GameDB _gameDb = new GameDB(Path.Combine(ApplicationInfo.AppPath, "Resources", "gameinfo.db"));
 
-        public bool Cancelled => _cancelled;
+        private List<string> tempFiles = new List<string>();
 
-        public Processing()
+        public Processing(INotifier notifier, IEventHandler eventHandler)
         {
-            _notifications = new ConsoleNotifications
-            {
-                OverwriteAllSelected = () => _overwriteIfExists = true,
-                CancelSelected = () => _cancelled = true
-            };
+            _notifier = notifier;
+            _eventHandler = eventHandler;
         }
 
         public bool ProcessFile(
             string file,
-            string outPath,
-            string tempPath,
-            string discs,
-            int compressionLevel,
-            bool checkIfFileExists,
+            ProcessOptions options,
             CancellationToken cancellationToken)
         {
             bool result = true;
 
-            List<string> tempFiles = null;
 
-            if (_cancelled) return false;
+            if (_eventHandler.Cancelled) return false;
 
-            checkIfFileExists = !_overwriteIfExists && checkIfFileExists;
+            options.CheckIfFileExists = !_eventHandler.OverwriteIfExists && options.CheckIfFileExists;
+
+            tempFiles.Clear();
 
             try
             {
                 if (FileExtensionHelper.IsArchive(file))
                 {
-                    tempFiles = Unpack(file, tempPath, cancellationToken);
+                    Unpack(file, options.TempPath, cancellationToken);
 
                     if (cancellationToken.IsCancellationRequested) return false;
 
@@ -58,16 +52,24 @@ namespace PSXPackager
 
                     if (tempFiles.Count(FileExtensionHelper.IsImageFile) == 0)
                     {
-                        Console.WriteLine("No image files found!");
+                        _notifier?.Notify(PopstationEventEnum.Error, "No image files found!");
                         return false;
                     }
                     else if (tempFiles.Count(FileExtensionHelper.IsImageFile) == 1)
                     {
-                        file = tempFiles.FirstOrDefault(FileExtensionHelper.IsImageFile);
+                        var cue = tempFiles.FirstOrDefault(FileExtensionHelper.IsCue);
+                        if (cue != null)
+                        {
+                            file = cue;
+                        }
+                        else
+                        {
+                            file = tempFiles.FirstOrDefault(FileExtensionHelper.IsImageFile);
+                        }
                     }
                     else if (tempFiles.Count(FileExtensionHelper.IsBin) > 1)
                     {
-                        Console.WriteLine($"Multi-bin image was found!");
+                        _notifier?.Notify(PopstationEventEnum.Info, $"Multi-bin image was found!");
 
                         var cue = tempFiles.FirstOrDefault(FileExtensionHelper.IsCue);
                         if (cue != null)
@@ -76,7 +78,7 @@ namespace PSXPackager
                         }
                         else
                         {
-                            Console.WriteLine($"No cue sheet found! Aborting...");
+                            _notifier?.Notify(PopstationEventEnum.Warning, $"No cue sheet found!");
                             return false;
                         }
                     }
@@ -87,19 +89,17 @@ namespace PSXPackager
 
                     if (FileExtensionHelper.IsPbp(file))
                     {
-                        ExtractPbp(file, outPath, discs, checkIfFileExists, cancellationToken);
+                        ExtractPbp(file, options, cancellationToken);
                     }
                     else
                     {
                         if (FileExtensionHelper.IsCue(file))
                         {
-                            tempFiles = new List<string>();
-                            var (outfile, srcToc) = ProcessCue(file, tempPath, tempFiles);
-                            result = ConvertIso(outfile, srcToc, outPath, compressionLevel, checkIfFileExists, cancellationToken);
+                            var (outfile, srcToc) = ProcessCue(file, options.TempPath);
+                            result = ConvertIso(outfile, srcToc, options, cancellationToken);
                         }
                         else if (FileExtensionHelper.IsM3u(file))
                         {
-                            tempFiles = new List<string>();
                             var filePath = Path.GetDirectoryName(file);
                             var files = new List<string>();
                             var tocs = new List<string>();
@@ -107,22 +107,22 @@ namespace PSXPackager
 
                             if (m3UFile.FileEntries.Count == 0)
                             {
-                                _notifications?.Notify(PopstationEventEnum.Info, $"Invalid number of entries, found {m3UFile.FileEntries.Count}");
+                                _notifier?.Notify(PopstationEventEnum.Error, $"Invalid number of entries, found {m3UFile.FileEntries.Count}");
                                 return false;
                             }
                             else if (m3UFile.FileEntries.Count > 5)
                             {
-                                _notifications?.Notify(PopstationEventEnum.Info, $"Invalid number of entries, found {m3UFile.FileEntries.Count}, max is 5");
+                                _notifier?.Notify(PopstationEventEnum.Error, $"Invalid number of entries, found {m3UFile.FileEntries.Count}, max is 5");
                                 return false;
                             }
 
-                            _notifications?.Notify(PopstationEventEnum.Info, $"Found {m3UFile.FileEntries.Count} entries");
+                            _notifier?.Notify(PopstationEventEnum.Info, $"Found {m3UFile.FileEntries.Count} entries");
 
                             foreach (var fileEntry in m3UFile.FileEntries)
                             {
                                 if (FileExtensionHelper.IsCue(fileEntry))
                                 {
-                                    var (outfile, srcToc) = ProcessCue(Path.Combine(filePath, fileEntry), tempPath, tempFiles);
+                                    var (outfile, srcToc) = ProcessCue(Path.Combine(filePath, fileEntry), options.TempPath);
                                     files.Add(outfile);
                                     tocs.Add(srcToc);
                                 }
@@ -130,18 +130,18 @@ namespace PSXPackager
                                 {
                                     files.Add(Path.Combine(filePath, fileEntry));
                                 }
-                                else 
+                                else
                                 {
-                                    _notifications?.Notify(PopstationEventEnum.Info, $"Unsupported playlist entry '{fileEntry}'");
-                                    _notifications?.Notify(PopstationEventEnum.Info, "Only the following are supported: .cue .img .bin .iso");
+                                    _notifier?.Notify(PopstationEventEnum.Warning, $"Unsupported playlist entry '{fileEntry}'");
+                                    _notifier?.Notify(PopstationEventEnum.Warning, "Only the following are supported: .cue .img .bin .iso");
                                     return false;
                                 }
                             }
-                            result = ConvertIsos(files.ToArray(), tocs.ToArray(), outPath, compressionLevel, checkIfFileExists, cancellationToken);
+                            result = ConvertIsos(files.ToArray(), tocs.ToArray(), options, cancellationToken);
                         }
                         else
                         {
-                            result = ConvertIso(file, "", outPath, compressionLevel, checkIfFileExists, cancellationToken);
+                            result = ConvertIso(file, "", options, cancellationToken);
                         }
 
                     }
@@ -151,35 +151,35 @@ namespace PSXPackager
 
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    Console.WriteLine("Conversion cancelled");
+                    _notifier?.Notify(PopstationEventEnum.Warning, "Conversion cancelled");
                     return false;
                 }
 
             }
             catch (CancellationException ex)
             {
-                Console.WriteLine(ex.Message);
+                _notifier?.Notify(PopstationEventEnum.Error, ex.Message);
                 return false;
             }
             catch (FileNotFoundException ex)
             {
-                Console.WriteLine(ex.Message);
+                _notifier?.Notify(PopstationEventEnum.Error, ex.Message);
                 return false;
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                _notifier?.Notify(PopstationEventEnum.Error, ex.Message);
+                return false;
                 //throw;
             }
             finally
             {
-                Console.CursorVisible = true;
-
                 if (tempFiles != null)
                 {
                     foreach (var tempFile in tempFiles)
                     {
-                        File.Delete(tempFile);
+                        if (File.Exists(tempFile))
+                            File.Delete(tempFile);
                     }
                 }
             }
@@ -187,7 +187,7 @@ namespace PSXPackager
             return result;
         }
 
-        static (string, string) ProcessCue(string file, string tempPath, List<string> tempFiles)
+        private (string, string) ProcessCue(string file, string tempPath)
         {
             var filePath = Path.GetDirectoryName(file);
 
@@ -195,6 +195,7 @@ namespace PSXPackager
             string srcToc = null;
             if (cueFiles.FileEntries.Count() > 1)
             {
+                _notifier?.Notify(PopstationEventEnum.Info, $"Merging .bins...");
                 var mergedBin = MergeBins(file, cueFiles, tempPath);
                 var cueFile = Path.Combine(tempPath,
                     Path.GetFileNameWithoutExtension(mergedBin.Path) + ".cue");
@@ -221,7 +222,7 @@ namespace PSXPackager
 
             var cueFilePath = Path.GetDirectoryName(file);
 
-            Console.WriteLine($"Merging .bins...");
+
             long currentFrame = 0;
 
             var mergedFilename = Path.GetFileNameWithoutExtension(file) + " - MERGED.bin";
@@ -295,7 +296,7 @@ namespace PSXPackager
             }
         }
 
-        List<string> Unpack(string file, string tempPath, CancellationToken cancellationToken)
+        void Unpack(string file, string tempPath, CancellationToken cancellationToken)
         {
             List<string> files;
 
@@ -303,9 +304,9 @@ namespace PSXPackager
             {
                 var archiveFiles = archiveFile.ArchiveFileData.Select(x => x.FileName).ToList();
 
-                archiveFile.FileExtractionStarted += (sender, args) => _notifications.Notify(PopstationEventEnum.DecompressStart, args.FileInfo.FileName);
+                archiveFile.FileExtractionStarted += (sender, args) => _notifier.Notify(PopstationEventEnum.DecompressStart, args.FileInfo.FileName);
                 archiveFile.Extracting += ArchiveFileOnExtracting;
-                archiveFile.FileExtractionFinished += (sender, args) => _notifications.Notify(PopstationEventEnum.DecompressComplete, null);
+                archiveFile.FileExtractionFinished += (sender, args) => _notifier.Notify(PopstationEventEnum.DecompressComplete, null);
                 //archiveFile.BeginExtractFiles(ExtractFileCallback);
                 //var unpackTasks = new List<Task>();
                 archiveFile.ExtractFiles(tempPath, archiveFiles.ToArray());
@@ -321,14 +322,14 @@ namespace PSXPackager
                 //        // extract to file
                 //        files.Add(path);
 
-                //        _notifications.Notify(PopstationEventEnum.DecompressStart, entry.FileName);
-                //        _notifications.Notify(PopstationEventEnum.DecompressComplete, null);
+                //        _notifier.Notify(PopstationEventEnum.DecompressStart, entry.FileName);
+                //        _notifier.Notify(PopstationEventEnum.DecompressComplete, null);
 
                 //        using (var stream = new FileStream(path, FileMode.Create, FileAccess.Write))
                 //        {
-                //            _notifications.Notify(PopstationEventEnum.DecompressStart, entry.FileName);
+                //            _notifier.Notify(PopstationEventEnum.DecompressStart, entry.FileName);
                 //            archiveFile.ExtractFile(entry.FileName, stream);
-                //            _notifications.Notify(PopstationEventEnum.DecompressComplete, null);
+                //            _notifier.Notify(PopstationEventEnum.DecompressComplete, null);
                 //        }
 
                 //    }
@@ -343,7 +344,7 @@ namespace PSXPackager
 
             }
 
-            return files;
+            tempFiles.AddRange(files);
         }
 
         //private void ExtractFileCallback(ExtractFileCallbackArgs extractfilecallbackargs)
@@ -353,121 +354,19 @@ namespace PSXPackager
 
         private void ArchiveFileOnExtracting(object sender, ProgressEventArgs e)
         {
-            _notifications.Notify(PopstationEventEnum.DecompressProgress, e.PercentDone);
+            _notifier.Notify(PopstationEventEnum.DecompressProgress, e.PercentDone);
         }
 
-        private const int RING_BUFFER_SIZE = 14;
-
-        string[] gamecodes =
+        static string FindGameId(string srcIso)
         {
-            "SCUS",
-            "SLUS",
-            "SLES",
-            "SCES",
-            "SCED",
-            "SLPS",
-            "SLPM",
-            "SCPS",
-            "SLED",
-            "SLPS",
-            "SIPS",
-            "ESPM",
-            "PBPX",
-            "LSP" // This must remain last
-        };
-
-
-
-        //static GameEntry FindGameInfo(string srcIso)
-        //{
-        //    GameEntry game = null;
-        //    string gameId;
-
-        //    using (var stream = new FileStream(srcIso, FileMode.Open))
-        //    {
-        //    }
-
-        //    //            char rbuf[RING_BUFFER_SIZE];
-        //    //            int bo = 0; // Buffer offset
-        //    ////            #define RBI(i) rbuf[(bo+i)%RING_BUFFER_SIZE]
-        //    //            // Prime the buffer
-        //    //            if ((fread(rbuf, 1, RING_BUFFER_SIZE, file)) != RING_BUFFER_SIZE)
-        //    //            {
-        //    //                fclose(file);
-        //    //                return NULL;
-        //    //            }
-        //    //            while (1)
-        //    //            {
-        //    //                // Look for end of potential gameid pattern
-        //    //                if (RBI(12) == ';' && RBI(13) == '1')
-        //    //                {
-        //    //                    // If found, copy buffer into a regular array for comparisons
-        //    //                    char buf[RING_BUFFER_SIZE];
-        //    //                    for (int c = 0; c < RING_BUFFER_SIZE; c++)
-        //    //                        buf[c] = RBI(c);
-        //    //                    // Then look for game codes
-        //    //                    char* matching_code;
-        //    //                    if ((matching_code = MatchingGameCode(buf)))
-        //    //                    {
-        //    //                        // If found, copy matching game code to output
-        //    //                        int code_len = strlen(matching_code);
-        //    //                        strncpy(output, matching_code, code_len);
-        //    //                        // Next, extract numeric portion.  Skip non-digits; stop if
-        //    //                        // gameid reaches 9 characters in length.
-        //    //                        int i, j;
-        //    //                        for (i = code_len, j = code_len; i < 9 && j != ';'; j++)
-        //    //                            if (isdigit(buf[j]))
-        //    //                                output[i++] = buf[j];
-        //    //                        // If we found enough digits, return the complete gameid.
-        //    //                        if (i == 9)
-        //    //                        {
-        //    //                            output[i] = '\0';
-        //    //                            fclose(file);
-        //    //                            return output;
-        //    //                        }
-        //    //                    }
-        //    //                }
-        //    //                // Read another character and write it into the ring buffer.
-        //    //                int c = fgetc(file);
-        //    //                if (c == EOF)
-        //    //                    break;
-        //    //                rbuf[bo++] = c;
-        //    //                bo %= RING_BUFFER_SIZE;
-        //    //            }
-
-        //    //            fclose(file);
-        //    //            return NULL;
-
-        //    var gameDB = new GameDB(Path.Combine(ApplicationInfo.AppPath, "Resources", "gameinfo.db"));
-
-        //    game = gameDB.GetEntryByScannerID(gameId);
-
-        //    if (game != null)
-        //    {
-        //        Console.WriteLine($"Found {game.GameName}!");
-        //    }
-        //    else
-        //    {
-        //        Console.WriteLine($"Could not find gameId {gameId}!");
-        //        return null;
-        //    }
-
-        //    return game;
-        //}
-
-        static GameEntry FindGameInfo(string srcIso)
-        {
-            var regex = new Regex("(S[LC]\\w{2})[_-](\\d{3})\\.(\\d{2})");
-            var bootRegex = new Regex("BOOT\\s*=\\s*cdrom:\\\\?(?:.*?\\\\)?(S[LC]\\w{2}[_-]?\\d{3}\\.\\d{2});1");
-
-            GameEntry game = null;
+            var regex = new Regex("(SCUS|SLUS|SLES|SCES|SCED|SLPS|SLPM|SCPS|SLED|SLPS|SIPS|ESPM|PBPX)[_-](\\d{3})\\.(\\d{2})", RegexOptions.IgnoreCase);
+            var bootRegex = new Regex("BOOT\\s*=\\s*cdrom:\\\\?(?:.*?\\\\)?(.*?);1");
 
             using (var stream = new FileStream(srcIso, FileMode.Open))
             {
                 var cdReader = new CDReader(stream, false, 2352);
 
-                string gameId = "";
-
+                // Why doesn't a root file check not work?
                 //foreach (var file in cdReader.GetFiles("\\"))
                 //{
                 //    var filename = file.Substring(1, file.LastIndexOf(";"));
@@ -483,45 +382,67 @@ namespace PSXPackager
                 foreach (var file in cdReader.GetFiles("\\"))
                 {
                     var filename = file.Substring(1, file.LastIndexOf(";") - 1);
-                    if (filename == "SYSTEM.CNF")
+                    if (filename != "SYSTEM.CNF") continue;
+
+                    syscnfFound = true;
+
+                    using (var datastream = cdReader.OpenFile(file, FileMode.Open))
                     {
-                        syscnfFound = true;
-                        using (var datastream = cdReader.OpenFile(file, FileMode.Open))
+                        datastream.Seek(24, SeekOrigin.Begin);
+                        var textReader = new StreamReader(datastream);
+                        var bootLine = textReader.ReadLine();
+                        var bootmatch = bootRegex.Match(bootLine);
+                        if (!bootmatch.Success) continue;
+
+                        var match = regex.Match(bootmatch.Groups[1].Value);
+                        if (match.Success)
                         {
-                            datastream.Seek(24, SeekOrigin.Begin);
-                            var textReader = new StreamReader(datastream);
-                            var bootLine = textReader.ReadLine();
-                            var bootmatch = bootRegex.Match(bootLine);
-                            if (bootmatch.Success)
-                            {
-                                var match = regex.Match(bootmatch.Groups[1].Value);
-                                if (match.Success)
-                                {
-                                    gameId = $"{match.Groups[1].Value}{match.Groups[2].Value}{match.Groups[3].Value}";
-                                    break;
-                                }
-                            }
+                            return $"{match.Groups[1].Value}{match.Groups[2].Value}{match.Groups[3].Value}";
                         }
                     }
                 }
+            }
 
-                if (syscnfFound)
+            return null;
+        }
+
+        private GameEntry GetDummyGame(string gameId, string gameTitle)
+        {
+            return new GameEntry()
+            {
+                GameID = gameId,
+                GameName = gameTitle,
+                SaveDescription = gameTitle,
+                Format = "NTSC",
+                SaveFolderName = gameId.Replace("-", "")
+            };
+        }
+
+        private GameEntry GetGameEntry(string gameId, string path, bool showMessages = true)
+        {
+            GameEntry game;
+            var dummyTitle = Path.GetFileNameWithoutExtension(path);
+
+            if (gameId != null)
+            {
+                game = _gameDb.GetEntryByScannerID(gameId.ToUpper());
+                if (game == null)
                 {
-                    var gameDB = new GameDB(Path.Combine(ApplicationInfo.AppPath, "Resources", "gameinfo.db"));
+                    if (showMessages)
+                        _notifier?.Notify(PopstationEventEnum.Warning, $"Did not find a Game with ID {gameId} Using title {dummyTitle}");
 
-                    game = gameDB.GetEntryByScannerID(gameId);
-
-                    if (game == null)
-                    {
-                        Console.WriteLine($"Could not find gameId {gameId}!");
-                    }
-                }
-                else
-                {
-                    Console.WriteLine($"Could not find SYSTEM.CNF!");
-                    return null;
+                    game = GetDummyGame(gameId, dummyTitle);
                 }
 
+                if (showMessages)
+                    _notifier?.Notify(PopstationEventEnum.Info, $"Found {gameId} \"{game.GameName}\"");
+            }
+            else
+            {
+                if (showMessages)
+                    _notifier?.Notify(PopstationEventEnum.Warning, "Did not find a Game ID! Using SLUS-00000");
+
+                game = GetDummyGame("SLUS-00000", dummyTitle);
             }
 
             return game;
@@ -530,89 +451,89 @@ namespace PSXPackager
         private bool ConvertIsos(
             string[] srcIsos,
             string[] srcTocs,
-            string outpath,
-            int compressionLevel,
-            bool checkIfFileExists,
+            ProcessOptions processOptions,
             CancellationToken cancellationToken)
         {
-            var game = FindGameInfo(srcIsos[0]);
-
-            if (game != null)
-            {
-                Console.WriteLine($"Found \"{game.SaveDescription}\"");
-            }
-
-
             var appPath = ApplicationInfo.AppPath;
+            var gameId = FindGameId(srcIsos[0]);
+            var game = GetGameEntry(gameId, srcIsos[0], false);
 
-            var info = new ConvertIsoInfo()
+            var options = new ConvertOptions()
             {
 
-                DestinationPbp = Path.Combine(outpath, $"{game.SaveDescription}.PBP"),
+                DestinationPbp = Path.Combine(processOptions.OutputPath, $"{game.SaveDescription}.PBP"),
                 DiscInfos = new List<DiscInfo>(),
                 MainGameTitle = game.SaveDescription,
                 MainGameID = game.SaveFolderName,
+                MainGameRegion = game.Format,
                 SaveTitle = game.SaveDescription,
                 SaveID = game.SaveFolderName,
                 Pic0 = Path.Combine(appPath, "Resources", "PIC0.PNG"),
                 Pic1 = Path.Combine(appPath, "Resources", "PIC1.PNG"),
                 Icon0 = Path.Combine(appPath, "Resources", "ICON0.PNG"),
                 BasePbp = Path.Combine(appPath, "Resources", "BASE.PBP"),
-                CompressionLevel = compressionLevel,
-                CheckIfFileExists = checkIfFileExists
-
+                CompressionLevel = processOptions.CompressionLevel,
+                CheckIfFileExists = processOptions.CheckIfFileExists,
+                FileNameFormat = processOptions.FileNameFormat,
             };
 
-            for (int i = 0; i < srcIsos.Length; i++)
+            for (var i = 0; i < srcIsos.Length; i++)
             {
-                info.DiscInfos.Add(new DiscInfo()
+                gameId = FindGameId(srcIsos[i]);
+                game = GetGameEntry(gameId, srcIsos[i]);
+
+                options.DiscInfos.Add(new DiscInfo()
                 {
                     GameID = game.ScannerID,
-                    GameTitle = game.GameName,
+                    GameTitle = game.SaveDescription,
+                    GameName = game.GameName,
+                    Region = game.Format,
+                    MainGameID = game.SaveFolderName,
                     SourceIso = srcIsos[i],
                     SourceToc = i < srcTocs.Length ? srcTocs[i] : "",
                 });
             }
 
+            _notifier?.Notify(PopstationEventEnum.Info, $"Using Title '{game.SaveDescription}'");
+
             var popstation = new Popstation.Popstation
             {
-                ActionIfFileExists = _notifications.ActionIfFileExists,
-                OnEvent = _notifications.Notify
+                ActionIfFileExists = _eventHandler.ActionIfFileExists,
+                Notify = _notifier.Notify,
+                TempFiles = tempFiles
             };
 
-            return popstation.Convert(info, cancellationToken);
+            return popstation.Convert(options, cancellationToken);
         }
 
         private bool ConvertIso(
             string srcIso,
             string srcToc,
-            string outpath,
-            int compressionLevel,
-            bool checkIfFileExists,
+            ProcessOptions processOptions,
             CancellationToken cancellationToken)
         {
-            var game = FindGameInfo(srcIso);
             var appPath = ApplicationInfo.AppPath;
+            var gameId = FindGameId(srcIso);
+            var game = GetGameEntry(gameId, srcIso, false);
 
-            if (game != null)
-            {
-                Console.WriteLine($"Found \"{game.SaveDescription}\"");
-            }
-
-            var info = new ConvertIsoInfo()
+            var options = new ConvertOptions()
             {
                 DiscInfos = new List<DiscInfo>()
                 {
                     new DiscInfo()
                     {
                         GameID = game.ScannerID,
-                        GameTitle = game.GameName,
+                        GameTitle = game.SaveDescription,
+                        GameName = game.GameName,
+                        Region = game.Format,
+                        MainGameID = game.SaveFolderName,
                         SourceIso = srcIso,
                         SourceToc = srcToc,
                     }
                 },
-                DestinationPbp = Path.Combine(outpath, $"{game.GameName}.PBP"),
+                DestinationPbp = Path.Combine(processOptions.OutputPath, $"{game.GameName}.PBP"),
                 MainGameTitle = game.GameName,
+                MainGameRegion = game.Format,
                 MainGameID = game.SaveFolderName,
                 SaveTitle = game.SaveDescription,
                 SaveID = game.SaveFolderName,
@@ -620,42 +541,59 @@ namespace PSXPackager
                 Pic1 = Path.Combine(appPath, "Resources", "PIC1.PNG"),
                 Icon0 = Path.Combine(appPath, "Resources", "ICON0.PNG"),
                 BasePbp = Path.Combine(appPath, "Resources", "BASE.PBP"),
-                CompressionLevel = compressionLevel,
-                CheckIfFileExists = checkIfFileExists
+                CompressionLevel = processOptions.CompressionLevel,
+                CheckIfFileExists = processOptions.CheckIfFileExists,
+                FileNameFormat = processOptions.FileNameFormat,
             };
+
+            _notifier.Notify(PopstationEventEnum.Info, $"Using Title '{game.GameName}'");
 
             var popstation = new Popstation.Popstation
             {
-                ActionIfFileExists = _notifications.ActionIfFileExists,
-                OnEvent = _notifications.Notify
+                ActionIfFileExists = _eventHandler.ActionIfFileExists,
+                Notify = _notifier.Notify,
+                TempFiles = tempFiles
             };
 
-            return popstation.Convert(info, cancellationToken);
+            return popstation.Convert(options, cancellationToken);
         }
 
-        private void ExtractPbp(
-            string srcPbp,
-            string outpath,
-            string discs,
-            bool checkIfFileExists,
+        private void ExtractPbp(string srcPbp,
+            ProcessOptions processOptions,
             CancellationToken cancellationToken)
         {
-            var filename = Path.GetFileNameWithoutExtension(srcPbp) + ".bin";
-
-            var info = new ExtractIsoInfo()
+            var info = new ExtractOptions()
             {
                 SourcePbp = srcPbp,
-                DestinationIso = Path.Combine(outpath, filename),
+                OutputPath = processOptions.OutputPath,
                 DiscName = "- Disc {0}",
-                Discs = string.IsNullOrEmpty(discs) ? Enumerable.Range(1, 5).ToList() : discs.Split(new char[] { ',' }).Select(int.Parse).ToList(),
+                Discs = processOptions.Discs,
                 CreateCuesheet = true,
-                CheckIfFileExists = checkIfFileExists
+                CheckIfFileExists = processOptions.CheckIfFileExists,
+                FileNameFormat = processOptions.FileNameFormat,
+                GetGameInfo = (gameId) =>
+                {
+                    var game = GetGameEntry(gameId, srcPbp, false);
+                    if (game == null)
+                    {
+                        return null;
+                    }
+                    return new GameInfo()
+                    {
+                        GameID = game.ScannerID,
+                        GameName = game.GameName,
+                        Title = game.SaveDescription,
+                        MainGameID = game.SaveFolderName,
+                        Region = game.Format
+                    };
+                }
             };
 
             var popstation = new Popstation.Popstation
             {
-                ActionIfFileExists = _notifications.ActionIfFileExists,
-                OnEvent = _notifications.Notify
+                ActionIfFileExists = _eventHandler.ActionIfFileExists,
+                Notify = _notifier.Notify,
+                TempFiles = tempFiles
             };
 
             popstation.Extract(info, cancellationToken);

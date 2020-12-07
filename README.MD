@@ -20,11 +20,45 @@ Feel free to take the Popstation library and use it as you like.
 
 # Usage
 
-There are updates to batch conversion, please see the Batch section.
+The basic usage of PSXPackager accepts the file or path to convert.
+
+```
+psxpackager -i <path_to_file>
+```
+
+The `-i` or `input` parameter is required. It specifies a path to a file, or a directory and a wildcard expression. If a wildcard expression is used, it will process all matching files in the directory.
+
+The `-o` or `output` parameter is optional. It specifies the folder where the the converted or extracted files will be placed. If not specified, the folder specified on the input is ued.
+
+
+```
+  -i, --input        The input file or path to convert. The filename may contain wildcards.
+
+  -o, --output       The output path where the converted file(s) will be written.
+
+  -l, --level        (Default: 5) Set compression level 0-9, default 5.
+
+  -d, --discs        A comma-separated list of disc numbers to extract from a PBP.
+
+  -v, --verbosity    (Default: 3) Set level of output messages. 1 = Files, Errors and Warnings only, 2 = No Info-level
+                     messages, 3 = All messages (default), 4 = Include timestamps
+
+  -x                 If this option is present, will overwrite a file if it exists, otherwise will ask confirmation.
+
+  -f, --format       (Default: %FILENAME%) Specify the filename format e.g. [%GAMEID%] [%MAINGAMEID%] %TITLE% (%REGION%)
+                     or %FILENAME%
+
+  -g, --log          If this option is present, will log messages to a file.
+
+  --help             Display this help screen.
+
+  --version          Display version information.
+```
 
 ## Convert a .7z, .BIN, .CUE, .ISO or .IMG to a .PBP
 
 PSXPackager supports several input formats. Simply pass the path to the archive, CUE sheet, or image with the `-i` parameter.
+
 ```
 psxpackager -i <path_to_file> [-o <output_path>] [-l <compression_level>] [-y]
 ```
@@ -33,7 +67,7 @@ psxpackager -i <path_to_file> [-o <output_path>] [-l <compression_level>] [-y]
 
 The output path is optional. If not specified the path of the input file will be used.
 
-PSXPackager will prompt if a file exists before overwriting it. Use the `-y` argument to overwrite all files in the output directory.
+PSXPackager will prompt if a file exists before overwriting it. Use the `-x` argument to overwrite all files in the output directory.
 
 Set the compression level to a value from 0 to 9, with 0 being no compression and 9 being the highest compression level. If not specified, it will default to 5.
 
@@ -101,23 +135,38 @@ This will convert all files matching `Legend of Dragoon - Disc ?.bin` in the fol
 psxpackager -i "C:\Roms\Legend of Dragoon - Disc ?.bin"
 ```
 
-## Batch Conversion (Old method)
+## Filename Formatting
 
-**NOTE:** This option will eventually be removed.
-
-To convert several files in a folder to .PBP
+Use the `-f` or `format` option to specify the format of the output filename. By default, it will use the input filename as the output filename.
 
 ```
-psxpackager -b <path_containing_files> -e <extension> [-o <output_path>]
+%FILENAME%   - The input filename
+ 
+%GAMEID%     - The GAMEID of the disc. For multi-disc games, each disc will have a differnt GAMEID. 
+
+%MAINGAMEID% - The GAMEID of the first disc in a multi-disc game.
+
+%TITLE%      - The Disc Title of the game. This will contain the Disc number or other identifier in a mult-disc game.
+
+%MAINTITLE%  - The Main title of the game. This will be the actual title of the game.
+
+%REGION%     - The game region, i.e. NTSC or PAL.
 ```
 
-The `-e` or `--extension` parameter should be a comma-separated list of extensions you wish to search in the containing folder. 
-
-The following command will convert all .7z and .iso files to .pbp
+For example, processing `Final Fantasy VIII - Disc 1.iso` with the following format:
 
 ```
-psxpackager -b C:\ROMS\PSX -e .7z,.iso -o C:\ROMS\PSX\Converted
+[%GAMEID%] %TITLE (%REGION)
 ```
+
+will generate the filename
+
+```
+[SLUS00892] Final Fantasy VIII - Disc 1 (NTSC).pbp
+```
+
+Note that when extracting from a multi-disc PBP PSXPackager will append the disc number to the file format.
+
 
 # Multi-track .CUE files (Audio tracks)
 

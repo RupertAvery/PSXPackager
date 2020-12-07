@@ -36,7 +36,7 @@ echo Merging %APP_NAME% ...
   DiscUtils.Streams.dll ^
   ICSharpCode.SharpZipLib.dll ^
   Popstation.dll ^
-  SevenZipExtractor.dll ^
+  SevenZipSharp.dll ^
   System.ValueTuple.dll
 
 echo Cleaning up...

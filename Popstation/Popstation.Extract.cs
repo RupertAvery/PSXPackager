@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Threading;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,23 +10,55 @@ namespace Popstation
 {
     public partial class Popstation
     {
-        public void Extract(ExtractIsoInfo extractInfo, CancellationToken cancellationToken)
+        private string GetFilename(string filenameFormat, string sourceFilename, string gameid, string maingameId, string title, string maintitle, string region)
         {
-            using (var stream = new FileStream(extractInfo.SourcePbp, FileMode.Open, FileAccess.Read))
+            var output = filenameFormat.ToUpper().Replace("%FILENAME%", Path.GetFileNameWithoutExtension(sourceFilename));
+            output = output.Replace("%GAMEID%", gameid);
+            output = output.Replace("%MAINGAMEID%", maingameId);
+            output = output.Replace("%TITLE%", title);
+            output = output.Replace("%MAINTITLE%", maintitle);
+            output = output.Replace("%REGION%", region);
+            return output;
+        }
+
+        public void Extract(ExtractOptions options, CancellationToken cancellationToken)
+        {
+            using (var stream = new FileStream(options.SourcePbp, FileMode.Open, FileAccess.Read))
             {
                 var pbpStreamReader = new PbpStreamReader(stream);
+
+
+                var ext = ".bin";
+
                 if (pbpStreamReader.Discs.Count > 1)
                 {
-                    var ext = Path.GetExtension(extractInfo.DestinationIso);
-                    var fileName = Path.GetFileNameWithoutExtension(extractInfo.DestinationIso);
-                    var path = Path.GetDirectoryName(extractInfo.DestinationIso);
-
-                    foreach (var disc in pbpStreamReader.Discs.Where(d => extractInfo.Discs.Contains(d.Index)))
+                    foreach (var disc in pbpStreamReader.Discs.Where(d => options.Discs.Contains(d.Index)))
                     {
-                        var discName = extractInfo.DiscName.Replace("{0}", disc.Index.ToString());
-                        var isoPath = Path.Combine(path, $"{fileName} {discName}{ext}");
+                        var gameInfo = options.GetGameInfo(disc.DiscID);
 
-                        ExtractISO(disc, isoPath, extractInfo, cancellationToken);
+                        if (gameInfo == null)
+                        {
+                            //var mainGameId = (string)pbpStreamReader.SFOData.Entries.FirstOrDefault(x => x.Key == SFOKeys.DISC_ID)?.Value;
+                            options.FileNameFormat = "%FILENAME%";
+                            gameInfo = new GameInfo();
+                        }
+
+                        var title = GetFilename(options.FileNameFormat,
+                            options.SourcePbp,
+                            disc.DiscID,
+                            gameInfo.MainGameID,
+                            gameInfo.GameName,
+                            gameInfo.Title,
+                            gameInfo.Region
+                        );
+
+                        Notify?.Invoke(PopstationEventEnum.Info, $"Using Title '{title}'");
+
+                        var discName = options.DiscName.Replace("{0}", disc.Index.ToString());
+
+                        var isoPath = Path.Combine(options.OutputPath, $"{title} {discName}{ext}");
+
+                        ExtractISO(disc, isoPath, options, cancellationToken);
             
                         if (cancellationToken.IsCancellationRequested)
                         {
@@ -36,67 +69,106 @@ namespace Popstation
                 }
                 else
                 {
-                    ExtractISO(pbpStreamReader.Discs[0], extractInfo.DestinationIso, extractInfo, cancellationToken);
+                    var disc = pbpStreamReader.Discs[0];
+
+                    var gameInfo = options.GetGameInfo(disc.DiscID);
+
+                    if (gameInfo == null)
+                    {
+                        //var mainGameId = (string)pbpStreamReader.SFOData.Entries.FirstOrDefault(x => x.Key == SFOKeys.DISC_ID)?.Value;
+                        options.FileNameFormat = "%FILENAME%";
+                        gameInfo = new GameInfo();
+                    }
+
+                    var title = GetFilename(options.FileNameFormat,
+                        options.SourcePbp,
+                        disc.DiscID,
+                        gameInfo.MainGameID,
+                        gameInfo.GameName,
+                        gameInfo.Title,
+                        gameInfo.Region
+                    );
+
+                    var isoPath = Path.Combine(options.OutputPath, $"{title}{ext}");
+
+                    ExtractISO(disc, isoPath, options, cancellationToken);
                 }
 
-                OnEvent?.Invoke(PopstationEventEnum.ExtractComplete, null);
+                Notify?.Invoke(PopstationEventEnum.ExtractComplete, null);
             }
         }
 
 
-        private void ExtractISO(PbpDiscEntry disc, string path, ExtractIsoInfo extractInfo, CancellationToken cancellationToken)
+        private void ExtractISO(PbpDiscEntry disc, string path, ExtractOptions extractInfo, CancellationToken cancellationToken)
         {
-            disc.ProgressEvent += ProgressEvent;
-
-            CheckIfFileExists(extractInfo, path);
-
-            OnEvent?.Invoke(PopstationEventEnum.Info, $"Writing {path}...");
-            OnEvent?.Invoke(PopstationEventEnum.GetIsoSize, disc.IsoSize);
-            OnEvent?.Invoke(PopstationEventEnum.ExtractStart, disc.Index);
-
-            using (var isoStream = new FileStream(path, FileMode.Create, FileAccess.Write))
+            try
             {
-                disc.CopyTo(isoStream, cancellationToken);
-            }
+                disc.ProgressEvent += ProgressEvent;
 
-            OnEvent?.Invoke(PopstationEventEnum.ExtractComplete, null);
-
-            disc.ProgressEvent -= ProgressEvent;
-
-            if (cancellationToken.IsCancellationRequested) return;
-            if (!extractInfo.CreateCuesheet) return;
-
-            var cueFilename = Path.GetFileNameWithoutExtension(path) + ".cue";
-            var dirPath = Path.GetDirectoryName(path);
-
-            var cueFile = TOCtoCUE(disc.TOC, Path.GetFileName(path));
-
-            CueFileWriter.Write(cueFile, Path.Combine(dirPath, cueFilename));
-        }
-
-        private void CheckIfFileExists(ExtractIsoInfo extractInfo, string path)
-        {
-            if (extractInfo.CheckIfFileExists && File.Exists(path))
-            {
-                var response = ActionIfFileExists(path);
-                if (response == ActionIfFileExistsEnum.OverwriteAll)
-                {
-                    extractInfo.CheckIfFileExists = false;
-                }
-                else if (response == ActionIfFileExistsEnum.Skip)
+                if (!ContinueIfFileExists(extractInfo, path))
                 {
                     return;
                 }
-                else if (response == ActionIfFileExistsEnum.Abort)
+                
+                Notify?.Invoke(PopstationEventEnum.Info, $"Writing {path}...");
+                Notify?.Invoke(PopstationEventEnum.GetIsoSize, disc.IsoSize);
+                Notify?.Invoke(PopstationEventEnum.ExtractStart, disc.Index);
+
+                var cueFilename = Path.GetFileNameWithoutExtension(path) + ".cue";
+                var dirPath = Path.GetDirectoryName(path);
+                var cuePath = Path.Combine(dirPath, cueFilename);
+
+                TempFiles.Add(path);
+                TempFiles.Add(cuePath);
+
+                using (var isoStream = new FileStream(path, FileMode.Create, FileAccess.Write))
                 {
-                    throw new CancellationException("Operation was aborted");
+                    disc.CopyTo(isoStream, cancellationToken);
                 }
+
+                if (cancellationToken.IsCancellationRequested) return;
+                
+                TempFiles.Remove(path);
+
+                if (!extractInfo.CreateCuesheet) return;
+
+
+                var cueFile = TOCtoCUE(disc.TOC, Path.GetFileName(path));
+
+                CueFileWriter.Write(cueFile, cuePath);
+
+                TempFiles.Remove(cuePath);
+
+                Notify?.Invoke(PopstationEventEnum.ExtractComplete, null);
             }
+            finally
+            {
+                disc.ProgressEvent -= ProgressEvent;
+            }
+        }
+
+        private bool ContinueIfFileExists(ICheckIfFileExists options, string path)
+        {
+            if (!options.CheckIfFileExists || !File.Exists(path)) return true;
+            var response = ActionIfFileExists(path);
+
+            switch (response)
+            {
+                case ActionIfFileExistsEnum.OverwriteAll:
+                    options.CheckIfFileExists = false;
+                    break;
+                case ActionIfFileExistsEnum.Skip:
+                    return false;
+                case ActionIfFileExistsEnum.Abort:
+                    throw new CancellationException("Operation was aborted");
+            }
+
+            return true;
         }
 
         private void ProgressEvent(uint bytes)
         {
-            OnEvent.Invoke(PopstationEventEnum.ConvertProgress, bytes);
+            Notify.Invoke(PopstationEventEnum.ConvertProgress, bytes);
         }
 
         private static CueFile TOCtoCUE(List<TOCEntry> tocEntries, string dataPath)

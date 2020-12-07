@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Popstation.Iso;
 using Popstation.Pbp;
@@ -27,10 +28,30 @@ namespace Popstation
             }
         }
 
+        public static ushort ReadUShort(this Stream stream)
+        {
+            var temp_buffer = new byte[sizeof(ushort)];
+            stream.Read(temp_buffer, 0, sizeof(ushort));
+            return BitConverter.ToUInt16(temp_buffer, 0);
+        }
+        public static short ReadShort(this Stream stream)
+        {
+            var temp_buffer = new byte[sizeof(short)];
+            stream.Read(temp_buffer, 0, sizeof(short));
+            return BitConverter.ToInt16(temp_buffer, 0);
+        }
+
+        public static uint ReadUInteger(this Stream stream)
+        {
+            var temp_buffer = new byte[sizeof(uint)];
+            stream.Read(temp_buffer, 0, sizeof(uint));
+            return BitConverter.ToUInt32(temp_buffer, 0);
+        }
+
         public static int ReadInteger(this Stream stream)
         {
             var temp_buffer = new byte[sizeof(int)];
-            stream.Read(temp_buffer, 0, 4);
+            stream.Read(temp_buffer, 0, sizeof(uint));
             return BitConverter.ToInt32(temp_buffer, 0);
         }
 
@@ -205,5 +226,61 @@ namespace Popstation
 
         }
 
+
+        public static string ReadString(this Stream stream, int length)
+        {
+            var temp_buffer = new byte[length];
+            stream.Read(temp_buffer, 0, length);
+            return System.Text.Encoding.ASCII.GetString(temp_buffer, 0, length);
+        }
+
+        public static SFOData ReadSFO(this Stream stream, uint sfoOffset)
+        {
+            var sfo = new SFOData();
+            sfo.Magic = stream.ReadUInteger();
+            sfo.Version = stream.ReadUInteger();
+            sfo.KeyTableOffset = stream.ReadUInteger();
+            sfo.DataTableOffset = stream.ReadUInteger();
+            var entries = stream.ReadUInteger();
+
+            sfo.Entries = new List<SFODir>();
+            for (var i = 0; i < entries; i++)
+            {
+                var entry = new SFODir
+                {
+                    KeyOffset = stream.ReadUShort(),
+                    Format = stream.ReadUShort(),
+                    Length = stream.ReadUInteger(),
+                    MaxLength = stream.ReadUInteger(),
+                    DataOffset = stream.ReadUInteger()
+                };
+                sfo.Entries.Add(entry);
+            }
+
+            for (var i = 0; i < sfo.Entries.Count; i++)
+            {
+                var entry = sfo.Entries[i];
+                stream.Seek(sfoOffset + sfo.KeyTableOffset + entry.KeyOffset, SeekOrigin.Begin);
+                var key = stream.ReadString(128);
+                entry.Key = key.Substring(0, key.IndexOf('\0'));
+            }
+
+            for (var i = 0; i < sfo.Entries.Count; i++)
+            {
+                var entry = sfo.Entries[i];
+                stream.Seek(sfoOffset + sfo.DataTableOffset + entry.DataOffset, SeekOrigin.Begin);
+                switch (entry.Format)
+                {
+                    case 0x0204:
+                        entry.Value = stream.ReadString((int)entry.Length - 1);
+                        break;
+                    case 0x0404:
+                        entry.Value = stream.ReadUInteger();
+                        break;
+                }
+            }
+
+            return sfo;
+        }
     }
 }

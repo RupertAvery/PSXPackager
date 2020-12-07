@@ -2,7 +2,7 @@
 
 namespace Popstation
 {
-    public class ConvertIsoInfo
+    public class ConvertOptions : ICheckIfFileExists
     {
         public string BasePbp { get; set; }
         public string DataPsp { get; set; }
@@ -22,5 +22,7 @@ namespace Popstation
         public List<DiscInfo> DiscInfos { get; set; }
         public List<PatchData> Patches { get; set; }
         public bool CheckIfFileExists { get; set; }
+        public string FileNameFormat { get; set; }
+        public string MainGameRegion { get; set; }
     };
 }

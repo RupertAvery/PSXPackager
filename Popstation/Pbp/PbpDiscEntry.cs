@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Threading;
 using Popstation.Iso;
 
@@ -25,19 +26,31 @@ namespace Popstation.Pbp
 
         private readonly Stream stream;
         private readonly int psar_offset;
-        public List<IsoIndexLite> IsoIndex { get; set; }
-        public List<TOCEntry> TOC { get; set; }
+        public List<IsoIndexLite> IsoIndex { get; }
+        public List<TOCEntry> TOC { get; }
         public uint IsoSize { get; }
-        public int Index { get; set; }
-
+        public int Index { get; }
+        public string DiscID { get; }
         public PbpDiscEntry(Stream stream, int psarOffset, int index)
         {
             this.stream = stream;
             Index = index;
             psar_offset = psarOffset;
+            DiscID = GetDiscID();
             TOC = ReadTOC();
             IsoIndex = ReadIsoIndexes();
             IsoSize = GetIsoSize();
+        }
+
+        private string GetDiscID()
+        {
+            byte[] buffer = new byte[16];
+            stream.Seek(psar_offset + 0x400, SeekOrigin.Begin);
+            stream.ReadByte();
+            stream.Read(buffer, 0, 4);
+            stream.ReadByte();
+            stream.Read(buffer, 4, 5);
+            return Encoding.ASCII.GetString(buffer, 0, 9);
         }
 
         private List<TOCEntry> ReadTOC()

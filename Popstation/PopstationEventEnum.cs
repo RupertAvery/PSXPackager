@@ -2,6 +2,8 @@
 {
     public enum PopstationEventEnum
     {
+        ProcessingStart,
+        ProcessingComplete,
         WritePbpHeader,
         WriteSfo,
         WriteHeader,
@@ -36,6 +38,8 @@
         ExtractComplete,
         WriteComplete,
         Warning,
-        Info
+        Info,
+        Error,
+        FileName
     }
 }
