@@ -411,6 +411,7 @@ namespace PSXPackager
             return new GameEntry()
             {
                 GameID = gameId,
+                ScannerID = gameId,
                 GameName = gameTitle,
                 SaveDescription = gameTitle,
                 Format = "NTSC",

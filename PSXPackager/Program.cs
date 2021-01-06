@@ -42,7 +42,7 @@ namespace PSXPackager
             Parser.Default.ParseArguments<Options>(args)
                  .WithParsed<Options>(o =>
                  {
-                     Console.WriteLine($"PSXPackager v1.4 by RupertAvery\r\n");
+                     Console.WriteLine($"PSXPackager v1.4.1 by RupertAvery\r\n");
 
                      if (o.CompressionLevel < 0 || o.CompressionLevel > 9)
                      {
