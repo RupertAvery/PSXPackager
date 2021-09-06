@@ -149,7 +149,9 @@ namespace Popstation
 
         private bool ContinueIfFileExists(ICheckIfFileExists options, string path)
         {
-            if (!options.CheckIfFileExists || !File.Exists(path)) return true;
+            var fileExists = File.Exists(path);
+            if (options.SkipIfFileExists && fileExists) return false;
+            if (!options.CheckIfFileExists || !fileExists) return true;
             var response = ActionIfFileExists(path);
 
             switch (response)

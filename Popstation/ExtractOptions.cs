@@ -6,6 +6,7 @@ namespace Popstation
     public interface ICheckIfFileExists
     {
         bool CheckIfFileExists { get; set; }
+        bool SkipIfFileExists { get; set; }
     }
 
     public class GameInfo
@@ -25,6 +26,7 @@ namespace Popstation
         public bool CreatePlaylist { get; set; }
         public IEnumerable<int> Discs { get; set; }
         public bool CheckIfFileExists { get; set; }
+        public bool SkipIfFileExists { get; set; }
         public string OutputPath { get; set; }
         public Func<string, GameInfo> GetGameInfo { get; set; }
         public string FileNameFormat { get; set; }

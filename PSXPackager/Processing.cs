@@ -475,6 +475,7 @@ namespace PSXPackager
                 BasePbp = Path.Combine(appPath, "Resources", "BASE.PBP"),
                 CompressionLevel = processOptions.CompressionLevel,
                 CheckIfFileExists = processOptions.CheckIfFileExists,
+                SkipIfFileExists = processOptions.SkipIfFileExists,
                 FileNameFormat = processOptions.FileNameFormat,
             };
 
@@ -544,6 +545,7 @@ namespace PSXPackager
                 BasePbp = Path.Combine(appPath, "Resources", "BASE.PBP"),
                 CompressionLevel = processOptions.CompressionLevel,
                 CheckIfFileExists = processOptions.CheckIfFileExists,
+                SkipIfFileExists = processOptions.SkipIfFileExists,
                 FileNameFormat = processOptions.FileNameFormat,
             };
 
@@ -571,6 +573,7 @@ namespace PSXPackager
                 Discs = processOptions.Discs,
                 CreateCuesheet = true,
                 CheckIfFileExists = processOptions.CheckIfFileExists,
+                SkipIfFileExists = processOptions.SkipIfFileExists,
                 FileNameFormat = processOptions.FileNameFormat,
                 GetGameInfo = (gameId) =>
                 {
