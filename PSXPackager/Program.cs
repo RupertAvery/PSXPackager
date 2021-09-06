@@ -26,7 +26,7 @@ namespace PSXPackager
 
         static void Main(string[] args)
         {
-            SevenZip.SevenZipBase.SetLibraryPath("x64/7z.dll");
+            SevenZip.SevenZipBase.SetLibraryPath(Path.Combine(ApplicationInfo.AppPath, $"{(System.Environment.Is64BitOperatingSystem ? "x64" : "x86")}/7z.dll"));
 
             _cancellationTokenSource = new CancellationTokenSource();
 
@@ -136,6 +136,7 @@ namespace PSXPackager
                          TempPath = tempPath,
                          Discs = discs,
                          CheckIfFileExists = !o.OverwriteIfExists,
+                         SkipIfFileExists = o.SkipIfExists,
                          FileNameFormat = o.FileNameFormat,
                          CompressionLevel = o.CompressionLevel,
                          Verbosity = o.Verbosity,
