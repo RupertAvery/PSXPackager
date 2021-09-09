@@ -9,6 +9,7 @@ namespace PSXPackager
         public string TempPath { get; set; }
         public IEnumerable<int> Discs { get; set; }
         public bool CheckIfFileExists { get; set; }
+        public bool SkipIfFileExists { get; set; }
         public int CompressionLevel { get; set; }
         public string FileNameFormat{ get; set; }
         public bool Log { get; set; }

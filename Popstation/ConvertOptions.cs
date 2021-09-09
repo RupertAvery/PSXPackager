@@ -22,6 +22,8 @@ namespace Popstation
         public List<DiscInfo> DiscInfos { get; set; }
         public List<PatchData> Patches { get; set; }
         public bool CheckIfFileExists { get; set; }
+
+        public bool SkipIfFileExists { get; set; }
         public string FileNameFormat { get; set; }
         public string MainGameRegion { get; set; }
     };

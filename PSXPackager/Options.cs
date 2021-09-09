@@ -28,8 +28,8 @@ namespace PSXPackager
         [Option('x', Required = false, HelpText = "If this option is present, will overwrite a file if it exists, otherwise will ask confirmation.")]
         public bool OverwriteIfExists { get; set; }
 
-        //[Option('s', "skip", Required = false, HelpText = "If this optioe n is present, will skip existing files.")]
-        //public bool SkipIfExists { get; set; }
+        [Option('s', "skip", Required = false, HelpText = "If this option is present, will skip existing files.")]
+        public bool SkipIfExists { get; set; }
 
         [Option('f', "format", Required = false, Default = "%FILENAME%", HelpText = "Specify the filename format e.g. [%GAMEID%] [%MAINGAMEID%] %TITLE% (%REGION%) or %FILENAME%")]
         public string FileNameFormat { get; set; }
