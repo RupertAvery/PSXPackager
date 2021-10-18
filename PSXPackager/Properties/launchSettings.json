@@ -2,7 +2,7 @@
   "profiles": {
     "PSXPackager": {
       "commandName": "Project",
-      "commandLineArgs": "-i \"C:\\Roms\\Parasite Eve.PBP\" -o \"E:\\Roms\\PSX\" -g -v 3"
+      "commandLineArgs": " -i \"D:\\roms\\PSX\\Resident Evil 2 - Dual Shock.m3u\" "
     }
   }
 }

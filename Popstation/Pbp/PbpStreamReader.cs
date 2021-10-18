@@ -6,7 +6,32 @@ using System.Text;
 
 namespace Popstation.Pbp
 {
-    public class PbpStreamReader 
+
+    //Offset Purpose
+    //0x00	The PBP signature, always is 00 50 42 50 or the string "<null char>PBP"
+    //0x04	Unknown purpose, possibly the version number.Currently is always 0x00000100 or 0x01000100 (some MINIS, PSP remaster and PSP PlayView)
+    //0x08	Offset of the file PARAM.SFO(this value should always be 0x28)
+    //0x0C	Offset of the file ICON0.PNG
+    //0x10	Offset of the file ICON1.PMF or ICON1.PNG
+    //0x14	Offset of the file PIC0.PNG or UNKNOWN.PNG (Value can be repeated)
+    //0x18	Offset of the file PIC1.PNG or PICT1.PNG
+    //0x1C	Offset of the file SND0.AT3
+    //0x20	Offset of the file DATA.PSP
+    //0x24	Offset of the file DATA.PSAR
+
+    public enum ResourceType
+    {
+        SFO,
+        ICON0,
+        ICON1,
+        PIC0,
+        PIC1,
+        SND0,
+        PSP,
+        PSAR
+    }
+
+    public class PbpStreamReader
     {
         //The location of the PSAR offset in the PBP header
         private const int HEADER_SFO_OFFSET = 0x08;
@@ -24,6 +49,61 @@ namespace Popstation.Pbp
 
         public List<PbpDiscEntry> Discs { get; }
 
+
+        public Stream GetResourceStream(ResourceType resource, Stream stream)
+        {
+            int start;
+            int end;
+            int offset;
+            switch (resource)
+            {
+                case ResourceType.SFO:
+                    offset = HEADER_SFO_OFFSET;
+                    break;
+                case ResourceType.ICON0:
+                    offset = HEADER_ICON0_OFFSET;
+                    break;
+                case ResourceType.ICON1:
+                    offset = HEADER_ICON1_OFFSET;
+                    break;
+                case ResourceType.PIC0:
+                    offset = HEADER_PIC0_OFFSET;
+                    break;
+                case ResourceType.PIC1:
+                    offset = HEADER_PIC1_OFFSET;
+                    break;
+                case ResourceType.SND0:
+                    offset = HEADER_SND0_OFFSET;
+                    break;
+                case ResourceType.PSP:
+                    offset = HEADER_PSP_OFFSET;
+                    break;
+                case ResourceType.PSAR:
+                    offset = HEADER_PSAR_OFFSET;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(resource));
+            }
+            stream.Seek(offset, SeekOrigin.Begin);
+            var reader = new BinaryReader(stream);
+            start = reader.ReadInt32();
+            if (resource != ResourceType.PSAR)
+            {
+                end = reader.ReadInt32();
+            }
+            else
+            {
+                end = (int)stream.Length;
+            }
+
+            var buffer = new byte[end - start];
+            stream.Seek(start, SeekOrigin.Begin);
+
+            stream.Read(buffer, 0, end - start);
+
+            return new MemoryStream(buffer);
+        }
+
         public PbpStreamReader(Stream stream)
         {
             var buffer = new byte[16];
@@ -37,8 +117,6 @@ namespace Popstation.Pbp
 
             stream.Seek(HEADER_PSAR_OFFSET, SeekOrigin.Begin);
             var psarOffset = stream.ReadInteger();
-
-
 
             if (psarOffset == 0 || stream.Position != HEADER_PSAR_OFFSET + sizeof(int))
             {
@@ -62,14 +140,35 @@ namespace Popstation.Pbp
                 stream.Read(buffer, 12, 4);
                 header = Encoding.ASCII.GetString(buffer);
 
+                if (header.Substring(0, 16) != "PSTITLEIMG000000")
+                {
+                    throw new Exception("Invalid header");
+                }
+
                 //stream.WriteInteger(0, 2);
                 stream.ReadInteger();
                 stream.ReadInteger();
 
-                var a = stream.ReadInteger();
-                var b = stream.ReadInteger();
-                var c = stream.ReadInteger();
-                var d = stream.ReadInteger();
+                var a = stream.ReadUInteger();
+                if (a != 0x2CC9C5BC)
+                {
+                    throw new Exception("Invalid header");
+                }
+                var b = stream.ReadUInteger();
+                if (b != 0x33B5A90F)
+                {
+                    throw new Exception("Invalid header");
+                }
+                var c = stream.ReadUInteger();
+                if (c != 0x06F6B4B3)
+                {
+                    throw new Exception("Invalid header");
+                }
+                var d = stream.ReadUInteger();
+                if (d != 0xB25945BA)
+                {
+                    throw new Exception("Invalid header");
+                }
 
                 //stream.WriteInteger(0x2CC9C5BC, 1);
                 //stream.WriteInteger(0x33B5A90F, 1);

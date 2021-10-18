@@ -95,7 +95,7 @@ namespace PSXPackager
                      {
                          if (PathIsDirectory(o.InputPath))
                          {
-                             files.AddRange(GetFilesFromDirectory(o.InputPath, o.Filters));
+                             files.AddRange(GetFilesFromDirectory(o.InputPath, o.Filters, o.Recursive));
                          }
                          else
                          {
@@ -103,13 +103,13 @@ namespace PSXPackager
                              var path = Path.GetDirectoryName(o.InputPath);
                              if (!string.IsNullOrEmpty(path) && PathIsDirectory(path) && ContainsWildCards(filename))
                              {
-                                 files.AddRange(GetFilesFromDirectory(path, filename));
+                                 files.AddRange(GetFilesFromDirectory(path, filename, o.Recursive));
                              }
                              else
                              {
                                  if (ContainsWildCards(filename))
                                  {
-                                     files.AddRange(GetFilesFromDirectory(".", filename));
+                                     files.AddRange(GetFilesFromDirectory(".", filename, o.Recursive));
                                  }
                                  else
                                  {
@@ -122,7 +122,7 @@ namespace PSXPackager
                      else if (!string.IsNullOrEmpty(o.Batch))
                      {
                          Console.WriteLine($"WARNING: Use of -b is deprecated. Use -i with wildcards instead.");
-                         files.AddRange(GetFilesFromDirectory(o.InputPath, o.Filters));
+                         files.AddRange(GetFilesFromDirectory(o.InputPath, o.Filters, o.Recursive));
                      }
 
                      var discs = string.IsNullOrEmpty(o.Discs)
@@ -140,14 +140,18 @@ namespace PSXPackager
                          FileNameFormat = o.FileNameFormat,
                          CompressionLevel = o.CompressionLevel,
                          Verbosity = o.Verbosity,
-                         Log = o.Log
+                         Log = o.Log,
+                         ExtractResources = o.ExtractResources,
+                         ImportResources = o.ImportResources,
+                         GenerateResourceFolders = o.GenerateResourceFolders,
+                         ResourceFoldersPath = o.ResourceFoldersPath,
                      };
 
                      ProcessFiles(options);
                  });
         }
 
-        private static IEnumerable<string> GetFilesFromDirectory(string path, string filterExpression)
+        private static IEnumerable<string> GetFilesFromDirectory(string path, string filterExpression, bool recursive)
         {
             var supportedFiles = new List<string>() { ".7z", ".zip", ".gz", ".rar", ".tar", ".bin", ".cue", ".img", ".iso", ".pbp" };
             var filters = filterExpression.Split(new char[] { ';', '|' });
@@ -163,6 +167,22 @@ namespace PSXPackager
                 {
                     if (supportedFiles.Contains(Path.GetExtension(file).ToLower()))
                         yield return file;
+                }
+
+                if (recursive)
+                {
+                    var dirs = Directory.GetDirectories(path);
+                    foreach (var dir in dirs)      
+                    {
+                        if (dir != "." && dir != "..")
+                        {
+                            foreach (var file in GetFilesFromDirectory(dir, filterExpression, recursive))
+                            {
+                                if (supportedFiles.Contains(Path.GetExtension(file).ToLower()))
+                                    yield return file;
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -8,6 +8,19 @@ using Popstation.Pbp;
 
 namespace Popstation
 {
+
+    //Offset Purpose
+    //0x00	The PBP signature, always is 00 50 42 50 or the string "<null char>PBP"
+    //0x04	Unknown purpose, possibly the version number.Currently is always 0x00000100 or 0x01000100 (some MINIS, PSP remaster and PSP PlayView)
+    //0x08	Offset of the file PARAM.SFO(this value should always be 0x28)
+    //0x0C	Offset of the file ICON0.PNG
+    //0x10	Offset of the file ICON1.PMF or ICON1.PNG
+    //0x14	Offset of the file PIC0.PNG or UNKNOWN.PNG (Value can be repeated)
+    //0x18	Offset of the file PIC1.PNG or PICT1.PNG
+    //0x1C	Offset of the file SND0.AT3
+    //0x20	Offset of the file DATA.PSP
+    //0x24	Offset of the file DATA.PSAR
+
     public partial class Popstation
     {
         private string GetFilename(string filenameFormat, string sourceFilename, string gameid, string maingameId, string title, string maintitle, string region)
@@ -21,12 +34,120 @@ namespace Popstation
             return output;
         }
 
+        private void ExtractResource(Stream stream, string path, string filename)
+        {
+            if (stream.Length > 0)
+            {
+                using (var file = new FileStream(Path.Combine(path, filename), FileMode.OpenOrCreate, FileAccess.Write))
+                {
+                    stream.CopyTo(file);
+                    stream.Flush();
+                }
+            }
+            stream.Dispose();
+        }
+
+        private string GetResouceFolderPath(ExtractOptions processOptions, string mode, GameInfo entry, string srcIso)
+        {
+            string path;
+
+            if (!string.IsNullOrEmpty(mode))
+            {
+                string filename = Path.GetFileNameWithoutExtension(srcIso);
+                path = Path.GetDirectoryName(srcIso);
+
+                if (!string.IsNullOrEmpty(processOptions.ResourceFoldersPath))
+                {
+                    path = processOptions.ResourceFoldersPath;
+                }
+
+                switch (mode)
+                {
+                    case "gameid":
+                        path = Path.Combine(path, entry.GameID);
+                        break;
+                    case "title":
+                        path = Path.Combine(path, entry.GameName);
+                        break;
+                    case "filename":
+                        path = Path.Combine(path, filename);
+                        break;
+                    default:
+                        path = Path.Combine(path, filename);
+                        break;
+                }
+
+            }
+            else
+            {
+                path = Path.GetDirectoryName(srcIso);
+            }
+
+            return path;
+        }
+
+
         public void Extract(ExtractOptions options, CancellationToken cancellationToken)
         {
             using (var stream = new FileStream(options.SourcePbp, FileMode.Open, FileAccess.Read))
             {
                 var pbpStreamReader = new PbpStreamReader(stream);
 
+                if (!string.IsNullOrEmpty(options.GenerateResourceFolders))
+                {
+                    var disc = pbpStreamReader.Discs[0];
+
+                    var gameInfo = options.GetGameInfo(disc.DiscID);
+
+                    var path = GetResouceFolderPath(options, options.GenerateResourceFolders, gameInfo, options.SourcePbp);
+
+                    if (!Directory.Exists(path))
+                    {
+                        Directory.CreateDirectory(path);
+                    }
+
+                    return;
+                }
+
+                if (!string.IsNullOrEmpty(options.ExtractResources))
+                {
+                    var disc = pbpStreamReader.Discs[0];
+
+                    var gameInfo = options.GetGameInfo(disc.DiscID);
+
+                    var directory =  Path.GetDirectoryName(options.SourcePbp);
+                    var filename = Path.GetFileNameWithoutExtension(options.SourcePbp);
+
+                    var path = directory;
+
+                    switch (options.ExtractResources)
+                    {
+                        case "gameid":
+                            path = Path.Combine(path, gameInfo.GameID);
+                            break;
+                        case "title":
+                            path = Path.Combine(path, gameInfo.Title);
+                            break;
+                        case "filename":
+                            path = Path.Combine(path, filename);
+                            break;
+                        default:
+                            path = Path.Combine(path, filename);
+                            break;
+                    }
+
+                    if (!Directory.Exists(path))
+                    {
+                        Directory.CreateDirectory(path);
+                    }
+
+                    ExtractResource(pbpStreamReader.GetResourceStream(ResourceType.ICON0, stream), path, "ICON0.png");
+                    ExtractResource(pbpStreamReader.GetResourceStream(ResourceType.ICON1, stream), path, "ICON1.pmf");
+                    ExtractResource(pbpStreamReader.GetResourceStream(ResourceType.PIC0, stream),  path, "PIC0.png");
+                    ExtractResource(pbpStreamReader.GetResourceStream(ResourceType.PIC1, stream),  path, "PIC1.png");
+                    ExtractResource(pbpStreamReader.GetResourceStream(ResourceType.SND0, stream),  path, "SND0.at3");
+                    return;
+                }
 
                 var ext = ".bin";
 

@@ -5,14 +5,14 @@ namespace Popstation
     public class ConvertOptions : ICheckIfFileExists
     {
         public string BasePbp { get; set; }
-        public string DataPsp { get; set; }
+        public Resource DataPsp { get; set; }
         //public string SourceIso {get; set;}
         public string DestinationPbp { get; set; }
-        public string Pic0 { get; set; }
-        public string Pic1 { get; set; }
-        public string Icon0 { get; set; }
-        public string Icon1 { get; set; }
-        public string Snd0 { get; set; }
+        public Resource Icon0 { get; set; }
+        public Resource Icon1 { get; set; }
+        public Resource Pic0 { get; set; }
+        public Resource Pic1 { get; set; }
+        public Resource Snd0 { get; set; }
         public string Boot { get; set; }
         public string MainGameTitle { get; set; }
         public string SaveTitle { get; set; }

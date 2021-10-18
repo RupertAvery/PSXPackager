@@ -8,6 +8,7 @@ using DiscUtils.Iso9660;
 using Popstation;
 using Popstation.Cue;
 using Popstation.M3u;
+using Popstation.Pbp;
 using SevenZip;
 
 namespace PSXPackager
@@ -459,6 +460,18 @@ namespace PSXPackager
             var gameId = FindGameId(srcIsos[0]);
             var game = GetGameEntry(gameId, srcIsos[0], false);
 
+            if (!string.IsNullOrEmpty(processOptions.GenerateResourceFolders))
+            {
+                var path = GetResouceFolderPath(processOptions, processOptions.GenerateResourceFolders, game, srcIsos[0], true);
+
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
+
+                return true;
+            }
+
             var options = new ConvertOptions()
             {
 
@@ -469,15 +482,14 @@ namespace PSXPackager
                 MainGameRegion = game.Format,
                 SaveTitle = game.SaveDescription,
                 SaveID = game.SaveFolderName,
-                Pic0 = Path.Combine(appPath, "Resources", "PIC0.PNG"),
-                Pic1 = Path.Combine(appPath, "Resources", "PIC1.PNG"),
-                Icon0 = Path.Combine(appPath, "Resources", "ICON0.PNG"),
                 BasePbp = Path.Combine(appPath, "Resources", "BASE.PBP"),
                 CompressionLevel = processOptions.CompressionLevel,
                 CheckIfFileExists = processOptions.CheckIfFileExists,
                 SkipIfFileExists = processOptions.SkipIfFileExists,
                 FileNameFormat = processOptions.FileNameFormat,
             };
+
+            SetResources(processOptions, options, game, srcIsos[0]);
 
             for (var i = 0; i < srcIsos.Length; i++)
             {
@@ -508,6 +520,79 @@ namespace PSXPackager
             return popstation.Convert(options, cancellationToken);
         }
 
+        private string GetResouceFolderPath(ProcessOptions processOptions, string mode, GameEntry entry, string srcIso, bool forGenerate = false)
+        {
+            string path;
+            
+            if (!string.IsNullOrEmpty(mode))
+            {
+                var filename = Path.GetFileNameWithoutExtension(srcIso);
+                path = Path.GetDirectoryName(srcIso);
+
+                if (!string.IsNullOrEmpty(processOptions.ResourceFoldersPath))
+                {
+                    path = processOptions.ResourceFoldersPath;
+                }
+
+                switch (mode)
+                {
+                    case "gameid":
+                        path = Path.Combine(path, entry.GameID);
+                        break;
+                    case "title":
+                        path = Path.Combine(path, entry.GameName);
+                        break;
+                    case "filename":
+                        path = Path.Combine(path, filename);
+                        break;
+                    default:
+                        path = Path.Combine(path, filename);
+                        break;
+                }
+
+            }
+            else
+            {
+                if (forGenerate)
+                {
+                    path = Path.GetDirectoryName(srcIso);
+                }
+                else
+                {
+                    var appPath = ApplicationInfo.AppPath;
+                    var defaultPath = Path.Combine(appPath, "Resources");
+                    path = defaultPath;
+                }
+            }
+
+            return path;
+        }
+
+
+        private void SetResources(ProcessOptions processOptions, ConvertOptions options, GameEntry entry, string srcIso)
+        {
+            var appPath = ApplicationInfo.AppPath;
+            var defaultPath = Path.Combine(appPath, "Resources");
+
+            var path = GetResouceFolderPath(processOptions, processOptions.ImportResources, entry, srcIso);
+
+            Resource GetResourceOrDefault(ResourceType type, string filename)
+            {
+                var resourcePath =  Path.Combine(path, filename);
+                if (!File.Exists(resourcePath))
+                {
+                    resourcePath = Path.Combine(defaultPath, filename);
+                }
+                return new Resource(type, resourcePath);
+            }
+
+            options.Icon0 = GetResourceOrDefault(ResourceType.ICON0, "ICON0.PNG");
+            options.Icon1 = GetResourceOrDefault(ResourceType.ICON1, "ICON1.PMF");
+            options.Pic0 = GetResourceOrDefault(ResourceType.PIC0, "PIC0.PNG");
+            options.Pic1 = GetResourceOrDefault(ResourceType.PIC1, "PIC1.PNG");
+            options.Snd0 = GetResourceOrDefault(ResourceType.SND0, "SND0.AT3");
+        }
+
         private bool ConvertIso(
             string srcIso,
             string srcToc,
@@ -517,6 +602,18 @@ namespace PSXPackager
             var appPath = ApplicationInfo.AppPath;
             var gameId = FindGameId(srcIso);
             var game = GetGameEntry(gameId, srcIso, false);
+
+            if (!string.IsNullOrEmpty(processOptions.GenerateResourceFolders))
+            {
+                var path = GetResouceFolderPath(processOptions, processOptions.GenerateResourceFolders, game, srcIso, true);
+
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
+
+                return true;
+            }
 
             var options = new ConvertOptions()
             {
@@ -539,15 +636,14 @@ namespace PSXPackager
                 MainGameID = game.SaveFolderName,
                 SaveTitle = game.SaveDescription,
                 SaveID = game.SaveFolderName,
-                Pic0 = Path.Combine(appPath, "Resources", "PIC0.PNG"),
-                Pic1 = Path.Combine(appPath, "Resources", "PIC1.PNG"),
-                Icon0 = Path.Combine(appPath, "Resources", "ICON0.PNG"),
                 BasePbp = Path.Combine(appPath, "Resources", "BASE.PBP"),
                 CompressionLevel = processOptions.CompressionLevel,
                 CheckIfFileExists = processOptions.CheckIfFileExists,
                 SkipIfFileExists = processOptions.SkipIfFileExists,
                 FileNameFormat = processOptions.FileNameFormat,
             };
+
+            SetResources(processOptions, options, game, srcIso);
 
             _notifier.Notify(PopstationEventEnum.Info, $"Using Title '{game.GameName}'");
 
@@ -575,6 +671,9 @@ namespace PSXPackager
                 CheckIfFileExists = processOptions.CheckIfFileExists,
                 SkipIfFileExists = processOptions.SkipIfFileExists,
                 FileNameFormat = processOptions.FileNameFormat,
+                ExtractResources = processOptions.ExtractResources,
+                GenerateResourceFolders = processOptions.GenerateResourceFolders,
+                ResourceFoldersPath = processOptions.ResourceFoldersPath,
                 GetGameInfo = (gameId) =>
                 {
                     var game = GetGameEntry(gameId, srcPbp, false);

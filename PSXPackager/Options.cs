@@ -16,9 +16,12 @@ namespace PSXPackager
         [Option('b', "batch", Group = "input", HelpText = "The path to batch process a set of files.")]
         public string Batch { get; set; }
 
+        [Option('r', "recursive", HelpText = "During batch processing, recurse subdirectories")]
+        public bool Recursive { get; set; }
+
         [Option('e', "ext", Required = false, HelpText = "The semi-colon or pipe-separated extension(s) of the files to process in the batch folder, e.g. .7z or .iso|.bin|.img")]
         public string Filters { get; set; }
- 
+
         [Option('d', "discs", Required = false, HelpText = "A comma-separated list of disc numbers to extract from a PBP.")]
         public string Discs { get; set; }
 
@@ -36,5 +39,18 @@ namespace PSXPackager
 
         [Option('g', "log", Required = false, HelpText = "If this option is present, will log messages to a file.")]
         public bool Log { get; set; }
+
+        [Option("extract-resources", Required = false, HelpText = "Extract resources into 'gameid', 'title' or 'filename'. Default to 'filename'")]
+        public string ExtractResources { get; set; }
+
+        [Option("import-resources", Required = false, HelpText = "Import resources from 'gameid', 'title' or 'filename'. Default to 'filename'")]
+        public string ImportResources { get; set; }
+
+        [Option("generate-resource-folders", Required = false, HelpText = "Create resources folder from 'gameid', 'title' or 'filename'. Default to 'filename'")]
+        public string GenerateResourceFolders { get; set; }
+
+        [Option("resource-folders-path", Required = false, HelpText = "The path where resource folders will be located. If not specified, the path will be the same as the input file")]
+        public string ResourceFoldersPath { get; set; }
+
     }
 }

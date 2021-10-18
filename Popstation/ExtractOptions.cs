@@ -30,5 +30,8 @@ namespace Popstation
         public string OutputPath { get; set; }
         public Func<string, GameInfo> GetGameInfo { get; set; }
         public string FileNameFormat { get; set; }
+        public string ExtractResources { get; set; }
+        public string GenerateResourceFolders { get; set; }
+        public string ResourceFoldersPath { get; set; }
     }
 }

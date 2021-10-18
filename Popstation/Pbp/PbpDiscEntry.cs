@@ -31,6 +31,7 @@ namespace Popstation.Pbp
         public uint IsoSize { get; }
         public int Index { get; }
         public string DiscID { get; }
+
         public PbpDiscEntry(Stream stream, int psarOffset, int index)
         {
             this.stream = stream;
@@ -55,48 +56,57 @@ namespace Popstation.Pbp
 
         private List<TOCEntry> ReadTOC()
         {
-            byte[] buffer = new byte[0xA];
-
             var entries = new List<TOCEntry>();
 
-            // Read in the offset of the PSAR file
-            //stream.Seek(HEADER_PSAR_OFFSET, SeekOrigin.Begin);
-            //var psar_offset = stream.ReadInteger();
-
-
-            stream.Seek(psar_offset + PSAR_TOC_OFFSET, SeekOrigin.Begin);
-
-            stream.Read(buffer, 0, 0xA);
-            if (buffer[2] != 0xA0) throw new Exception("Invalid TOC!");
-            int startTrack = TOCHelper.FromBinaryDecimal(buffer[7]);
-            stream.Read(buffer, 0, 0xA);
-            if (buffer[2] != 0xA1) throw new Exception("Invalid TOC!");
-            int endTrack = TOCHelper.FromBinaryDecimal(buffer[7]);
-            stream.Read(buffer, 0, 0xA);
-            if (buffer[2] != 0xA2) throw new Exception("Invalid TOC!");
-            int mm = TOCHelper.FromBinaryDecimal(buffer[7]);
-            int ss = TOCHelper.FromBinaryDecimal(buffer[8]);
-            int ff = TOCHelper.FromBinaryDecimal(buffer[9]);
-            //var frames = mm * 60 * 75 + ss * 75 + ff;
-            //var size = 2352 * frames;
-
-            for (var c = startTrack; c <= endTrack; c++)
+            try
             {
+                byte[] buffer = new byte[0xA];
+
+
+                // Read in the offset of the PSAR file
+                //stream.Seek(HEADER_PSAR_OFFSET, SeekOrigin.Begin);
+                //var psar_offset = stream.ReadInteger();
+
+
+                stream.Seek(psar_offset + PSAR_TOC_OFFSET, SeekOrigin.Begin);
+
                 stream.Read(buffer, 0, 0xA);
-                var trackNo = TOCHelper.FromBinaryDecimal(buffer[2]);
-                if (trackNo != c) throw new Exception("Invalid TOC!");
+                if (buffer[2] != 0xA0) throw new Exception("Invalid TOC!");
+                int startTrack = TOCHelper.FromBinaryDecimal(buffer[7]);
+                stream.Read(buffer, 0, 0xA);
+                if (buffer[2] != 0xA1) throw new Exception("Invalid TOC!");
+                int endTrack = TOCHelper.FromBinaryDecimal(buffer[7]);
+                stream.Read(buffer, 0, 0xA);
+                if (buffer[2] != 0xA2) throw new Exception("Invalid TOC!");
+                int mm = TOCHelper.FromBinaryDecimal(buffer[7]);
+                int ss = TOCHelper.FromBinaryDecimal(buffer[8]);
+                int ff = TOCHelper.FromBinaryDecimal(buffer[9]);
+                //var frames = mm * 60 * 75 + ss * 75 + ff;
+                //var size = 2352 * frames;
 
-                var entry = new TOCEntry
+                for (var c = startTrack; c <= endTrack; c++)
                 {
-                    TrackType = (TrackTypeEnum)buffer[0],
-                    TrackNo = trackNo,
-                    Minutes = TOCHelper.FromBinaryDecimal(buffer[3]),
-                    Seconds = TOCHelper.FromBinaryDecimal(buffer[4]),
-                    Frames = TOCHelper.FromBinaryDecimal(buffer[5])
-                };
+                    stream.Read(buffer, 0, 0xA);
+                    var trackNo = TOCHelper.FromBinaryDecimal(buffer[2]);
+                    if (trackNo != c) throw new Exception("Invalid TOC!");
 
-                entries.Add(entry);
+                    var entry = new TOCEntry
+                    {
+                        TrackType = (TrackTypeEnum)buffer[0],
+                        TrackNo = trackNo,
+                        Minutes = TOCHelper.FromBinaryDecimal(buffer[3]),
+                        Seconds = TOCHelper.FromBinaryDecimal(buffer[4]),
+                        Frames = TOCHelper.FromBinaryDecimal(buffer[5])
+                    };
 
+                    entries.Add(entry);
+
+                }
+
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
             }
 
             return entries;
