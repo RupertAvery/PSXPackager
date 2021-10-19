@@ -22,15 +22,10 @@ namespace Popstation
             var code = convertInfo.MainGameID;
             var region = convertInfo.MainGameRegion;
 
-            uint boot_size = 0;
-
-
-
             uint[] dummy = new uint[6];
 
-            uint i, offset, isosize, isorealsize, x;
-            uint index_offset, p1_offset, p2_offset, m_offset, end_offset;
-            IsoIndex[] indexes = null;
+            uint i, offset, isosize, x;
+            uint p1_offset, p2_offset, m_offset, end_offset;
             uint[] iso_positions = new uint[5];
             end_offset = 0;
 
@@ -78,17 +73,7 @@ namespace Popstation
             totSize = 0;
 
             int ciso;
-            for (ciso = 0; ciso < convertInfo.DiscInfos.Count; ciso++)
-            {
-                var disc = convertInfo.DiscInfos[ciso];
-                if (File.Exists(disc.SourceIso))
-                {
-                    var t = new FileInfo(convertInfo.DiscInfos[ciso].SourceIso);
-                    isosize = (uint)t.Length;
-                    disc.IsoSize = isosize;
-                    totSize += isosize;
-                }
-            }
+
 
             //TODO: Callback
             //PostMessage(convertInfo.callback, WM_CONVERT_SIZE, 0, totSize);
@@ -102,12 +87,6 @@ namespace Popstation
                 var disc = convertInfo.DiscInfos[ciso];
                 uint curSize = 0;
 
-                Notify?.Invoke(PopstationEventEnum.WriteStart, ciso + 1);
-
-                if (!File.Exists(disc.SourceIso))
-                {
-                    continue;
-                }
 
                 offset = (uint)outputStream.Position;
 
@@ -117,8 +96,11 @@ namespace Popstation
                     outputStream.WriteChar(0, (int)x);
                 }
 
-                iso_positions[ciso] = WriteDisc(disc, psarOffset, outputStream, ciso, cancellationToken);
+                iso_positions[ciso] = (uint)outputStream.Position - psarOffset;
 
+                Notify?.Invoke(PopstationEventEnum.WriteStart, ciso + 1);
+
+                WriteDisc(disc, iso_positions[ciso], psarOffset, true, outputStream, cancellationToken);
 
                 Notify?.Invoke(PopstationEventEnum.WriteComplete, null);
             }
@@ -141,6 +123,8 @@ namespace Popstation
 
             end_offset -= psarOffset;
 
+            offset = (uint)outputStream.Position;
+
             outputStream.Seek(p1_offset, SeekOrigin.Begin);
             outputStream.WriteInteger(end_offset, 1);
 
@@ -150,6 +134,8 @@ namespace Popstation
 
             outputStream.Seek(m_offset, SeekOrigin.Begin);
             outputStream.Write(iso_positions, 1, sizeof(uint) * iso_positions.Length);
+
+            outputStream.Seek(offset, SeekOrigin.Begin);
         }
     }
 }

@@ -31,6 +31,10 @@ namespace Popstation
                 writer = new MultiDiscPbpWriter(convertInfo);
             }
 
+            writer.Notify = Notify;
+            writer.ActionIfFileExists = ActionIfFileExists;
+            writer.TempFiles = TempFiles;
+
             var directory = Path.GetDirectoryName(convertInfo.DestinationPbp);
             var ext = Path.GetExtension(convertInfo.DestinationPbp);
 

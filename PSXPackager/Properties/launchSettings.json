@@ -2,7 +2,7 @@
   "profiles": {
     "PSXPackager": {
       "commandName": "Project",
-      "commandLineArgs": " -i \"D:\\roms\\PSX\\Resident Evil 2 - Dual Shock.m3u\" "
+      "commandLineArgs": " -i \"D:\\roms\\PSX\\Castlevania - Symphony of the Night.cue\" -o \"D:\\roms\\PSX\" "
     }
   }
 }

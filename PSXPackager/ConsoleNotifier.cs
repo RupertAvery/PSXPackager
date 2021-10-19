@@ -84,10 +84,12 @@ namespace PSXPackager
                     Console.CursorVisible = true;
                     WriteLine(@event, $"\r\n{value}");
                     break;
+
                 case PopstationEventEnum.FileName:
                 case PopstationEventEnum.Info:
                     WriteLine(@event, $"{value}");
                     break;
+
                 case PopstationEventEnum.Warning:
                     var lastColor = Console.ForegroundColor;
                     Console.ForegroundColor = ConsoleColor.DarkYellow;
@@ -98,6 +100,7 @@ namespace PSXPackager
                 case PopstationEventEnum.GetIsoSize:
                     _total = Convert.ToInt64(value);
                     break;
+
                 case PopstationEventEnum.ConvertSize:
                 case PopstationEventEnum.ExtractSize:
                 case PopstationEventEnum.WriteSize:
@@ -109,21 +112,25 @@ namespace PSXPackager
                     _cursorYPos = Console.CursorTop;
                     Console.CursorVisible = false;
                     break;
+
                 case PopstationEventEnum.WriteStart:
                     Write(@event, $"Writing Disc {value} - ");
                     _cursorYPos = Console.CursorTop;
                     Console.CursorVisible = false;
                     break;
+
                 case PopstationEventEnum.ExtractStart:
                     Write(@event, $"Extracting Disc {value} - ");
                     _cursorYPos = Console.CursorTop;
                     Console.CursorVisible = false;
                     break;
+
                 case PopstationEventEnum.DecompressStart:
                     Write(@event, $"Decompressing file {value} - ");
                     _cursorYPos = Console.CursorTop;
                     Console.CursorVisible = false;
                     break;
+
                 case PopstationEventEnum.ConvertComplete:
                 case PopstationEventEnum.ExtractComplete:
                 case PopstationEventEnum.WriteComplete:

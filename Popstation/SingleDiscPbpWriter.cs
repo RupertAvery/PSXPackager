@@ -19,7 +19,13 @@ namespace Popstation
         {
             var disc = convertInfo.DiscInfos[0];
 
-            WriteDisc(disc, psarOffset, outputStream, 0, cancellationToken);
+            var iso_position = (uint)outputStream.Position - psarOffset;
+
+            Notify?.Invoke(PopstationEventEnum.WriteStart, 1);
+
+            WriteDisc(disc, iso_position, psarOffset, false, outputStream, cancellationToken);
+
+            Notify?.Invoke(PopstationEventEnum.WriteComplete, null);
 
             Notify?.Invoke(PopstationEventEnum.ConvertComplete, null);
 
