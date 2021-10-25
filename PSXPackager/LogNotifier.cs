@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using Popstation;
+using Popstation.Notification;
 
 namespace PSXPackager
 {

@@ -1,0 +1,56 @@
+﻿<Window x:Class="PSXPackagerGUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:models="clr-namespace:PSXPackagerGUI.Models"
+        xmlns:controls="clr-namespace:PSXPackagerGUI.Controls"
+        mc:Ignorable="d"
+        Title="PSXPackager" Height="609" Width="807">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Menu Margin="5,2,5,2">
+            <MenuItem x:Name="OpenFile" Click="OpenFile_OnClick" ToolTip="Open File">
+                <MenuItem.Header>
+                    <controls:AutoDisableImage Height="32" Width="32">
+                        <Image.Source>
+                            <BitmapImage  UriSource="./Resources/open-48x48.png"/>
+                        </Image.Source>
+                    </controls:AutoDisableImage>
+                </MenuItem.Header>
+            </MenuItem>
+            <MenuItem x:Name="NewPBP" Click="NewPBP_OnClick" ToolTip="New PBP">
+                <MenuItem.Header>
+                    <controls:AutoDisableImage Height="32" Width="32">
+                        <Image.Source>
+                            <BitmapImage  UriSource="./Resources/package-48x48.png"/>
+                        </Image.Source>
+                    </controls:AutoDisableImage>
+                </MenuItem.Header>
+            </MenuItem>
+            <MenuItem x:Name="Save" Click="Save_OnClick" ToolTip="Save" IsEnabled="{Binding IsDirty}">
+                <MenuItem.Header>
+                    <controls:AutoDisableImage Height="32" Width="32">
+                        <Image.Source>
+                            <BitmapImage  UriSource="./Resources/floppy-48x48.png"/>
+                        </Image.Source>
+                    </controls:AutoDisableImage>
+                </MenuItem.Header>
+            </MenuItem>
+            <MenuItem x:Name="Settings" Click="Settings_OnClick" ToolTip="Save">
+                <MenuItem.Header>
+                    <controls:AutoDisableImage Height="32" Width="32">
+                        <Image.Source>
+                            <BitmapImage  UriSource="./Resources/gear-48x48.png"/>
+                        </Image.Source>
+                    </controls:AutoDisableImage>
+                </MenuItem.Header>
+            </MenuItem>
+        </Menu>
+        <Frame Grid.Row="1" x:Name="CurrentPage"></Frame>
+    </Grid>
+
+</Window>

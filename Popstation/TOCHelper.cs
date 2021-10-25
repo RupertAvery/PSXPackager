@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Popstation.Cue;
 using Popstation.Pbp;
 
@@ -68,6 +69,57 @@ namespace Popstation
             };
 
             return position;
+        }
+
+        public static CueFile TOCtoCUE(List<TOCEntry> tocEntries, string dataPath)
+        {
+            var cueFile = new CueFileEntry()
+            {
+                FileName = dataPath,
+                Tracks = new List<CueTrack>(),
+                FileType = "BINARY"
+            };
+
+            var audioLeadin = new IndexPosition { Seconds = 2 };
+
+            foreach (var track in tocEntries)
+            {
+                var position = new IndexPosition
+                {
+                    Minutes = track.Minutes,
+                    Seconds = track.Seconds,
+                    Frames = track.Frames,
+                };
+
+                var indexes = new List<CueIndex>();
+
+                if (track.TrackType == TrackTypeEnum.Audio)
+                {
+                    indexes.Add(new CueIndex()
+                    {
+                        Number = 0,
+                        Position = position - audioLeadin,
+                    });
+                }
+
+                indexes.Add(new CueIndex()
+                {
+                    Number = 1,
+                    Position = position,
+                });
+
+                var cueTrack = new CueTrack()
+                {
+                    DataType = GetDataType(track.TrackType),
+                    Indexes = indexes,
+                    Number = track.TrackNo
+                };
+
+
+                cueFile.Tracks.Add(cueTrack);
+            }
+
+            return new CueFile(new[] { cueFile });
         }
     }
 }

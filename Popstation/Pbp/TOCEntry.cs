@@ -1,4 +1,7 @@
-﻿namespace Popstation.Pbp
+﻿using System.Collections.Generic;
+using Popstation.Cue;
+
+namespace Popstation.Pbp
 {
     public class TOCEntry
     {
@@ -8,4 +11,6 @@
         public int Seconds { get; set; }
         public int Frames { get; set; }
     }
+
+
 }

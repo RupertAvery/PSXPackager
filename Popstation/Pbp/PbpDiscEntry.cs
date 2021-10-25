@@ -227,7 +227,7 @@ namespace Popstation.Pbp
             uint totSize = 0;
             int i;
 
-            byte[] outBuffer = new byte[16 * PbpStreamReader.ISO_BLOCK_SIZE];
+            byte[] outBuffer = new byte[16 * PbpReader.ISO_BLOCK_SIZE];
 
             for (i = 0; i < IsoIndex.Count; i++)
             {

@@ -61,7 +61,7 @@ namespace Popstation
                     path = processOptions.ResourceFoldersPath;
                 }
 
-                switch (mode)
+                switch (mode.ToLower())
                 {
                     case "gameid":
                         path = Path.Combine(path, entry.GameID);
@@ -86,12 +86,44 @@ namespace Popstation
             return path;
         }
 
+        private void ExtractResources(Stream stream, string path)
+        {
+            Stream resourceStream;
+
+            var pbpStreamReader = new PbpReader(stream);
+
+            if (pbpStreamReader.TryGetResourceStream(ResourceType.ICON0, stream, out resourceStream))
+            {
+                ExtractResource(resourceStream, path, "ICON0.png");
+            }
+
+            if (pbpStreamReader.TryGetResourceStream(ResourceType.ICON1, stream, out resourceStream))
+            {
+                ExtractResource(resourceStream, path, "ICON1.pmf");
+            }
+
+            if (pbpStreamReader.TryGetResourceStream(ResourceType.PIC0, stream, out resourceStream))
+            {
+                ExtractResource(resourceStream, path, "PIC0.png");
+            }
+
+            if (pbpStreamReader.TryGetResourceStream(ResourceType.PIC1, stream, out resourceStream))
+            {
+                ExtractResource(resourceStream, path, "PIC1.png");
+            }
+
+            if (pbpStreamReader.TryGetResourceStream(ResourceType.SND0, stream, out resourceStream))
+            {
+                ExtractResource(resourceStream, path, "SND0.at3");
+            }
+
+        }
 
         public void Extract(ExtractOptions options, CancellationToken cancellationToken)
         {
             using (var stream = new FileStream(options.SourcePbp, FileMode.Open, FileAccess.Read))
             {
-                var pbpStreamReader = new PbpStreamReader(stream);
+                var pbpStreamReader = new PbpReader(stream);
 
                 if (!string.IsNullOrEmpty(options.GenerateResourceFolders))
                 {
@@ -106,6 +138,13 @@ namespace Popstation
                         Directory.CreateDirectory(path);
                     }
 
+                    if (options.GenerateResourceFolders.ToLower() == "gameid")
+                    {
+                        using (File.Create(Path.Combine(path, gameInfo.GameName)))
+                        {
+                        }
+                    }
+
                     return;
                 }
 
@@ -115,37 +154,22 @@ namespace Popstation
 
                     var gameInfo = options.GetGameInfo(disc.DiscID);
 
-                    var directory =  Path.GetDirectoryName(options.SourcePbp);
-                    var filename = Path.GetFileNameWithoutExtension(options.SourcePbp);
-
-                    var path = directory;
-
-                    switch (options.ExtractResources)
-                    {
-                        case "gameid":
-                            path = Path.Combine(path, gameInfo.GameID);
-                            break;
-                        case "title":
-                            path = Path.Combine(path, gameInfo.Title);
-                            break;
-                        case "filename":
-                            path = Path.Combine(path, filename);
-                            break;
-                        default:
-                            path = Path.Combine(path, filename);
-                            break;
-                    }
+                    var path = GetResouceFolderPath(options, options.ExtractResources, gameInfo, options.SourcePbp);
 
                     if (!Directory.Exists(path))
                     {
                         Directory.CreateDirectory(path);
                     }
 
-                    ExtractResource(pbpStreamReader.GetResourceStream(ResourceType.ICON0, stream), path, "ICON0.png");
-                    ExtractResource(pbpStreamReader.GetResourceStream(ResourceType.ICON1, stream), path, "ICON1.pmf");
-                    ExtractResource(pbpStreamReader.GetResourceStream(ResourceType.PIC0, stream),  path, "PIC0.png");
-                    ExtractResource(pbpStreamReader.GetResourceStream(ResourceType.PIC1, stream),  path, "PIC1.png");
-                    ExtractResource(pbpStreamReader.GetResourceStream(ResourceType.SND0, stream),  path, "SND0.at3");
+                    ExtractResources(stream, path);
+
+                    if (options.ExtractResources.ToLower() == "gameid")
+                    {
+                        using (File.Create(Path.Combine(path, gameInfo.GameName)))
+                        {
+                        }
+                    }
+
                     return;
                 }
 
@@ -180,7 +204,7 @@ namespace Popstation
                         var isoPath = Path.Combine(options.OutputPath, $"{title} {discName}{ext}");
 
                         ExtractISO(disc, isoPath, options, cancellationToken);
-            
+
                         if (cancellationToken.IsCancellationRequested)
                         {
                             break;
@@ -230,7 +254,7 @@ namespace Popstation
                 {
                     return;
                 }
-                
+
                 Notify?.Invoke(PopstationEventEnum.Info, $"Writing {path}...");
                 Notify?.Invoke(PopstationEventEnum.GetIsoSize, disc.IsoSize);
                 Notify?.Invoke(PopstationEventEnum.ExtractStart, disc.Index);
@@ -248,13 +272,13 @@ namespace Popstation
                 }
 
                 if (cancellationToken.IsCancellationRequested) return;
-                
+
                 TempFiles.Remove(path);
 
                 if (!extractInfo.CreateCuesheet) return;
 
 
-                var cueFile = TOCtoCUE(disc.TOC, Path.GetFileName(path));
+                var cueFile = TOCHelper.TOCtoCUE(disc.TOC, Path.GetFileName(path));
 
                 CueFileWriter.Write(cueFile, cuePath);
 
@@ -294,56 +318,7 @@ namespace Popstation
             Notify.Invoke(PopstationEventEnum.ConvertProgress, bytes);
         }
 
-        private static CueFile TOCtoCUE(List<TOCEntry> tocEntries, string dataPath)
-        {
-            var cueFile = new CueFileEntry()
-            {
-                FileName = dataPath,
-                Tracks = new List<CueTrack>(),
-                FileType = "BINARY"
-            };
-
-            var audioLeadin = new IndexPosition { Seconds = 2 };
-
-            foreach (var track in tocEntries)
-            {
-                var position = new IndexPosition
-                {
-                    Minutes = track.Minutes,
-                    Seconds = track.Seconds,
-                    Frames = track.Frames,
-                };
-
-                var indexes = new List<CueIndex>();
-
-                if (track.TrackType == TrackTypeEnum.Audio)
-                {
-                    indexes.Add(new CueIndex()
-                    {
-                        Number = 0,
-                        Position = position - audioLeadin,
-                    });
-                }
-
-                indexes.Add(new CueIndex()
-                {
-                    Number = 1,
-                    Position = position,
-                });
-
-                var cueTrack = new CueTrack()
-                {
-                    DataType = TOCHelper.GetDataType(track.TrackType),
-                    Indexes = indexes,
-                    Number = track.TrackNo
-                };
-
-
-                cueFile.Tracks.Add(cueTrack);
-            }
-
-            return new CueFile(new[] { cueFile });
-        }
+       
 
     }
 

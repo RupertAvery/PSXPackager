@@ -38,6 +38,16 @@ namespace Popstation
             }
         }
 
+        private Resource(ResourceType resourceType)
+        {
+            ResourceType = resourceType;
+        }
+
+        public static Resource Empty(ResourceType resourceType)
+        {
+            return new Resource(resourceType);
+        }
+
         public void Write(Stream stream)
         {
             if (_file != null)

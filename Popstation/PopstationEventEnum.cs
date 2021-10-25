@@ -40,6 +40,7 @@
         Warning,
         Info,
         Error,
-        FileName
+        FileName,
+        Cancelled
     }
 }

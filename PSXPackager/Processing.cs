@@ -7,7 +7,9 @@ using System.Threading;
 using DiscUtils.Iso9660;
 using Popstation;
 using Popstation.Cue;
+using Popstation.Games;
 using Popstation.M3u;
+using Popstation.Notification;
 using Popstation.Pbp;
 using SevenZip;
 
@@ -90,7 +92,14 @@ namespace PSXPackager
 
                     if (FileExtensionHelper.IsPbp(file))
                     {
-                        ExtractPbp(file, options, cancellationToken);
+                        if (!string.IsNullOrEmpty(options.ImportResources))
+                        {
+                            RepackPBP(file, options, cancellationToken);
+                        }
+                        else
+                        {
+                            ExtractPbp(file, options, cancellationToken);
+                        }
                     }
                     else
                     {
@@ -358,54 +367,15 @@ namespace PSXPackager
             _notifier.Notify(PopstationEventEnum.DecompressProgress, e.PercentDone);
         }
 
-        static string FindGameId(string srcIso)
+        static string GetPBPGameId(string srcPbp)
         {
-            var regex = new Regex("(SCUS|SLUS|SLES|SCES|SCED|SLPS|SLPM|SCPS|SLED|SLPS|SIPS|ESPM|PBPX)[_-](\\d{3})\\.(\\d{2})", RegexOptions.IgnoreCase);
-            var bootRegex = new Regex("BOOT\\s*=\\s*cdrom:\\\\?(?:.*?\\\\)?(.*?);1");
-
-            using (var stream = new FileStream(srcIso, FileMode.Open))
+            using (var stream = new FileStream(srcPbp, FileMode.Open, FileAccess.Read))
             {
-                var cdReader = new CDReader(stream, false, 2352);
-
-                // Why doesn't a root file check not work?
-                //foreach (var file in cdReader.GetFiles("\\"))
-                //{
-                //    var filename = file.Substring(1, file.LastIndexOf(";"));
-                //    var match = regex.Match(filename);
-                //    if (match.Success)
-                //    {
-                //        gameId = $"{match.Groups[1].Value}{match.Groups[2].Value}{match.Groups[3].Value}";
-                //        break;
-                //    }
-                //}
-                var syscnfFound = false;
-
-                foreach (var file in cdReader.GetFiles("\\"))
-                {
-                    var filename = file.Substring(1, file.LastIndexOf(";") - 1);
-                    if (filename != "SYSTEM.CNF") continue;
-
-                    syscnfFound = true;
-
-                    using (var datastream = cdReader.OpenFile(file, FileMode.Open))
-                    {
-                        datastream.Seek(24, SeekOrigin.Begin);
-                        var textReader = new StreamReader(datastream);
-                        var bootLine = textReader.ReadLine();
-                        var bootmatch = bootRegex.Match(bootLine);
-                        if (!bootmatch.Success) continue;
-
-                        var match = regex.Match(bootmatch.Groups[1].Value);
-                        if (match.Success)
-                        {
-                            return $"{match.Groups[1].Value}{match.Groups[2].Value}{match.Groups[3].Value}";
-                        }
-                    }
-                }
+                var pbpStreamReader = new PbpReader(stream);
+                return (string)pbpStreamReader.SFOData.Entries.First(e => e.Key == SFOKeys.DISC_ID).Value;
             }
-
-            return null;
         }
+
 
         private GameEntry GetDummyGame(string gameId, string gameTitle)
         {
@@ -457,18 +427,13 @@ namespace PSXPackager
             CancellationToken cancellationToken)
         {
             var appPath = ApplicationInfo.AppPath;
-            var gameId = FindGameId(srcIsos[0]);
-            var game = GetGameEntry(gameId, srcIsos[0], false);
+            var srcIso = srcIsos[0];
+            var gameId = GameDB.FindGameId(srcIso);
+            var game = GetGameEntry(gameId, srcIso, false);
 
             if (!string.IsNullOrEmpty(processOptions.GenerateResourceFolders))
             {
-                var path = GetResouceFolderPath(processOptions, processOptions.GenerateResourceFolders, game, srcIsos[0], true);
-
-                if (!Directory.Exists(path))
-                {
-                    Directory.CreateDirectory(path);
-                }
-
+                GenerateResourceFolders(processOptions, game, srcIso);
                 return true;
             }
 
@@ -489,11 +454,11 @@ namespace PSXPackager
                 FileNameFormat = processOptions.FileNameFormat,
             };
 
-            SetResources(processOptions, options, game, srcIsos[0]);
+            SetResources(processOptions, options, game, srcIso);
 
             for (var i = 0; i < srcIsos.Length; i++)
             {
-                gameId = FindGameId(srcIsos[i]);
+                gameId = GameDB.FindGameId(srcIso);
                 game = GetGameEntry(gameId, srcIsos[i]);
 
                 options.DiscInfos.Add(new DiscInfo()
@@ -523,7 +488,7 @@ namespace PSXPackager
         private string GetResouceFolderPath(ProcessOptions processOptions, string mode, GameEntry entry, string srcIso, bool forGenerate = false)
         {
             string path;
-            
+
             if (!string.IsNullOrEmpty(mode))
             {
                 var filename = Path.GetFileNameWithoutExtension(srcIso);
@@ -534,10 +499,10 @@ namespace PSXPackager
                     path = processOptions.ResourceFoldersPath;
                 }
 
-                switch (mode)
+                switch (mode.ToLower())
                 {
                     case "gameid":
-                        path = Path.Combine(path, entry.GameID);
+                        path = Path.Combine(path, entry.ScannerID);
                         break;
                     case "title":
                         path = Path.Combine(path, entry.GameName);
@@ -578,7 +543,7 @@ namespace PSXPackager
 
             Resource GetResourceOrDefault(ResourceType type, string filename)
             {
-                var resourcePath =  Path.Combine(path, filename);
+                var resourcePath = Path.Combine(path, filename);
                 if (!File.Exists(resourcePath))
                 {
                     resourcePath = Path.Combine(defaultPath, filename);
@@ -593,6 +558,24 @@ namespace PSXPackager
             options.Snd0 = GetResourceOrDefault(ResourceType.SND0, "SND0.AT3");
         }
 
+        private void GenerateResourceFolders(ProcessOptions processOptions, GameEntry game, string srcIso)
+        {
+            var path = GetResouceFolderPath(processOptions, processOptions.GenerateResourceFolders, game, srcIso, true);
+
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+
+
+            if (processOptions.GenerateResourceFolders.ToLower() == "gameid")
+            {
+                using (File.Create(Path.Combine(path, game.GameName)))
+                {
+                }
+            }
+        }
+
         private bool ConvertIso(
             string srcIso,
             string srcToc,
@@ -600,18 +583,12 @@ namespace PSXPackager
             CancellationToken cancellationToken)
         {
             var appPath = ApplicationInfo.AppPath;
-            var gameId = FindGameId(srcIso);
+            var gameId = GameDB.FindGameId(srcIso);
             var game = GetGameEntry(gameId, srcIso, false);
 
             if (!string.IsNullOrEmpty(processOptions.GenerateResourceFolders))
             {
-                var path = GetResouceFolderPath(processOptions, processOptions.GenerateResourceFolders, game, srcIso, true);
-
-                if (!Directory.Exists(path))
-                {
-                    Directory.CreateDirectory(path);
-                }
-
+                GenerateResourceFolders(processOptions, game, srcIso);
                 return true;
             }
 
@@ -655,6 +632,67 @@ namespace PSXPackager
             };
 
             return popstation.Convert(options, cancellationToken);
+        }
+
+        private bool RepackPBP(string srcPbp,
+            ProcessOptions processOptions,
+            CancellationToken cancellationToken)
+        {
+            var appPath = ApplicationInfo.AppPath;
+            var gameId = GetPBPGameId(srcPbp);
+            var game = GetGameEntry(gameId, srcPbp, false);
+
+            if (!string.IsNullOrEmpty(processOptions.GenerateResourceFolders))
+            {
+                var path = GetResouceFolderPath(processOptions, processOptions.GenerateResourceFolders, game, srcPbp, true);
+
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
+
+                return true;
+            }
+
+            var options = new ConvertOptions()
+            {
+                DiscInfos = new List<DiscInfo>()
+                {
+                    new DiscInfo()
+                    {
+                        GameID = game.ScannerID,
+                        GameTitle = game.SaveDescription,
+                        GameName = game.GameName,
+                        Region = game.Format,
+                        MainGameID = game.SaveFolderName,
+                        SourceIso = srcPbp,
+                    }
+                },
+                DestinationPbp = Path.Combine(processOptions.OutputPath, $"{game.GameName}.PBP"),
+                MainGameTitle = game.GameName,
+                MainGameRegion = game.Format,
+                MainGameID = game.SaveFolderName,
+                SaveTitle = game.SaveDescription,
+                SaveID = game.SaveFolderName,
+                BasePbp = Path.Combine(appPath, "Resources", "BASE.PBP"),
+                CompressionLevel = processOptions.CompressionLevel,
+                CheckIfFileExists = processOptions.CheckIfFileExists,
+                SkipIfFileExists = processOptions.SkipIfFileExists,
+                FileNameFormat = processOptions.FileNameFormat,
+            };
+
+            SetResources(processOptions, options, game, srcPbp);
+
+            _notifier.Notify(PopstationEventEnum.Info, $"Using Title '{game.GameName}'");
+
+            var popstation = new Popstation.Popstation
+            {
+                ActionIfFileExists = _eventHandler.ActionIfFileExists,
+                Notify = _notifier.Notify,
+                TempFiles = tempFiles
+            };
+
+            return popstation.Repack(options, cancellationToken);
         }
 
         private void ExtractPbp(string srcPbp,
