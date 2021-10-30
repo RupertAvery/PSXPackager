@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using Popstation.Cue;
-
-namespace Popstation.Pbp
+﻿namespace PSXPackager.Common
 {
     public class TOCEntry
     {

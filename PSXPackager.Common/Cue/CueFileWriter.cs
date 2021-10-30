@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace Popstation.Cue
+namespace PSXPackager.Common.Cue
 {
     public class CueFileWriter
     {

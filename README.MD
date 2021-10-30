@@ -56,7 +56,7 @@ The `-o` or `output` parameter is optional. It specifies the folder where the th
 
 ```
 
-## Convert a .7z, .BIN, .CUE, .ISO or .IMG to a .PBP
+## Convert a .BIN, .CUE, .ISO, .IMG or .7z to a .PBP
 
 PSXPackager supports several input formats. Simply pass the path to the archive, CUE sheet, or image with the `-i` parameter.
 
@@ -64,9 +64,9 @@ PSXPackager supports several input formats. Simply pass the path to the archive,
 psxpackager -i <path_to_file> [-o <output_path>] [-l <compression_level>] [-y]
 ```
 
- Since 7z is used for decompression, any format the 7z supports, such as `.rar` or `.zip` can be used as an input, so long as PSXPackager can find an image or CUE sheet within.
+Since 7z is used for decompression, any format the 7z supports, such as `.rar` or `.zip` can be used as an input, so long as PSXPackager can find an image or CUE sheet within the archive.
 
-The output path is optional. If not specified the path of the input file will be used.
+The output path is optional. If not specified, the path of the input file will be used.
 
 PSXPackager will prompt if a file exists before overwriting it. Use the `-x` argument to overwrite all files in the output directory.
 
@@ -78,24 +78,28 @@ Archives will be decompressed to a temporary folder in `%TEMP%\PSXPackager`, and
 
 PSXPackager checks the file extension to decide whether to extract or convert, so the syntax remains the same. The output will always be a `.bin` + `.cue`.
 
-Multi-disc PBPs are supported. If no disc is specified, all discs will be extracted. Specify the discs to extract with the `-d` or `--disc` option, which takes a comma-separated list of disc numbers to extract, e.g. `-d 1,2`
+Extracting from Multi-disc PBPs are supported. Specify the discs to extract with the `-d` or `--disc` option, which takes a comma-separated list of disc numbers to extract, e.g. `-d 1,2`. If this option is not specified, all discs will be extracted.
 
 ```
 psxpackager -i <path_to_pbp> [-o <output_path>] [-d <list_of_discs>]
 ```
 
-## Convert multiple .BIN files to a multi-disc .PBP
+## Merging Multi-Track Games
 
-Multi-disc PBPs are supported by PSXPackager.
+Some games such as Tomb Raider 
+
+## Creating Multi-disc PBPs
+
+PBPs containing more than one disc are supported by PSXPackager. This allows you to compress a multi-disc game such as Final Fantasy VII (3 discs) into a single PBP. 
 
 First, create an `.m3u` file containing a list of the discs in the order you wish them to appear in the PBP.
 
 For example, create a text file with the following contents and save as `Final Fantasy VIII.m3u`
 
 ```
-Final Fantasy VIII - Disc 1.bin
-Final Fantasy VIII - Disc 2.bin
-Final Fantasy VIII - Disc 3.bin
+Final Fantasy VIII - Disc 1.cue
+Final Fantasy VIII - Disc 2.cue
+Final Fantasy VIII - Disc 3.cue
 ```
 
 Call `psxpackager` with the `.m3u` as the input file.
@@ -105,10 +109,6 @@ psxpackager -i "Final Fantasy VIII.m3u" [-o <output_path>]
 ```
 
 The file  `Final Fantasy VIII.PBP` will be created which contains the three discs in one file.
-
-## Convert multiple .CUE files to a multi-disc .PBP
-
-You can also use `.cue` files in the `.m3u`. If the `.cue` contains a single `.bin` track, it will use the `.bin` as the source image. If the `.cue` file contains mulitple tracks, such as audio tracks, the files will be merged into a single `.bin`. 
 
 ## Batch Conversion
 

@@ -10,9 +10,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using Popstation;
-using Popstation.Cue;
-using Popstation.Games;
 using Popstation.Pbp;
+using PSXPackager.Common;
+using PSXPackager.Common.Cue;
+using PSXPackager.Common.Games;
 using PSXPackagerGUI.Controls;
 using PSXPackagerGUI.Models;
 
@@ -508,17 +509,22 @@ namespace PSXPackagerGUI.Pages
 
         private void SaveImage_OnClick(object sender, RoutedEventArgs e)
         {
+            var context = ((MenuItem)sender).DataContext as Disc;
+            var pbpRegex = new Regex("//pbp/disc(\\d)/(.*\\.pbp)", RegexOptions.IgnoreCase);
+
+            var game = _gameDb.GetEntryByScannerID(context.GameID);
+
+
             var saveFileDialog = new Ookii.Dialogs.Wpf.VistaSaveFileDialog();
+            saveFileDialog.CheckFileExists = true;
+            saveFileDialog.FileName = $"{game.GameName}.bin";
             saveFileDialog.Filter = "BIN files|*.bin|All files|*.*";
             saveFileDialog.DefaultExt = ".bin";
             saveFileDialog.AddExtension = true;
-            saveFileDialog.ShowDialog();
+            var result = saveFileDialog.ShowDialog();
 
-            if (!string.IsNullOrEmpty(saveFileDialog.FileName))
+            if (result.GetValueOrDefault(false))
             {
-                var context = ((MenuItem)sender).DataContext as Disc;
-                var pbpRegex = new Regex("//pbp/disc(\\d)/(.*\\.pbp)", RegexOptions.IgnoreCase);
-
                 var sourceUrl = _viewModel.Discs.Single(d => d.Index == context.Index).SourceUrl;
 
                 var match = pbpRegex.Match(sourceUrl);

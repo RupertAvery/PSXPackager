@@ -21,6 +21,7 @@
   <ItemGroup> 
     <ProjectReference Include="..\DiscUtils.Iso9660\DiscUtils.Iso9660.csproj" />
     <ProjectReference Include="..\Popstation\Popstation.csproj" />
+    <ProjectReference Include="..\PSXPackager.Common\PSXPackager.Common.csproj" />
   </ItemGroup>
 
 

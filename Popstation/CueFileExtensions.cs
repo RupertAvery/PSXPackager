@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Popstation.Cue;
+using PSXPackager.Common;
+using PSXPackager.Common.Cue;
 
 namespace Popstation
 {

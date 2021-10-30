@@ -1,4 +1,4 @@
-﻿namespace Popstation.Notification
+﻿namespace PSXPackager.Common.Notification
 {
     public interface INotifier
     {

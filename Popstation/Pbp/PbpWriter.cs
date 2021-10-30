@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
-using Popstation.Cue;
 using Popstation.Iso;
+using PSXPackager.Common;
+using PSXPackager.Common.Cue;
 
 namespace Popstation.Pbp
 {

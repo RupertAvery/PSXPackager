@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace PSXPackager
+namespace PSXPackager.Common
 {
     public static class FileExtensionHelper
     {

@@ -1,4 +1,4 @@
-﻿namespace Popstation
+﻿namespace PSXPackager.Common
 {
     public enum PopstationEventEnum
     {

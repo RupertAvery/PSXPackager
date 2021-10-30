@@ -61,6 +61,10 @@
       <Project>{28756239-6D08-4ED2-80FF-7F389858C782}</Project>
       <Name>Popstation</Name>
     </ProjectReference>
+    <ProjectReference Include="..\PSXPackager.Common\PSXPackager.Common.csproj">
+      <Project>{52B20BFE-93BE-4167-9F58-D04508698881}</Project>
+      <Name>PSXPackager.Common</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

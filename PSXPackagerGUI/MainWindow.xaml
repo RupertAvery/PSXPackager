@@ -5,24 +5,23 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:models="clr-namespace:PSXPackagerGUI.Models"
         xmlns:controls="clr-namespace:PSXPackagerGUI.Controls"
+        xmlns:local="clr-namespace:PSXPackagerGUI"
+        xmlns:converters="clr-namespace:PSXPackagerGUI.Converters"
         mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance local:MainModel, IsDesignTimeCreatable=True}"
         Title="PSXPackager" Height="609" Width="807">
+    <Window.Resources>
+        <converters:ModeVisibilityConverter x:Key="ModeVisibilityConverter"></converters:ModeVisibilityConverter>
+        <local:AppMode x:Key="Single">Single</local:AppMode>
+        <local:AppMode x:Key="Batch">Batch</local:AppMode>
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="40"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
         <Menu Margin="5,2,5,2">
-            <MenuItem x:Name="OpenFile" Click="OpenFile_OnClick" ToolTip="Open File">
-                <MenuItem.Header>
-                    <controls:AutoDisableImage Height="32" Width="32">
-                        <Image.Source>
-                            <BitmapImage  UriSource="./Resources/open-48x48.png"/>
-                        </Image.Source>
-                    </controls:AutoDisableImage>
-                </MenuItem.Header>
-            </MenuItem>
-            <MenuItem x:Name="NewPBP" Click="NewPBP_OnClick" ToolTip="New PBP">
+            <MenuItem x:Name="SingleMode" Click="SingleMode_OnClick" ToolTip="Single Mode">
                 <MenuItem.Header>
                     <controls:AutoDisableImage Height="32" Width="32">
                         <Image.Source>
@@ -31,7 +30,51 @@
                     </controls:AutoDisableImage>
                 </MenuItem.Header>
             </MenuItem>
+            <MenuItem x:Name="BatchMode" Click="BatchMode_OnClick" ToolTip="Batch Mode">
+                <MenuItem.Header>
+                    <Grid>
+                        <controls:AutoDisableImage Height="16" Width="16" Margin="-15,-15,0,0">
+                            <Image.Source>
+                                <BitmapImage  UriSource="./Resources/package-48x48.png"/>
+                            </Image.Source>
+                        </controls:AutoDisableImage>
+
+                        <controls:AutoDisableImage Height="16" Width="16">
+                            <Image.Source>
+                                <BitmapImage  UriSource="./Resources/package-48x48.png"/>
+                            </Image.Source>
+                        </controls:AutoDisableImage>
+
+                        <controls:AutoDisableImage Height="16" Width="16" Margin="15,15,0,0">
+                            <Image.Source>
+                                <BitmapImage  UriSource="./Resources/package-48x48.png"/>
+                            </Image.Source>
+                        </controls:AutoDisableImage>
+                    </Grid>
+                </MenuItem.Header>
+            </MenuItem>
+            <MenuItem x:Name="OpenFile" Click="OpenFile_OnClick" ToolTip="Open File">
+                <MenuItem.Visibility >
+                    <MultiBinding Converter="{StaticResource ModeVisibilityConverter}">
+                        <Binding Path="Mode"></Binding>
+                        <Binding Source="{StaticResource Single}"></Binding>
+                    </MultiBinding>
+                </MenuItem.Visibility>
+                <MenuItem.Header>
+                    <controls:AutoDisableImage Height="32" Width="32">
+                        <Image.Source>
+                            <BitmapImage  UriSource="./Resources/open-48x48.png"/>
+                        </Image.Source>
+                    </controls:AutoDisableImage>
+                </MenuItem.Header>
+            </MenuItem>
             <MenuItem x:Name="Save" Click="Save_OnClick" ToolTip="Save" IsEnabled="{Binding IsDirty}">
+                <MenuItem.Visibility >
+                    <MultiBinding Converter="{StaticResource ModeVisibilityConverter}">
+                        <Binding Path="Mode"></Binding>
+                        <Binding Source="{StaticResource Single}"></Binding>
+                    </MultiBinding>
+                </MenuItem.Visibility>
                 <MenuItem.Header>
                     <controls:AutoDisableImage Height="32" Width="32">
                         <Image.Source>
@@ -40,6 +83,7 @@
                     </controls:AutoDisableImage>
                 </MenuItem.Header>
             </MenuItem>
+            <Separator Width="2"/>
             <MenuItem x:Name="Settings" Click="Settings_OnClick" ToolTip="Save">
                 <MenuItem.Header>
                     <controls:AutoDisableImage Height="32" Width="32">
@@ -49,8 +93,9 @@
                     </controls:AutoDisableImage>
                 </MenuItem.Header>
             </MenuItem>
+
         </Menu>
-        <Frame Grid.Row="1" x:Name="CurrentPage"></Frame>
+        <Frame Grid.Row="1" x:Name="CurrentPage" NavigationUIVisibility="Hidden"></Frame>
     </Grid>
 
 </Window>

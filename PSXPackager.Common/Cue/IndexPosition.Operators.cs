@@ -1,4 +1,4 @@
-﻿namespace Popstation.Cue
+﻿namespace PSXPackager.Common.Cue
 {
     public partial class IndexPosition
     {

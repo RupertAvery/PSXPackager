@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Popstation.Notification
+namespace PSXPackager.Common.Notification
 {
     public interface IEventHandler
     {

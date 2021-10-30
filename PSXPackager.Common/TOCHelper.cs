@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Popstation.Cue;
-using Popstation.Pbp;
+using PSXPackager.Common.Cue;
 
-namespace Popstation
+namespace PSXPackager.Common
 {
     public static class CueTrackType
     {

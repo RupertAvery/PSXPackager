@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using Popstation.Iso;
+using PSXPackager.Common;
 
 namespace Popstation.Pbp
 {

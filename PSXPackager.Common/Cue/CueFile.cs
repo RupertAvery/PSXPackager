@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Popstation.Cue
+namespace PSXPackager.Common.Cue
 {
     public class CueFile
     {

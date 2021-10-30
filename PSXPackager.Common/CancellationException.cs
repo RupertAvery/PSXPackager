@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Popstation
+namespace PSXPackager.Common
 {
     public class CancellationException : Exception
     {

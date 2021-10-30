@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace PSXPackager
+namespace PSXPackager.Common
 {
     public class ProcessOptions
     {

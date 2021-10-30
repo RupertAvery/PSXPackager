@@ -5,11 +5,103 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:PSXPackagerGUI.Pages"
       mc:Ignorable="d" 
+      d:DataContext="{d:DesignInstance local:BatchModel, IsDesignTimeCreatable=True}"
       d:DesignHeight="450" d:DesignWidth="800"
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
       Title="Batch">
 
     <Grid>
-        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="120"/>
+            <RowDefinition/>
+            <RowDefinition Height="30"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="100"/>
+                <ColumnDefinition MinWidth="200"/>
+                <ColumnDefinition Width="100"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="60"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="30"/>
+                <RowDefinition Height="30"/>
+                <RowDefinition Height="30"/>
+                <RowDefinition Height="30"/>
+                <RowDefinition Height="30"/>
+            </Grid.RowDefinitions>
+            <Label Grid.Row="0" Grid.Column="0" Margin="2,2,2,2">Input Folder:</Label>
+            <TextBox Grid.Row="0" Grid.Column="1" Margin="2,2,2,2" VerticalContentAlignment="Center" Text="{Binding InputPath}"></TextBox>
+            <Button Grid.Row="0" Grid.Column="2" Margin="2,2,2,2" Command="{Binding BrowseInputCommand}">Browse</Button>
+
+            <Label Grid.Row="1" Grid.Column="0" Margin="2,2,2,2">Convert From:</Label>
+            <RadioButton Grid.Row="1" Grid.Column="1" Margin="2,8,2,7" Grid.ColumnSpan="2" IsChecked="{Binding ConvertImageToPbp}">Image to .PBP</RadioButton>
+            <RadioButton Grid.Row="1" Grid.Column="1" Margin="120,8,2,7" Grid.ColumnSpan="2"  IsChecked="{Binding ConvertPbpToImage}">.PBP to .BIN</RadioButton>
+
+            <Label Grid.Row="2" Grid.Column="0" Margin="2,2,2,2">Image types:</Label>
+            <StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" Orientation="Horizontal">
+                <CheckBox Margin="2,8,2,2" IsChecked="{Binding IsBinChecked}">.BIN / .CUE</CheckBox>
+                <CheckBox Margin="2,8,2,2" IsChecked="{Binding IsM3uChecked}">.M3U</CheckBox>
+                <CheckBox Margin="2,8,2,2" IsChecked="{Binding IsImgChecked}">.IMG</CheckBox>
+                <CheckBox Margin="2,8,2,2" IsChecked="{Binding IsIsoChecked}">.ISO</CheckBox>
+                <!--<CheckBox Margin="2,8,2,2">.7Z</CheckBox>
+                <CheckBox Margin="2,8,2,2">.ZIP</CheckBox>
+                <CheckBox Margin="2,8,2,2">.RAR</CheckBox>-->
+            </StackPanel>
+            <Label Grid.Row="3" Grid.Column="0" Margin="2,2,2,2">Output Folder:</Label>
+            <TextBox Grid.Row="3" Grid.Column="1" Margin="2,2,2,2" VerticalContentAlignment="Center" Text="{Binding OutputPath}"></TextBox>
+            <Button Grid.Row="3" Grid.Column="2" Margin="2,2,2,2" Command="{Binding BrowseOutputCommand}">Browse</Button>
+
+            <Button Grid.Row="0" Grid.Column="4" Grid.RowSpan="2" Margin="2,2,2,2" ToolTip="Scan" Command="{Binding ScanCommand}">
+                <Image Margin="5,5,5,5">
+                    <Image.Source>
+                        <BitmapImage  UriSource="../Resources/search-48x48.png"/>
+                    </Image.Source>
+                </Image>
+            </Button>
+            <Button Grid.Row="2" Grid.Column="4" Grid.RowSpan="2" Margin="2,2,2,2" ToolTip="Start" Command="{Binding ProcessCommand}">
+                <Image Margin="5,5,5,5">
+                    <Image.Source>
+                        <BitmapImage  UriSource="../Resources/start-48x48.png"/>
+                    </Image.Source>
+                </Image>
+            </Button>
+
+        </Grid>
+        <Grid Grid.Row="1">
+            <ListView ItemsSource="{Binding BatchEntries}">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Margin" Value="2,2,2,2"></Setter>
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" Name="TitleColumnDefinition"/>
+                                <ColumnDefinition Width="120"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock TextTrimming="CharacterEllipsis" Width="{Binding ActualWidth, ElementName=TitleColumnWidth}" VerticalAlignment="Center" Grid.Column="0" Text="{Binding Path}"></TextBlock>
+                            <ProgressBar Grid.Column="1" Maximum="{Binding MaxProgress}" Value="{Binding Progress}"></ProgressBar>
+                            <Label Grid.Column="1" Content="{Binding Status}"></Label>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="138"/>
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" x:Name="TitleColumnWidth"/>
+            </Grid>
+        </Grid>
+        <Grid Grid.Row="2">
+            <ProgressBar Margin="2,5,5,5" Maximum="{Binding MaxProgress}" Value="{Binding Progress}"></ProgressBar>
+            <Label Margin="2,2,2,2" Content="{Binding Status}"></Label>
+        </Grid>
     </Grid>
 </Page>

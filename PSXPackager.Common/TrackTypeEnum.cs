@@ -1,4 +1,4 @@
-﻿namespace Popstation.Pbp
+﻿namespace PSXPackager.Common
 {
     public enum TrackTypeEnum
     {

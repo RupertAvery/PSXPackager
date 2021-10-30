@@ -1,7 +1,5 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Popstation;
-using Popstation.Cue;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using PSXPackager.Common.Cue;
 
 namespace UnitTestProject
 {

@@ -7,6 +7,8 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Popstation;
+using PSXPackager.Common;
+using PSXPackager.Common.Games;
 
 namespace PSXPackager
 {
@@ -212,7 +214,9 @@ namespace PSXPackager
                 notifier.Add(logNotifier);
             }
 
-            var processing = new Processing(notifier, eventHandler);
+            var gameDb = new GameDB(Path.Combine(ApplicationInfo.AppPath, "Resources", "gameInfo.db"));
+
+            var processing = new Processing(notifier, eventHandler, gameDb);
 
             notifier.Notify(PopstationEventEnum.ProcessingStart, null);
 

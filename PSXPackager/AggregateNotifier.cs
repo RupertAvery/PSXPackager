@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Popstation;
-using Popstation.Notification;
+using PSXPackager.Common;
+using PSXPackager.Common.Notification;
 
 namespace PSXPackager
 {

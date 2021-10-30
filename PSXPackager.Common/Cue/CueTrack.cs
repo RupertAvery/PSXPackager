@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Popstation.Cue
+namespace PSXPackager.Common.Cue
 {
     public class CueTrack
     {

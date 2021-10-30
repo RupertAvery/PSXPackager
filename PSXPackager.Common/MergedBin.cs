@@ -1,8 +1,6 @@
-﻿using Popstation;
-using System.Collections.Generic;
-using Popstation.Cue;
+﻿using PSXPackager.Common.Cue;
 
-namespace PSXPackager
+namespace PSXPackager.Common
 {
     public class MergedBin
     {

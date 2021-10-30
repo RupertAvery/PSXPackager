@@ -2,31 +2,30 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading;
-using DiscUtils.Iso9660;
-using Popstation;
-using Popstation.Cue;
-using Popstation.Games;
 using Popstation.M3u;
-using Popstation.Notification;
 using Popstation.Pbp;
+using PSXPackager.Common;
+using PSXPackager.Common.Cue;
+using PSXPackager.Common.Games;
+using PSXPackager.Common.Notification;
 using SevenZip;
 
-namespace PSXPackager
+namespace Popstation
 {
     public class Processing
     {
         private readonly INotifier _notifier;
         private readonly IEventHandler _eventHandler;
-        private readonly GameDB _gameDb = new GameDB(Path.Combine(ApplicationInfo.AppPath, "Resources", "gameInfo.db"));
+        private readonly GameDB _gameDb;
 
         private List<string> tempFiles = new List<string>();
 
-        public Processing(INotifier notifier, IEventHandler eventHandler)
+        public Processing(INotifier notifier, IEventHandler eventHandler, GameDB gameDb)
         {
             _notifier = notifier;
             _eventHandler = eventHandler;
+            _gameDb = gameDb;
         }
 
         public bool ProcessFile(
@@ -362,7 +361,7 @@ namespace PSXPackager
         //    extractfilecallbackargs.CancelExtraction
         //}
 
-        private void ArchiveFileOnExtracting(object sender, ProgressEventArgs e)
+        private void ArchiveFileOnExtracting(object sender, SevenZip.ProgressEventArgs e)
         {
             _notifier.Notify(PopstationEventEnum.DecompressProgress, e.PercentDone);
         }
@@ -475,7 +474,7 @@ namespace PSXPackager
 
             _notifier?.Notify(PopstationEventEnum.Info, $"Using Title '{game.SaveDescription}'");
 
-            var popstation = new Popstation.Popstation
+            var popstation = new Popstation
             {
                 ActionIfFileExists = _eventHandler.ActionIfFileExists,
                 Notify = _notifier.Notify,
@@ -624,7 +623,7 @@ namespace PSXPackager
 
             _notifier.Notify(PopstationEventEnum.Info, $"Using Title '{game.GameName}'");
 
-            var popstation = new Popstation.Popstation
+            var popstation = new Popstation
             {
                 ActionIfFileExists = _eventHandler.ActionIfFileExists,
                 Notify = _notifier.Notify,
@@ -685,7 +684,7 @@ namespace PSXPackager
 
             _notifier.Notify(PopstationEventEnum.Info, $"Using Title '{game.GameName}'");
 
-            var popstation = new Popstation.Popstation
+            var popstation = new Popstation
             {
                 ActionIfFileExists = _eventHandler.ActionIfFileExists,
                 Notify = _notifier.Notify,
@@ -730,7 +729,7 @@ namespace PSXPackager
                 }
             };
 
-            var popstation = new Popstation.Popstation
+            var popstation = new Popstation
             {
                 ActionIfFileExists = _eventHandler.ActionIfFileExists,
                 Notify = _notifier.Notify,

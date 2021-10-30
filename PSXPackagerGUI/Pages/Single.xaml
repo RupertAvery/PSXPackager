@@ -28,21 +28,32 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition/>
-            <RowDefinition Height="35"/>
+            <RowDefinition Height="30"/>
         </Grid.RowDefinitions>
         <Grid Grid.Row="0" Margin="5,5,5,5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition />
                 <ColumnDefinition />
             </Grid.ColumnDefinitions>
+
             <GroupBox Header="Discs">
                 <Grid Margin="5,5,5,5">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="185"/>
-                        <RowDefinition/>
+                        <RowDefinition Height="1*"/>
                     </Grid.RowDefinitions>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="32"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="35"/>
+                            <ColumnDefinition Width="20"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="1" x:Name="TitleColumnWidth"/>
+                    </Grid>
                     <ListView Grid.Row="0" ItemsSource="{Binding Discs}" SelectedItem="{Binding SelectedDisc}"  
-                      Grid.Column="0" Height="185" VerticalAlignment="Top">
+                        ScrollViewer.HorizontalScrollBarVisibility="Hidden"
+                        Grid.Column="0" Height="185" VerticalAlignment="Top">
                         <ListView.ItemContainerStyle>
                             <Style TargetType="ListViewItem">
                                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -53,7 +64,7 @@
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="32"/>
-                                        <ColumnDefinition Width="*" Name="TitleColumnDefinition"/>
+                                        <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="20"/>
                                         <ColumnDefinition Width="20"/>
                                     </Grid.ColumnDefinitions>
@@ -62,9 +73,8 @@
                                             <BitmapImage  UriSource="../Resources/disc.png"/>
                                         </Image.Source>
                                     </controls:AutoDisableImage>
-                                    <TextBlock TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
-                                               Width="{Binding ElementName=TitleColumnDefinition, Path=Width}" VerticalAlignment="Center" Grid.Column="1" 
-                                   
+                                    <TextBlock TextTrimming="CharacterEllipsis"
+                                               Width="{Binding ElementName=TitleColumnWidth, Path=ActualWidth}" VerticalAlignment="Center" Grid.Column="1" 
                                                Foreground="{Binding IsEmpty, Converter={StaticResource IsEmptyBrushConverter}}">
                                         <TextBlock.Text>
                                             <MultiBinding Converter="{StaticResource IsoInformationConverter}">
@@ -147,8 +157,8 @@
 
         </Grid>
         <Grid Grid.Row="1">
-            <ProgressBar Maximum="{Binding MaxProgress}" Value="{Binding Progress}" Margin="5,2,5,5"></ProgressBar>
-            <Label Content="{Binding Status}" Margin="5,2,5,5"></Label>
+            <ProgressBar Maximum="{Binding MaxProgress}" Value="{Binding Progress}" Margin="2,5,5,5"></ProgressBar>
+            <Label Content="{Binding Status}"  Margin="2,2,2,2"></Label>
         </Grid>
     </Grid>
 </Page>

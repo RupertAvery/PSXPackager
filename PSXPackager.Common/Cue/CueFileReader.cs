@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace Popstation.Cue
+namespace PSXPackager.Common.Cue
 {
     public class CueFileReader
     {

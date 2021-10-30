@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using DiscUtils.Iso9660;
 
-namespace Popstation.Games
+namespace PSXPackager.Common.Games
 {
     public class GameDB
     {

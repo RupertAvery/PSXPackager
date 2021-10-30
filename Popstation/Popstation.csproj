@@ -14,11 +14,13 @@
 
   <ItemGroup>
     <PackageReference Include="SharpZipLib" Version="1.2.0" />
+    <PackageReference Include="Squid-Box.SevenZipSharp" Version="1.3.283" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DiscUtils.Core\DiscUtils.Core.csproj" />
     <ProjectReference Include="..\DiscUtils.Iso9660\DiscUtils.Iso9660.csproj" />
+    <ProjectReference Include="..\PSXPackager.Common\PSXPackager.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>
