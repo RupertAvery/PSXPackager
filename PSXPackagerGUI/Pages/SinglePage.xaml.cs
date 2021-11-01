@@ -10,10 +10,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using Popstation;
+using Popstation.Database;
 using Popstation.Pbp;
 using PSXPackager.Common;
 using PSXPackager.Common.Cue;
-using PSXPackager.Common.Games;
 using PSXPackagerGUI.Controls;
 using PSXPackagerGUI.Models;
 
@@ -22,11 +22,12 @@ namespace PSXPackagerGUI.Pages
     /// <summary>
     /// Interaction logic for Single.xaml
     /// </summary>
-    public partial class Single : Page
+    public partial class SinglePage : Page
     {
+        private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly Model _viewModel;
-        private readonly GameDB _gameDb = new GameDB(Path.Combine(ApplicationInfo.AppPath, "Resources", "gameInfo.db"));
-        private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+        private readonly SettingsModel _settings;
+        private readonly GameDB _gameDb;
 
         private IEnumerable<Disc> DummyDisc(int start, int count)
         {
@@ -36,8 +37,11 @@ namespace PSXPackagerGUI.Pages
             }
         }
 
-        public Single()
+        public SinglePage(SettingsModel settings, GameDB gameDb, CancellationTokenSource cancellationTokenSource)
         {
+            _settings = settings;
+            _gameDb = gameDb;
+            _cancellationTokenSource = cancellationTokenSource;
 
             InitializeComponent();
 
@@ -59,20 +63,7 @@ namespace PSXPackagerGUI.Pages
             //Closing += OnClosing;
         }
 
-        private void OnClosing(object sender, CancelEventArgs e)
-        {
-            if (_viewModel.IsBusy)
-            {
-                var result = MessageBox.Show("An operation is in progress. Are you sure you want to cancel?", "PSXPackager",
-                    MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.Yes);
-                if (result == MessageBoxResult.No)
-                {
-                    e.Cancel = true;
-                    return;
-                }
-            }
-            _cancellationTokenSource.Cancel();
-        }
+
 
         public void LoadPbp(string path)
         {
@@ -181,6 +172,8 @@ namespace PSXPackagerGUI.Pages
 
         private Window Window => Window.GetWindow(this);
 
+        public bool IsBusy => _viewModel.IsBusy;
+
         public void Save()
         {
             var discs = _viewModel.Discs.Where(d => d.SourceUrl != null).OrderBy(d => d.Index).ToList();
@@ -240,7 +233,7 @@ namespace PSXPackagerGUI.Pages
                     SaveTitle = game.SaveDescription,
                     SaveID = game.SaveFolderName,
                     BasePbp = Path.Combine(appPath, "Resources", "BASE.PBP"),
-                    CompressionLevel = 5,
+                    CompressionLevel = _settings.CompressionLevel,
                     //CheckIfFileExists = processOptions.CheckIfFileExists,
                     //SkipIfFileExists = processOptions.SkipIfFileExists,
                     //FileNameFormat = processOptions.FileNameFormat,

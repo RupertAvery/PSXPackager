@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using Popstation.Database;
 using Popstation.M3u;
 using Popstation.Pbp;
 using PSXPackager.Common;
 using PSXPackager.Common.Cue;
-using PSXPackager.Common.Games;
 using PSXPackager.Common.Notification;
 using SevenZip;
 
@@ -141,8 +141,8 @@ namespace Popstation
                                 }
                                 else
                                 {
-                                    _notifier?.Notify(PopstationEventEnum.Warning, $"Unsupported playlist entry '{fileEntry}'");
-                                    _notifier?.Notify(PopstationEventEnum.Warning, "Only the following are supported: .cue .img .bin .iso");
+                                    _notifier?.Notify(PopstationEventEnum.Error, $"Unsupported playlist entry '{fileEntry}'");
+                                    _notifier?.Notify(PopstationEventEnum.Error, "Only the following are supported: .cue .img .bin .iso");
                                     return false;
                                 }
                             }

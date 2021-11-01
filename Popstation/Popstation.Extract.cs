@@ -24,7 +24,19 @@ namespace Popstation
 
     public partial class Popstation
     {
-        private string GetFilename(string filenameFormat, string sourceFilename, string gameid, string maingameId, string title, string maintitle, string region)
+
+        public static bool CheckFormat(string filenameFormat)
+        {
+            var output = filenameFormat.Contains("%FILENAME%");
+            output |= filenameFormat.Contains("%GAMEID%");
+            output |= filenameFormat.Contains("%MAINGAMEID%");
+            output |= filenameFormat.Contains("%TITLE%");
+            output |= filenameFormat.Contains("%MAINTITLE%");
+            output |= filenameFormat.Contains("%REGION%");
+            return output;
+        }
+
+        public static string GetFilename(string filenameFormat, string sourceFilename, string gameid, string maingameId, string title, string maintitle, string region)
         {
             var output = filenameFormat.ToUpper().Replace("%FILENAME%", Path.GetFileNameWithoutExtension(sourceFilename));
             output = output.Replace("%GAMEID%", gameid);

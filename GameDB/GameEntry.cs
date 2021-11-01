@@ -1,4 +1,4 @@
-﻿namespace PSXPackager.Common.Games
+﻿namespace Popstation.Database
 {
     public class GameEntry
     {

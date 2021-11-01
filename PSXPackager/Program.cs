@@ -5,10 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Threading.Tasks;
 using Popstation;
+using Popstation.Database;
 using PSXPackager.Common;
-using PSXPackager.Common.Games;
 
 namespace PSXPackager
 {

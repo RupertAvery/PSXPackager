@@ -9,6 +9,7 @@
         xmlns:converters="clr-namespace:PSXPackagerGUI.Converters"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance local:MainModel, IsDesignTimeCreatable=True}"
+        Closing="OnClosing"
         Title="PSXPackager" Height="609" Width="807">
     <Window.Resources>
         <converters:ModeVisibilityConverter x:Key="ModeVisibilityConverter"></converters:ModeVisibilityConverter>

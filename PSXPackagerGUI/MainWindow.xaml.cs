@@ -1,4 +1,8 @@
-﻿using System.Windows;
+﻿using System.ComponentModel;
+using System.IO;
+using System.Threading;
+using System.Windows;
+using Popstation.Database;
 using PSXPackagerGUI.Pages;
 
 namespace PSXPackagerGUI
@@ -8,24 +12,44 @@ namespace PSXPackagerGUI
     /// </summary>
     public partial class MainWindow : Window
     {
-        private Single _single;
-        private Batch _batch;
-        private Settings _settings;
-        private MainModel _model;
+        private readonly SinglePage _singlePage;
+        private readonly BatchPage _batchPage;
+        private readonly SettingsPage _settings;
+        private readonly MainModel _model;
+        private readonly CancellationTokenSource _cancellationTokenSource;
+        private readonly GameDB _gameDb = new GameDB(Path.Combine(ApplicationInfo.AppPath, "Resources", "gameInfo.db"));
+
         public MainWindow()
         {
 
             InitializeComponent();
-            _single = new Single();
-            _batch = new Batch();
-            _settings = new Settings();
+
+            _cancellationTokenSource = new CancellationTokenSource();
+
+            _settings = new SettingsPage();
+
+            _singlePage = new SinglePage(_settings.Model, _gameDb, _cancellationTokenSource);
+            _batchPage = new BatchPage(_settings.Model, _gameDb, _cancellationTokenSource);
             _model = new MainModel();
             DataContext = _model;
             _model.Mode = AppMode.Single;
-            CurrentPage.Content = _single;
+            CurrentPage.Content = _singlePage;
         }
 
-
+        private void OnClosing(object sender, CancelEventArgs e)
+        {
+            if (_singlePage.IsBusy || _batchPage.IsBusy)
+            {
+                var result = MessageBox.Show("An operation is in progress. Are you sure you want to cancel?", "PSXPackager",
+                    MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.Yes);
+                if (result == MessageBoxResult.No)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+            }
+            _cancellationTokenSource.Cancel();
+        }
 
         private void OpenFile_OnClick(object sender, RoutedEventArgs e)
         {
@@ -34,18 +58,13 @@ namespace PSXPackagerGUI
             openFileDialog.ShowDialog();
             if (!string.IsNullOrEmpty(openFileDialog.FileName))
             {
-                _single.LoadPbp(openFileDialog.FileName);
+                _singlePage.LoadPbp(openFileDialog.FileName);
             }
-        }
-
-        private void NewPBP_OnClick(object sender, RoutedEventArgs e)
-        {
-            this.Save.IsEnabled = !this.Save.IsEnabled;
         }
 
         private void Save_OnClick(object sender, RoutedEventArgs e)
         {
-            _single.Save();
+            _singlePage.Save();
         }
         
         private void Settings_OnClick(object sender, RoutedEventArgs e)
@@ -53,20 +72,17 @@ namespace PSXPackagerGUI
             CurrentPage.Content = _settings;
         }
 
-        private void Batch_OnClick(object sender, RoutedEventArgs e)
-        {
-        }
 
         private void SingleMode_OnClick(object sender, RoutedEventArgs e)
         {
             _model.Mode = AppMode.Single;
-            CurrentPage.Content = _single;
+            CurrentPage.Content = _singlePage;
         }
 
         private void BatchMode_OnClick(object sender, RoutedEventArgs e)
         {
             _model.Mode = AppMode.Batch;
-            CurrentPage.Content = _batch;
+            CurrentPage.Content = _batchPage;
         }
     }
 }

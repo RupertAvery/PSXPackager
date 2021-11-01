@@ -1,59 +1,42 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Channels;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
+using Popstation.Database;
 using Popstation.M3u;
 using PSXPackager.Common.Cue;
-using Path = System.IO.Path;
 
 namespace PSXPackagerGUI.Pages
 {
-    /// <summary>
-    /// Interaction logic for Batch.xaml
-    /// </summary>
-    public partial class Batch : Page
-    {
-        private BatchModel _model;
-        private BatchController _controller;
-
-        public Batch()
-        {
-            InitializeComponent();
-            _model = new BatchModel();
-            _controller = new BatchController(_model, this, Dispatcher);
-            DataContext = _model;
-        }
-
-
-    }
-
     public class BatchController
     {
         private readonly BatchModel _model;
+        private readonly SettingsModel _settings;
         private readonly Page _page;
         private readonly Dispatcher _dispatcher;
+        private readonly GameDB _gameDb;
+        private readonly CancellationTokenSource _cancellationTokenSource;
 
         private Window Window => Window.GetWindow(_page);
 
-        public BatchController(BatchModel model, Page page, Dispatcher dispatcher)
+        public BatchController(BatchModel model, SettingsModel settings, Page page, Dispatcher dispatcher, GameDB gameDb,
+            CancellationTokenSource cancellationTokenSource)
         {
             _dispatcher = dispatcher;
+            _gameDb = gameDb;
+            _cancellationTokenSource = cancellationTokenSource;
             _model = model;
+            _settings = settings;
             _page = page;
+
+            _model.MaxProgress = 100;
+            _model.Progress = 0;
 
             _model.ConvertImageToPbp = true;
             _model.IsBinChecked = true;
@@ -154,6 +137,9 @@ namespace PSXPackagerGUI.Pages
                                 _model.BatchEntries.Add(new BatchEntryModel()
                                 {
                                     Path = file,
+                                    MaxProgress = 100,
+                                    Progress = 0,
+                                    Status = "Queued"
                                 });
                             });
                         }
@@ -174,6 +160,32 @@ namespace PSXPackagerGUI.Pages
                 MessageBox.Show(Window, "Invalid directory or directory not found", "Batch", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
+
+            var processor = new Processor(_dispatcher, _gameDb, _settings, new ProcessEventHandler());
+
+            foreach (var entry in _model.BatchEntries)
+            {
+                entry.HasError = false;
+                entry.MaxProgress = 100;
+                entry.Progress = 0;
+                entry.ErrorMessage = "";
+
+                processor.Add(new ConvertJob()
+                {
+                    Entry = entry
+                });
+            }
+
+            processor.Start(_model, _cancellationTokenSource.Token).ContinueWith(t =>
+            {
+                if (t.IsCompletedSuccessfully)
+                {
+                    _dispatcher.Invoke(() =>
+                    {
+                        MessageBox.Show(Window, "Conversion completed.", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Information);
+                    });
+                }
+            });
         }
 
         private void BrowseInput(object obj)
@@ -201,185 +213,5 @@ namespace PSXPackagerGUI.Pages
 
         }
     }
-
-    public class Processor
-    {
-        //private readonly Channel<ProcessOption> _channel = Channel.CreateUnbounded<int>();
-
-        public void AddJob()
-        {
-
-        }
-
-        public void ProcessJobs()
-        {
-            while (true)
-            {
-                //_channel.Reader.TryRead(out var )
-            }
-        }
-    }
-
-    public class BatchEntryModel : BaseNotifyModel
-    {
-        private string _path;
-        private double _maxProgress;
-        private double _progress;
-        private string _status;
-
-        public string Path
-        {
-            get => _path;
-            set => SetProperty(ref _path, value);
-        }
-
-        public double MaxProgress
-        {
-            get => _maxProgress;
-            set => SetProperty(ref _maxProgress, value);
-        }
-
-        public double Progress
-        {
-            get => _progress;
-            set => SetProperty(ref _progress, value);
-        }
-
-        public string Status
-        {
-            get => _status;
-            set => SetProperty(ref _status, value);
-        }
-    }
-
-    public class BatchModel : BaseNotifyModel
-    {
-        private ObservableCollection<BatchEntryModel> _batchEntries;
-        private string _inputPath;
-        private string _outputPath;
-        private ICommand _browseInputCommand;
-        private ICommand _browseOutputCommand;
-        private ICommand _scanCommand;
-        private ICommand _processCommand;
-        private bool _isScanning;
-        private bool _isProcessing;
-        private bool _isBinChecked;
-        private bool _isM3UChecked;
-        private bool _isIsoChecked;
-        private bool _isImgChecked;
-        private string _status;
-        private double _progress;
-        private double _maxProgress;
-        private bool _convertImageToPbp;
-        private bool _convertPbpToImage;
-
-        public ObservableCollection<BatchEntryModel> BatchEntries
-        {
-            get => _batchEntries;
-            set => SetProperty(ref _batchEntries, value);
-        }
-
-        public string InputPath
-        {
-            get => _inputPath;
-            set => SetProperty(ref _inputPath, value);
-        }
-
-        public string OutputPath
-        {
-            get => _outputPath;
-            set => SetProperty(ref _outputPath, value);
-        }
-
-        public ICommand BrowseInputCommand
-        {
-            get => _browseInputCommand;
-            set => SetProperty(ref _browseInputCommand, value);
-        }
-
-        public ICommand BrowseOutputCommand
-        {
-            get => _browseOutputCommand;
-            set => SetProperty(ref _browseOutputCommand, value);
-        }
-
-        public ICommand ScanCommand
-        {
-            get => _scanCommand;
-            set => SetProperty(ref _scanCommand, value);
-        }
-
-        public ICommand ProcessCommand
-        {
-            get => _processCommand;
-            set => SetProperty(ref _processCommand, value);
-        }
-
-        public bool IsScanning
-        {
-            get => _isScanning;
-            set => SetProperty(ref _isScanning, value);
-        }
-
-        public bool IsProcessing
-        {
-            get => _isProcessing;
-            set => SetProperty(ref _isProcessing, value);
-        }
-
-        public bool IsBinChecked
-        {
-            get => _isBinChecked;
-            set => SetProperty(ref _isBinChecked, value);
-        }
-
-        public bool IsM3uChecked
-        {
-            get => _isM3UChecked;
-            set => _isM3UChecked = value;
-        }
-
-        public bool IsIsoChecked
-        {
-            get => _isIsoChecked;
-            set => SetProperty(ref _isIsoChecked, value);
-        }
-
-        public bool IsImgChecked
-        {
-            get => _isImgChecked;
-            set => SetProperty(ref _isImgChecked, value);
-        }
-
-
-        public string Status
-        {
-            get => _status;
-            set => SetProperty(ref _status, value);
-        }
-
-        public double Progress
-        {
-            get => _progress;
-            set => SetProperty(ref _progress, value);
-        }
-
-        public double MaxProgress
-        {
-            get => _maxProgress;
-            set => SetProperty(ref _maxProgress, value);
-        }
-
-        public bool ConvertImageToPbp
-        {
-            get => _convertImageToPbp;
-            set => SetProperty(ref _convertImageToPbp, value);
-        }
-
-        public bool ConvertPbpToImage
-        {
-            get => _convertPbpToImage;
-            set => SetProperty(ref _convertPbpToImage, value);
-        }
-    }
 }
+
