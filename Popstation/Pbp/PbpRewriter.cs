@@ -28,8 +28,6 @@ namespace Popstation.Pbp
                 }
             }
 
-            Notify?.Invoke(PopstationEventEnum.ConvertComplete, null);
-
         }
     }
 

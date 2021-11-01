@@ -101,7 +101,14 @@ namespace Popstation.Pbp
 
                 WriteDisc(disc, iso_positions[ciso], psarOffset, true, outputStream, cancellationToken);
 
-                Notify?.Invoke(PopstationEventEnum.WriteComplete, null);
+                if (!cancellationToken.IsCancellationRequested)
+                {
+                    Notify?.Invoke(PopstationEventEnum.WriteComplete, null);
+                }
+                else
+                {
+                    return;
+                }
             }
 
             x = (uint)outputStream.Position;

@@ -16,6 +16,7 @@
     <None Remove="Resources\package-48x48.png" />
     <None Remove="Resources\search-48x48.png" />
     <None Remove="Resources\start-48x48.png" />
+    <None Remove="Resources\stop-48x48.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -37,6 +38,7 @@
     <Resource Include="Resources\package-48x48.png" />
     <Resource Include="Resources\search-48x48.png" />
     <Resource Include="Resources\start-48x48.png" />
+    <Resource Include="Resources\stop-48x48.png" />
   </ItemGroup>
 
 </Project>

@@ -2,17 +2,17 @@
 {
     public class BatchEntryModel : BaseNotifyModel
     {
-        private string _path;
+        private string _relativePath;
         private double _maxProgress;
         private double _progress;
         private string _status;
         private string _errorMessage;
         private bool _hasError;
 
-        public string Path
+        public string RelativePath
         {
-            get => _path;
-            set => SetProperty(ref _path, value);
+            get => _relativePath;
+            set => SetProperty(ref _relativePath, value);
         }
 
         public double MaxProgress

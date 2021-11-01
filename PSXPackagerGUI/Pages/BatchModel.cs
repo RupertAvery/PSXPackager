@@ -71,19 +71,27 @@ namespace PSXPackagerGUI.Pages
         public bool IsScanning
         {
             get => _isScanning;
-            set => SetProperty(ref _isScanning, value);
+            set
+            {
+                 SetProperty(ref _isScanning, value);
+                 OnPropertyChanged(nameof(IsBusy));
+            }
         }
 
         public bool IsProcessing
         {
             get => _isProcessing;
-            set => SetProperty(ref _isProcessing, value);
+            set
+            {
+                SetProperty(ref _isProcessing, value);
+                OnPropertyChanged(nameof(IsBusy));
+            }
         }
 
         public bool IsBinChecked
         {
             get => _isBinChecked;
-            set => SetProperty(ref _isBinChecked, value);
+            set => SetProperty(ref _isBinChecked, value); 
         }
 
         public bool IsM3uChecked
@@ -135,6 +143,7 @@ namespace PSXPackagerGUI.Pages
             set => SetProperty(ref _convertPbpToImage, value);
         }
 
-        public bool IsBusy { get; set; }
+
+        public bool IsBusy => IsProcessing || IsScanning;
     }
 }

@@ -16,7 +16,6 @@ namespace PSXPackagerGUI
         private readonly BatchPage _batchPage;
         private readonly SettingsPage _settings;
         private readonly MainModel _model;
-        private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly GameDB _gameDb = new GameDB(Path.Combine(ApplicationInfo.AppPath, "Resources", "gameInfo.db"));
 
         public MainWindow()
@@ -24,31 +23,24 @@ namespace PSXPackagerGUI
 
             InitializeComponent();
 
-            _cancellationTokenSource = new CancellationTokenSource();
-
             _settings = new SettingsPage();
 
-            _singlePage = new SinglePage(_settings.Model, _gameDb, _cancellationTokenSource);
-            _batchPage = new BatchPage(_settings.Model, _gameDb, _cancellationTokenSource);
+            _singlePage = new SinglePage(_settings.Model, _gameDb);
+            _batchPage = new BatchPage(_settings.Model, _gameDb);
+
             _model = new MainModel();
+            
             DataContext = _model;
+            
             _model.Mode = AppMode.Single;
+            
             CurrentPage.Content = _singlePage;
         }
 
         private void OnClosing(object sender, CancelEventArgs e)
         {
-            if (_singlePage.IsBusy || _batchPage.IsBusy)
-            {
-                var result = MessageBox.Show("An operation is in progress. Are you sure you want to cancel?", "PSXPackager",
-                    MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.Yes);
-                if (result == MessageBoxResult.No)
-                {
-                    e.Cancel = true;
-                    return;
-                }
-            }
-            _cancellationTokenSource.Cancel();
+            _singlePage.OnClosing(e);
+            _batchPage.OnClosing(e);
         }
 
         private void OpenFile_OnClick(object sender, RoutedEventArgs e)
@@ -71,7 +63,6 @@ namespace PSXPackagerGUI
         {
             CurrentPage.Content = _settings;
         }
-
 
         private void SingleMode_OnClick(object sender, RoutedEventArgs e)
         {

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
+using Ookii.Dialogs.Wpf;
 using Popstation.Database;
 using Popstation.M3u;
 using PSXPackager.Common.Cue;
@@ -21,16 +23,16 @@ namespace PSXPackagerGUI.Pages
         private readonly Page _page;
         private readonly Dispatcher _dispatcher;
         private readonly GameDB _gameDb;
-        private readonly CancellationTokenSource _cancellationTokenSource;
+        private CancellationToken _token;
 
         private Window Window => Window.GetWindow(_page);
 
         public BatchController(BatchModel model, SettingsModel settings, Page page, Dispatcher dispatcher, GameDB gameDb,
-            CancellationTokenSource cancellationTokenSource)
+            CancellationToken token)
         {
             _dispatcher = dispatcher;
             _gameDb = gameDb;
-            _cancellationTokenSource = cancellationTokenSource;
+            _token = token;
             _model = model;
             _settings = settings;
             _page = page;
@@ -48,15 +50,29 @@ namespace PSXPackagerGUI.Pages
 
 
             _model.ScanCommand = new RelayCommand(Scan);
-            _model.ProcessCommand = new RelayCommand(ProcessFiles);
+            _model.ProcessCommand = new RelayCommand((o) => ProcessFiles(_token));
             _model.BrowseInputCommand = new RelayCommand(BrowseInput);
             _model.BrowseOutputCommand = new RelayCommand(BrowseOutput);
         }
 
+        public Action Cancel { get; set; }
+
         private void Scan(object obj)
         {
+            if (_model.IsScanning)
+            {
+                var result = MessageBox.Show(Window, "Abort scanning?", "Batch", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
+                if (result == MessageBoxResult.Yes)
+                {
+                    Cancel();
+                }
+                return;
+            }
+
             if (string.IsNullOrEmpty(_model.InputPath))
             {
+
+                MessageBox.Show(Window, "No input path specified", "Batch", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -85,10 +101,12 @@ namespace PSXPackagerGUI.Pages
                 patterns.Add("*.iso");
             }
 
+
             Task.Run(() =>
             {
                 _dispatcher.Invoke(() =>
                 {
+                    _model.IsScanning = true;
                     _model.BatchEntries.Clear();
                 });
 
@@ -101,18 +119,14 @@ namespace PSXPackagerGUI.Pages
 
                 foreach (var pattern in patterns)
                 {
+                    if (_token.IsCancellationRequested) break;
+
                     var files = Directory.EnumerateFiles(_model.InputPath, pattern, SearchOption.TopDirectoryOnly);
 
                     foreach (var file in files.Select(GetFullPath))
                     {
-                        if (Path.GetFileName(file) == "Lunar - Silver Star Story Complete (USA) (Disc 1).cue")
-                        {
-                            var x = 1;
-                        }
-                        if (Path.GetFileName(file) == "Lunar - Silver Star Story Complete (USA) (Disc 1) (Track 1).bin")
-                        {
-                            var x = 1;
-                        }
+                        if (_token.IsCancellationRequested) break;
+
                         if (pattern == "*.m3u")
                         {
                             var playlist = M3uFileReader.Read(file);
@@ -130,28 +144,55 @@ namespace PSXPackagerGUI.Pages
                             }
                         }
 
+                        var relativePath = Path.GetRelativePath(_model.InputPath, file);
+
                         if (!ignoreFileSet.Contains(file))
                         {
                             _dispatcher.Invoke(() =>
                             {
                                 _model.BatchEntries.Add(new BatchEntryModel()
                                 {
-                                    Path = file,
+                                    RelativePath = relativePath,
                                     MaxProgress = 100,
                                     Progress = 0,
-                                    Status = "Queued"
+                                    Status = "Ready"
                                 });
                             });
                         }
                     }
                 }
+
+                _dispatcher.Invoke(() =>
+                {
+                    _model.IsScanning = false;
+                });
+
+                if (_token.IsCancellationRequested)
+                {
+                    _dispatcher.Invoke(() =>
+                    {
+                        MessageBox.Show(Window, "Scan aborted!", "Batch", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    });
+                }
+
             });
         }
 
-        private void ProcessFiles(object obj)
+        private void ProcessFiles(CancellationToken token)
         {
+            if (_model.IsProcessing)
+            {
+                var result = MessageBox.Show(Window, "Abort processing?", "Batch", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
+                if (result == MessageBoxResult.Yes)
+                {
+                    Cancel();
+                }
+                return;
+            }
+
             if (string.IsNullOrEmpty(_model.OutputPath))
             {
+                MessageBox.Show(Window, "No output path specified", "Batch", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -161,14 +202,21 @@ namespace PSXPackagerGUI.Pages
                 return;
             }
 
+            if (_model.BatchEntries.Count == 0)
+            {
+                MessageBox.Show(Window, "Nothing to process. Please Scan a directory first.", "Batch", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             var processor = new Processor(_dispatcher, _gameDb, _settings, new ProcessEventHandler());
 
-            foreach (var entry in _model.BatchEntries)
+            foreach (var entry in _model.BatchEntries.Where(e => e.Status != "Complete"))
             {
                 entry.HasError = false;
                 entry.MaxProgress = 100;
                 entry.Progress = 0;
-                entry.ErrorMessage = "";
+                entry.ErrorMessage = null;
+                entry.Status = "Queued";
 
                 processor.Add(new ConvertJob()
                 {
@@ -176,15 +224,37 @@ namespace PSXPackagerGUI.Pages
                 });
             }
 
-            processor.Start(_model, _cancellationTokenSource.Token).ContinueWith(t =>
+            _dispatcher.Invoke(() =>
             {
+                _model.IsProcessing = true;
+            });
+
+            processor.Start(_model, token).ContinueWith(t =>
+            {
+                _dispatcher.Invoke(() =>
+                {
+                    _model.IsProcessing = false;
+                });
+
                 if (t.IsCompletedSuccessfully)
                 {
-                    _dispatcher.Invoke(() =>
+                    if (token.IsCancellationRequested)
                     {
-                        MessageBox.Show(Window, "Conversion completed.", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Information);
-                    });
+                        _dispatcher.Invoke(() =>
+                        {
+                            MessageBox.Show(Window, "Conversion aborted!", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        });
+                    }
+                    else
+                    {
+                        _dispatcher.Invoke(() =>
+                        {
+                            MessageBox.Show(Window, "Conversion completed.", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Information);
+                        });
+                    }
+
                 }
+
             });
         }
 
@@ -211,6 +281,11 @@ namespace PSXPackagerGUI.Pages
 
             _model.OutputPath = folderBrowserDialog.SelectedPath;
 
+        }
+
+        public void UpdateToken(CancellationToken token)
+        {
+            _token = token;
         }
     }
 }

@@ -53,12 +53,12 @@ namespace PSXPackagerGUI.Pages
         {
             var tempPath = Path.Combine(Path.GetTempPath(), "PSXPackager");
 
-            var notifier = new ProcessNotifier(_dispatcher);
             
             while (await _channel.Reader.WaitToReadAsync())
             {
                 var job = await _channel.Reader.ReadAsync();
 
+                var notifier = new ProcessNotifier(_dispatcher);
                 notifier.Entry = job.Entry;
 
                 var processing = new Processing(notifier, _eventHandler, _gameDb);
@@ -83,7 +83,7 @@ namespace PSXPackagerGUI.Pages
 
                 await Task.Run(() =>
                 {
-                    processing.ProcessFile(job.Entry.Path, processOptions, token);
+                    processing.ProcessFile(Path.Combine(model.InputPath, job.Entry.RelativePath), processOptions, token);
                 });
 
             }

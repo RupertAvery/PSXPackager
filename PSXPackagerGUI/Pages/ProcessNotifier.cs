@@ -9,6 +9,7 @@ namespace PSXPackagerGUI.Pages
         private readonly Dispatcher _dispatcher;
         private double _lastvalue;
         private string _action;
+        private bool _cancelled;
         public ProcessNotifier(Dispatcher dispatcher)
         {
             _dispatcher = dispatcher;
@@ -26,6 +27,10 @@ namespace PSXPackagerGUI.Pages
                 case PopstationEventEnum.ProcessingComplete:
                     Entry.MaxProgress = 100;
                     Entry.Progress = 0;
+                    break;
+
+                case PopstationEventEnum.Cancelled:
+                    _cancelled = true;
                     break;
 
                 case PopstationEventEnum.Error:
@@ -79,13 +84,17 @@ namespace PSXPackagerGUI.Pages
                 case PopstationEventEnum.ExtractComplete:
                 case PopstationEventEnum.WriteComplete:
                 case PopstationEventEnum.DecompressComplete:
-                    Entry.Status = "Complete";
-                    //Entry.MaxProgress = 100;
-                    //Entry.Progress = 0;
                     break;
 
                 case PopstationEventEnum.ConvertComplete:
-
+                    if (_cancelled)
+                    {
+                        Entry.Status = "Cancelled";
+                    }
+                    else
+                    {
+                        Entry.Status = "Complete";
+                    }
                     break;
 
 

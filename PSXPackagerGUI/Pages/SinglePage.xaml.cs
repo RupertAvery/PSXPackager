@@ -24,7 +24,7 @@ namespace PSXPackagerGUI.Pages
     /// </summary>
     public partial class SinglePage : Page
     {
-        private readonly CancellationTokenSource _cancellationTokenSource;
+        private CancellationTokenSource _cancellationTokenSource;
         private readonly Model _viewModel;
         private readonly SettingsModel _settings;
         private readonly GameDB _gameDb;
@@ -37,11 +37,27 @@ namespace PSXPackagerGUI.Pages
             }
         }
 
-        public SinglePage(SettingsModel settings, GameDB gameDb, CancellationTokenSource cancellationTokenSource)
+        public void OnClosing(CancelEventArgs e)
+        {
+            if (IsBusy)
+            {
+                var result = MessageBox.Show("An operation is in progress. Are you sure you want to cancel?", "PSXPackager",
+                    MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.Yes);
+                if (result == MessageBoxResult.No)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+                _cancellationTokenSource.Cancel();
+            }
+            _cancellationTokenSource.Dispose();
+        }
+
+        public SinglePage(SettingsModel settings, GameDB gameDb)
         {
             _settings = settings;
             _gameDb = gameDb;
-            _cancellationTokenSource = cancellationTokenSource;
+            _cancellationTokenSource = new CancellationTokenSource();
 
             InitializeComponent();
 
@@ -236,7 +252,7 @@ namespace PSXPackagerGUI.Pages
                     CompressionLevel = _settings.CompressionLevel,
                     //CheckIfFileExists = processOptions.CheckIfFileExists,
                     //SkipIfFileExists = processOptions.SkipIfFileExists,
-                    //FileNameFormat = processOptions.FileNameFormat,
+                    FileNameFormat = _settings.FileNameFormat,
                 };
 
                 PbpWriter writer;

@@ -20,7 +20,11 @@ namespace Popstation.Pbp
 
             WriteDisc(disc, iso_position, psarOffset, false, outputStream, cancellationToken);
 
-            Notify?.Invoke(PopstationEventEnum.WriteComplete, null);
+
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                Notify?.Invoke(PopstationEventEnum.WriteComplete, null);
+            }
 
 
         }

@@ -118,14 +118,10 @@ namespace Popstation.Pbp
 
             if (cancellationToken.IsCancellationRequested)
             {
-                Notify?.Invoke(PopstationEventEnum.Cancelled, null);
                 return;
             }
 
             WriteSTARTDAT(outputStream);
-
-
-            Notify?.Invoke(PopstationEventEnum.ConvertComplete, null);
         }
 
         public abstract void WritePSAR(Stream outputStream, uint psarOffset, CancellationToken cancellationToken);

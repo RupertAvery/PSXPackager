@@ -161,6 +161,7 @@ namespace Popstation
                 if (cancellationToken.IsCancellationRequested)
                 {
                     _notifier?.Notify(PopstationEventEnum.Warning, "Conversion cancelled");
+                    _notifier?.Notify(PopstationEventEnum.Cancelled, null);
                     return false;
                 }
 
@@ -183,6 +184,7 @@ namespace Popstation
             }
             finally
             {
+                _notifier?.Notify(PopstationEventEnum.ConvertComplete, null);
                 if (tempFiles != null)
                 {
                     foreach (var tempFile in tempFiles)
