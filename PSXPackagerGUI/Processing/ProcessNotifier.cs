@@ -1,8 +1,10 @@
 ﻿using System.Windows.Threading;
 using PSXPackager.Common;
 using PSXPackager.Common.Notification;
+using PSXPackagerGUI.Models;
+using PSXPackagerGUI.Pages;
 
-namespace PSXPackagerGUI.Pages
+namespace PSXPackagerGUI.Processing
 {
     public class ProcessNotifier : INotifier
     {

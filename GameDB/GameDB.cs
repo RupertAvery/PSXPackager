@@ -31,7 +31,7 @@ namespace Popstation.Database
 
         public GameEntry GetEntryByScannerID(string scannerID)
         {
-            return _gameEntries.FirstOrDefault(x => x.ScannerID == scannerID);
+            return _gameEntries.FirstOrDefault(x => x.ScannerID == scannerID.ToUpper());
         }
 
 

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Input;
 
-namespace PSXPackagerGUI
+namespace PSXPackagerGUI.Common
 {
     public class RelayCommand : ICommand
     {

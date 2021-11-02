@@ -14,9 +14,10 @@ namespace PSXPackager.Common
         public string FileNameFormat{ get; set; }
         public bool Log { get; set; }
         public int Verbosity { get; set; }
-        public string ExtractResources { get; set; }
-        public string ImportResources { get; set; }
-        public string GenerateResourceFolders { get; set; }
+        public bool ExtractResources { get; set; }
+        public bool ImportResources { get; set; }
+        public bool GenerateResourceFolders { get; set; }
+        public string CustomResourceFormat { get; set; }
         public string ResourceFoldersPath { get; set; }
     }
 }

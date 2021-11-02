@@ -4,6 +4,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using Popstation.Database;
+using PSXPackagerGUI.Models;
 
 namespace PSXPackagerGUI.Pages
 {
@@ -20,7 +21,12 @@ namespace PSXPackagerGUI.Pages
         {
             _cancellationTokenSource = new CancellationTokenSource();
             InitializeComponent();
-            _model = new BatchModel();
+
+            _model = new BatchModel()
+            {
+                Settings = settings.Batch
+            };
+
             _controller = new BatchController(_model, settings, this, Dispatcher, gameDb, _cancellationTokenSource.Token);
             _controller.Cancel = () =>
             {

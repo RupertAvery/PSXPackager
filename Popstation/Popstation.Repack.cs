@@ -21,19 +21,19 @@ namespace Popstation
 
                 try
                 {
-                    ExtractResources(stream, path);
+                    //ExtractResources(stream, (type, extension) => GetResourcePath(options, gameInfo, type, extension));
 
                     var writer = new PbpRewriter(options);
 
-                    var directory = Path.GetDirectoryName(options.DestinationPbp);
-                    var ext = Path.GetExtension(options.DestinationPbp);
+                    var directory = options.OutputPath;
+                    var ext = ".pbp";
 
                     var title = options.MainGameTitle;
                     var code = options.MainGameID;
                     var region = options.MainGameRegion;
 
                     var outputFilename = GetFilename(options.FileNameFormat,
-                        options.DestinationPbp,
+                        options.OriginalFilename,
                         code,
                         code,
                         title,

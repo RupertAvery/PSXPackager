@@ -3,6 +3,8 @@ using System.IO;
 using System.Threading;
 using System.Windows;
 using Popstation.Database;
+using PSXPackagerGUI.Common;
+using PSXPackagerGUI.Models;
 using PSXPackagerGUI.Pages;
 
 namespace PSXPackagerGUI

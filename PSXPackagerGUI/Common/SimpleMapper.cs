@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 
-namespace PSXPackagerGUI.Pages
+namespace PSXPackagerGUI.Common
 {
     public class SimpleMapper
     {

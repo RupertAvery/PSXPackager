@@ -7,7 +7,8 @@ namespace Popstation
         public string BasePbp { get; set; }
         public Resource DataPsp { get; set; }
         //public string SourceIso {get; set;}
-        public string DestinationPbp { get; set; }
+        public string OriginalFilename { get; set; }
+        public string OutputPath { get; set; }
         public Resource Icon0 { get; set; }
         public Resource Icon1 { get; set; }
         public Resource Pic0 { get; set; }
@@ -26,5 +27,6 @@ namespace Popstation
         public bool SkipIfFileExists { get; set; }
         public string FileNameFormat { get; set; }
         public string MainGameRegion { get; set; }
+        public string OriginalPath { get; set; }
     };
 }

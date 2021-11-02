@@ -64,21 +64,12 @@ namespace PSXPackager
                      {
                          Console.WriteLine($"Input : {o.InputPath}");
                      }
-                     else if (!string.IsNullOrEmpty(o.Batch))
-                     {
-                         Console.WriteLine($"Batch : {o.Batch}");
-                         Console.WriteLine($"Extension: {o.Filters}");
-                     }
 
                      if (string.IsNullOrEmpty(o.OutputPath))
                      {
                          if (!string.IsNullOrEmpty(o.InputPath))
                          {
                              o.OutputPath = Path.GetDirectoryName(o.InputPath);
-                         }
-                         else if (!string.IsNullOrEmpty(o.Batch))
-                         {
-                             o.OutputPath = o.Batch;
                          }
                      }
 
@@ -96,7 +87,7 @@ namespace PSXPackager
                      {
                          if (PathIsDirectory(o.InputPath))
                          {
-                             files.AddRange(GetFilesFromDirectory(o.InputPath, o.Filters, o.Recursive));
+                             files.AddRange(GetFilesFromDirectory(o.InputPath, null, o.Recursive));
                          }
                          else
                          {
@@ -120,15 +111,10 @@ namespace PSXPackager
                          }
 
                      }
-                     else if (!string.IsNullOrEmpty(o.Batch))
-                     {
-                         Console.WriteLine($"WARNING: Use of -b is deprecated. Use -i with wildcards instead.");
-                         files.AddRange(GetFilesFromDirectory(o.InputPath, o.Filters, o.Recursive));
-                     }
 
                      var discs = string.IsNullOrEmpty(o.Discs)
                          ? Enumerable.Range(1, 5).ToList()
-                         : o.Discs.Split(new char[] {','}).Select(int.Parse).ToList();
+                         : o.Discs.Split(new char[] { ',' }).Select(int.Parse).ToList();
 
                      var options = new ProcessOptions()
                      {
@@ -142,9 +128,10 @@ namespace PSXPackager
                          CompressionLevel = o.CompressionLevel,
                          Verbosity = o.Verbosity,
                          Log = o.Log,
-                         ExtractResources = o.ExtractResources,
-                         ImportResources = o.ImportResources,
-                         GenerateResourceFolders = o.GenerateResourceFolders,
+                         ExtractResources = o.ExtractResources != null,
+                         ImportResources = o.ImportResources != null,
+                         GenerateResourceFolders = o.GenerateResourceFolders != null,
+                         CustomResourceFormat = o.ImportResources ?? o.ExtractResources ?? o.GenerateResourceFolders,
                          ResourceFoldersPath = o.ResourceFoldersPath,
                      };
 
@@ -155,6 +142,12 @@ namespace PSXPackager
         private static IEnumerable<string> GetFilesFromDirectory(string path, string filterExpression, bool recursive)
         {
             var supportedFiles = new List<string>() { ".7z", ".zip", ".gz", ".rar", ".tar", ".bin", ".cue", ".img", ".iso", ".pbp" };
+
+            if (string.IsNullOrEmpty(filterExpression))
+            {
+                filterExpression = string.Join(";", supportedFiles);
+            }
+
             var filters = filterExpression.Split(new char[] { ';', '|' });
             foreach (var filter in filters)
             {
@@ -173,7 +166,7 @@ namespace PSXPackager
                 if (recursive)
                 {
                     var dirs = Directory.GetDirectories(path);
-                    foreach (var dir in dirs)      
+                    foreach (var dir in dirs)
                     {
                         if (dir != "." && dir != "..")
                         {
@@ -253,7 +246,7 @@ namespace PSXPackager
                         }
 
                         processed += result ? 1 : 0;
-                        
+
                         i++;
                     }
 

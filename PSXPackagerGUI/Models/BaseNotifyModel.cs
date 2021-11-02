@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace PSXPackagerGUI
+namespace PSXPackagerGUI.Models
 {
     public class BaseNotifyModel : INotifyPropertyChanged
     {

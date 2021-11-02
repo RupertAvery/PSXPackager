@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -9,10 +8,12 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
-using Ookii.Dialogs.Wpf;
 using Popstation.Database;
 using Popstation.M3u;
 using PSXPackager.Common.Cue;
+using PSXPackagerGUI.Common;
+using PSXPackagerGUI.Models;
+using PSXPackagerGUI.Processing;
 
 namespace PSXPackagerGUI.Pages
 {
@@ -41,10 +42,7 @@ namespace PSXPackagerGUI.Pages
             _model.Progress = 0;
 
             _model.ConvertImageToPbp = true;
-            _model.IsBinChecked = true;
-            _model.IsImgChecked = true;
-            _model.IsM3uChecked = true;
-            _model.IsIsoChecked = true;
+
 
             _model.BatchEntries = new ObservableCollection<BatchEntryModel>();
 
@@ -69,37 +67,47 @@ namespace PSXPackagerGUI.Pages
                 return;
             }
 
-            if (string.IsNullOrEmpty(_model.InputPath))
+            if (string.IsNullOrEmpty(_model.Settings.InputPath))
             {
 
                 MessageBox.Show(Window, "No input path specified", "Batch", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            if (!Directory.Exists(_model.InputPath))
+            if (!Directory.Exists(_model.Settings.InputPath))
             {
                 MessageBox.Show(Window, "Invalid directory or directory not found", "Batch", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
             var patterns = new List<string>();
-            if (_model.IsM3uChecked)
+            if (_model.ConvertImageToPbp || _model.GenerateResourceFolders)
             {
-                patterns.Add("*.m3u");
+                if (_model.Settings.IsM3uChecked)
+                {
+                    patterns.Add("*.m3u");
+                }
+                if (_model.Settings.IsBinChecked)
+                {
+                    patterns.Add("*.cue");
+                    patterns.Add("*.bin");
+                }
+                if (_model.Settings.IsImgChecked)
+                {
+                    patterns.Add("*.img");
+                }
+                if (_model.Settings.IsIsoChecked)
+                {
+                    patterns.Add("*.iso");
+                }
             }
-            if (_model.IsBinChecked)
+
+
+            if (_model.ConvertPbpToImage || _model.ExtractResources || _model.GenerateResourceFolders)
             {
-                patterns.Add("*.cue");
-                patterns.Add("*.bin");
+                patterns.Add("*.pbp");
             }
-            if (_model.IsImgChecked)
-            {
-                patterns.Add("*.img");
-            }
-            if (_model.IsIsoChecked)
-            {
-                patterns.Add("*.iso");
-            }
+
 
 
             Task.Run(() =>
@@ -114,14 +122,14 @@ namespace PSXPackagerGUI.Pages
 
                 string GetFullPath(string file)
                 {
-                    return Path.Combine(_model.InputPath, file);
+                    return Path.Combine(_model.Settings.InputPath, file);
                 }
 
                 foreach (var pattern in patterns)
                 {
                     if (_token.IsCancellationRequested) break;
 
-                    var files = Directory.EnumerateFiles(_model.InputPath, pattern, SearchOption.TopDirectoryOnly);
+                    var files = Directory.EnumerateFiles(_model.Settings.InputPath, pattern, SearchOption.TopDirectoryOnly);
 
                     foreach (var file in files.Select(GetFullPath))
                     {
@@ -144,7 +152,7 @@ namespace PSXPackagerGUI.Pages
                             }
                         }
 
-                        var relativePath = Path.GetRelativePath(_model.InputPath, file);
+                        var relativePath = Path.GetRelativePath(_model.Settings.InputPath, file);
 
                         if (!ignoreFileSet.Contains(file))
                         {
@@ -190,13 +198,13 @@ namespace PSXPackagerGUI.Pages
                 return;
             }
 
-            if (string.IsNullOrEmpty(_model.OutputPath))
+            if (string.IsNullOrEmpty(_model.Settings.OutputPath))
             {
                 MessageBox.Show(Window, "No output path specified", "Batch", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            if (!Directory.Exists(_model.OutputPath))
+            if (!Directory.Exists(_model.Settings.OutputPath))
             {
                 MessageBox.Show(Window, "Invalid directory or directory not found", "Batch", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
@@ -267,7 +275,7 @@ namespace PSXPackagerGUI.Pages
                 return;
             }
 
-            _model.InputPath = folderBrowserDialog.SelectedPath;
+            _model.Settings.InputPath = folderBrowserDialog.SelectedPath;
         }
 
         private void BrowseOutput(object obj)
@@ -279,7 +287,7 @@ namespace PSXPackagerGUI.Pages
                 return;
             }
 
-            _model.OutputPath = folderBrowserDialog.SelectedPath;
+            _model.Settings.OutputPath = folderBrowserDialog.SelectedPath;
 
         }
 

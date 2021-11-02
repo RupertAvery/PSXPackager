@@ -2,16 +2,16 @@
 using System.IO;
 using Newtonsoft.Json;
 
-namespace PSXPackagerGUI.Pages
+namespace PSXPackagerGUI.Common
 {
     public class Configuration<T>
     {
         private readonly string _settingsPath;
 
-        public Configuration()
+        public Configuration(string appName, string configName = "config.json")
         {
             var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            _settingsPath = Path.Combine(local, "PSXPackagerUI", "config.json");
+            _settingsPath = Path.Combine(local, appName, configName);
         }
 
         public bool TryLoad(out T obj)
@@ -33,7 +33,7 @@ namespace PSXPackagerGUI.Pages
             var path = Path.GetDirectoryName(_settingsPath);
             if (!Directory.Exists(path)) Directory.CreateDirectory(path);
 
-            var json = JsonConvert.SerializeObject(obj);
+            var json = JsonConvert.SerializeObject(obj, Formatting.Indented);
 
             File.WriteAllText(_settingsPath, json);
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Popstation.Database;
 
 namespace Popstation
 {
@@ -7,15 +8,6 @@ namespace Popstation
     {
         bool CheckIfFileExists { get; set; }
         bool SkipIfFileExists { get; set; }
-    }
-
-    public class GameInfo
-    {
-        public string GameID { get; set; }
-        public string Title{ get; set; }
-        public string GameName { get; set; }
-        public string MainGameID { get; set; }
-        public string Region { get; set; }
     }
 
     public class ExtractOptions : ICheckIfFileExists
@@ -28,10 +20,11 @@ namespace Popstation
         public bool CheckIfFileExists { get; set; }
         public bool SkipIfFileExists { get; set; }
         public string OutputPath { get; set; }
-        public Func<string, GameInfo> GetGameInfo { get; set; }
+        public Func<string, GameEntry> FindGame { get; set; }
         public string FileNameFormat { get; set; }
-        public string ExtractResources { get; set; }
-        public string GenerateResourceFolders { get; set; }
+        public bool ExtractResources { get; set; }
+        public string CustomResourceFormat { get; set; }
+        public bool GenerateResourceFolders { get; set; }
         public string ResourceFoldersPath { get; set; }
     }
 }

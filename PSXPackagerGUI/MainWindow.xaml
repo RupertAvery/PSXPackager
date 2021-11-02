@@ -7,14 +7,15 @@
         xmlns:controls="clr-namespace:PSXPackagerGUI.Controls"
         xmlns:local="clr-namespace:PSXPackagerGUI"
         xmlns:converters="clr-namespace:PSXPackagerGUI.Converters"
+        xmlns:common="clr-namespace:PSXPackagerGUI.Common"
         mc:Ignorable="d"
-        d:DataContext="{d:DesignInstance local:MainModel, IsDesignTimeCreatable=True}"
+        d:DataContext="{d:DesignInstance models:MainModel, IsDesignTimeCreatable=True}"
         Closing="OnClosing"
         Title="PSXPackager" Height="609" Width="807">
     <Window.Resources>
         <converters:ModeVisibilityConverter x:Key="ModeVisibilityConverter"></converters:ModeVisibilityConverter>
-        <local:AppMode x:Key="Single">Single</local:AppMode>
-        <local:AppMode x:Key="Batch">Batch</local:AppMode>
+        <common:AppMode x:Key="Single">Single</common:AppMode>
+        <common:AppMode x:Key="Batch">Batch</common:AppMode>
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>

@@ -1,4 +1,4 @@
-﻿namespace PSXPackagerGUI.Pages
+﻿namespace PSXPackagerGUI.Models
 {
     public class ConvertJob
     {

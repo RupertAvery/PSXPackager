@@ -14,6 +14,7 @@ using Popstation.Database;
 using Popstation.Pbp;
 using PSXPackager.Common;
 using PSXPackager.Common.Cue;
+using PSXPackagerGUI.Common;
 using PSXPackagerGUI.Controls;
 using PSXPackagerGUI.Models;
 
@@ -235,8 +236,8 @@ namespace PSXPackagerGUI.Pages
 
                 var options = new ConvertOptions()
                 {
-
-                    DestinationPbp = saveFileDialog.FileName,
+                    OutputPath = Path.GetDirectoryName(saveFileDialog.FileName),
+                    OriginalFilename = Path.GetFileName(saveFileDialog.FileName),
                     DiscInfos = discs.Select(GetDiscInfo).ToList(),
                     Icon0 = GetResource(_viewModel.Icon0),
                     Icon1 = GetResource(_viewModel.Icon1),
@@ -525,12 +526,12 @@ namespace PSXPackagerGUI.Pages
 
 
             var saveFileDialog = new Ookii.Dialogs.Wpf.VistaSaveFileDialog();
-            saveFileDialog.CheckFileExists = true;
+            saveFileDialog.OverwritePrompt = true;
             saveFileDialog.FileName = $"{game.GameName}.bin";
             saveFileDialog.Filter = "BIN files|*.bin|All files|*.*";
             saveFileDialog.DefaultExt = ".bin";
             saveFileDialog.AddExtension = true;
-            var result = saveFileDialog.ShowDialog();
+            var result = saveFileDialog.ShowDialog(Window);
 
             if (result.GetValueOrDefault(false))
             {

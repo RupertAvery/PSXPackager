@@ -41,11 +41,14 @@ namespace Popstation
             options.CheckIfFileExists = !_eventHandler.OverwriteIfExists && options.CheckIfFileExists;
 
             tempFiles.Clear();
-
+            
             try
             {
+                var originalFile = file;
+
                 if (FileExtensionHelper.IsArchive(file))
                 {
+
                     Unpack(file, options.TempPath, cancellationToken);
 
                     if (cancellationToken.IsCancellationRequested) return false;
@@ -91,9 +94,9 @@ namespace Popstation
 
                     if (FileExtensionHelper.IsPbp(file))
                     {
-                        if (!string.IsNullOrEmpty(options.ImportResources))
+                        if (options.ImportResources)
                         {
-                            RepackPBP(file, options, cancellationToken);
+                            RepackPBP(originalFile, file, options, cancellationToken);
                         }
                         else
                         {
@@ -105,7 +108,7 @@ namespace Popstation
                         if (FileExtensionHelper.IsCue(file))
                         {
                             var (outfile, srcToc) = ProcessCue(file, options.TempPath);
-                            result = ConvertIso(outfile, srcToc, options, cancellationToken);
+                            result = ConvertIso(originalFile, outfile, srcToc, options, cancellationToken);
                         }
                         else if (FileExtensionHelper.IsM3u(file))
                         {
@@ -146,11 +149,11 @@ namespace Popstation
                                     return false;
                                 }
                             }
-                            result = ConvertIsos(files.ToArray(), tocs.ToArray(), options, cancellationToken);
+                            result = ConvertIsos(originalFile, files.ToArray(), tocs.ToArray(), options, cancellationToken);
                         }
                         else
                         {
-                            result = ConvertIso(file, "", options, cancellationToken);
+                            result = ConvertIso(originalFile, file, "", options, cancellationToken);
                         }
 
                     }
@@ -398,7 +401,7 @@ namespace Popstation
 
             if (gameId != null)
             {
-                game = _gameDb.GetEntryByScannerID(gameId.ToUpper());
+                game = _gameDb.GetEntryByScannerID(gameId);
                 if (game == null)
                 {
                     if (showMessages)
@@ -422,6 +425,7 @@ namespace Popstation
         }
 
         private bool ConvertIsos(
+            string originalFile,
             string[] srcIsos,
             string[] srcTocs,
             ProcessOptions processOptions,
@@ -432,16 +436,11 @@ namespace Popstation
             var gameId = GameDB.FindGameId(srcIso);
             var game = GetGameEntry(gameId, srcIso, false);
 
-            if (!string.IsNullOrEmpty(processOptions.GenerateResourceFolders))
-            {
-                GenerateResourceFolders(processOptions, game, srcIso);
-                return true;
-            }
-
             var options = new ConvertOptions()
             {
-
-                DestinationPbp = Path.Combine(processOptions.OutputPath, $"{game.SaveDescription}.PBP"),
+                OriginalPath = Path.GetDirectoryName(originalFile),
+                OriginalFilename = Path.GetFileNameWithoutExtension(originalFile),
+                OutputPath = processOptions.OutputPath,
                 DiscInfos = new List<DiscInfo>(),
                 MainGameTitle = game.SaveDescription,
                 MainGameID = game.SaveFolderName,
@@ -455,7 +454,12 @@ namespace Popstation
                 FileNameFormat = processOptions.FileNameFormat,
             };
 
-            SetResources(processOptions, options, game, srcIso);
+            if (processOptions.GenerateResourceFolders)
+            {
+                GenerateResourceFolders(processOptions, options, game);
+                return true;
+            }
+            SetResources(processOptions, options, game);
 
             for (var i = 0; i < srcIsos.Length; i++)
             {
@@ -486,98 +490,60 @@ namespace Popstation
             return popstation.Convert(options, cancellationToken);
         }
 
-        private string GetResouceFolderPath(ProcessOptions processOptions, string mode, GameEntry entry, string srcIso, bool forGenerate = false)
-        {
-            string path;
-
-            if (!string.IsNullOrEmpty(mode))
-            {
-                var filename = Path.GetFileNameWithoutExtension(srcIso);
-                path = Path.GetDirectoryName(srcIso);
-
-                if (!string.IsNullOrEmpty(processOptions.ResourceFoldersPath))
-                {
-                    path = processOptions.ResourceFoldersPath;
-                }
-
-                switch (mode.ToLower())
-                {
-                    case "gameid":
-                        path = Path.Combine(path, entry.ScannerID);
-                        break;
-                    case "title":
-                        path = Path.Combine(path, entry.GameName);
-                        break;
-                    case "filename":
-                        path = Path.Combine(path, filename);
-                        break;
-                    default:
-                        path = Path.Combine(path, filename);
-                        break;
-                }
-
-            }
-            else
-            {
-                if (forGenerate)
-                {
-                    path = Path.GetDirectoryName(srcIso);
-                }
-                else
-                {
-                    var appPath = ApplicationInfo.AppPath;
-                    var defaultPath = Path.Combine(appPath, "Resources");
-                    path = defaultPath;
-                }
-            }
-
-            return path;
-        }
-
-
-        private void SetResources(ProcessOptions processOptions, ConvertOptions options, GameEntry entry, string srcIso)
+      
+        private void SetResources(ProcessOptions processOptions, ConvertOptions options, GameEntry entry)
         {
             var appPath = ApplicationInfo.AppPath;
             var defaultPath = Path.Combine(appPath, "Resources");
 
-            var path = GetResouceFolderPath(processOptions, processOptions.ImportResources, entry, srcIso);
 
-            Resource GetResourceOrDefault(ResourceType type, string filename)
+            if (string.IsNullOrEmpty(processOptions.ResourceFoldersPath))
             {
-                var resourcePath = Path.Combine(path, filename);
+                processOptions.ResourceFoldersPath = options.OriginalPath;
+            }
+
+            Resource GetResourceOrDefault(ResourceType type, string ext)
+            {
+                if (!processOptions.ImportResources)
+                {
+                    var defaultResourcePath = Path.Combine(defaultPath, type.ToString(), ext);
+                    return new Resource(type, defaultResourcePath);
+                }
+
+                var filename = Popstation.GetResourceFilename(processOptions.CustomResourceFormat, options.OriginalFilename, entry.GameID, entry.SaveFolderName, entry.GameName, entry.SaveDescription, entry.Format, type, ext);
+
+                var resourcePath = Path.Combine(processOptions.ResourceFoldersPath, filename);
+
                 if (!File.Exists(resourcePath))
                 {
-                    resourcePath = Path.Combine(defaultPath, filename);
+                    resourcePath = Path.Combine(defaultPath, $"{type}{ext}");
                 }
                 return new Resource(type, resourcePath);
             }
 
-            options.Icon0 = GetResourceOrDefault(ResourceType.ICON0, "ICON0.PNG");
-            options.Icon1 = GetResourceOrDefault(ResourceType.ICON1, "ICON1.PMF");
-            options.Pic0 = GetResourceOrDefault(ResourceType.PIC0, "PIC0.PNG");
-            options.Pic1 = GetResourceOrDefault(ResourceType.PIC1, "PIC1.PNG");
-            options.Snd0 = GetResourceOrDefault(ResourceType.SND0, "SND0.AT3");
+            options.Icon0 = GetResourceOrDefault(ResourceType.ICON0, "png");
+            options.Icon1 = GetResourceOrDefault(ResourceType.ICON1, "pmf");
+            options.Pic0 = GetResourceOrDefault(ResourceType.PIC0, "png");
+            options.Pic1 = GetResourceOrDefault(ResourceType.PIC1, "png");
+            options.Snd0 = GetResourceOrDefault(ResourceType.SND0, "at3");
         }
 
-        private void GenerateResourceFolders(ProcessOptions processOptions, GameEntry game, string srcIso)
+        private void GenerateResourceFolders(ProcessOptions processOptions, ConvertOptions options, GameEntry entry)
         {
-            var path = GetResouceFolderPath(processOptions, processOptions.GenerateResourceFolders, game, srcIso, true);
+            var path = Popstation.GetResourceFolder(processOptions.CustomResourceFormat, options.OriginalFilename, entry.GameID, entry.SaveFolderName, entry.GameName, entry.SaveDescription, entry.Format);
 
             if (!Directory.Exists(path))
             {
                 Directory.CreateDirectory(path);
             }
 
-
-            if (processOptions.GenerateResourceFolders.ToLower() == "gameid")
+            using (File.Create(Path.Combine(path, entry.GameName)))
             {
-                using (File.Create(Path.Combine(path, game.GameName)))
-                {
-                }
             }
         }
 
         private bool ConvertIso(
+            string originalFile,
             string srcIso,
             string srcToc,
             ProcessOptions processOptions,
@@ -586,13 +552,7 @@ namespace Popstation
             var appPath = ApplicationInfo.AppPath;
             var gameId = GameDB.FindGameId(srcIso);
             var game = GetGameEntry(gameId, srcIso, false);
-
-            if (!string.IsNullOrEmpty(processOptions.GenerateResourceFolders))
-            {
-                GenerateResourceFolders(processOptions, game, srcIso);
-                return true;
-            }
-
+            
             var options = new ConvertOptions()
             {
                 DiscInfos = new List<DiscInfo>()
@@ -608,7 +568,9 @@ namespace Popstation
                         SourceToc = srcToc,
                     }
                 },
-                DestinationPbp = Path.Combine(processOptions.OutputPath, $"{game.GameName}.PBP"),
+                OutputPath = processOptions.OutputPath,
+                OriginalPath = Path.GetDirectoryName(originalFile),
+                OriginalFilename = Path.GetFileNameWithoutExtension(originalFile),
                 MainGameTitle = game.GameName,
                 MainGameRegion = game.Format,
                 MainGameID = game.SaveFolderName,
@@ -621,7 +583,14 @@ namespace Popstation
                 FileNameFormat = processOptions.FileNameFormat,
             };
 
-            SetResources(processOptions, options, game, srcIso);
+            if (processOptions.GenerateResourceFolders)
+            {
+                GenerateResourceFolders(processOptions, options, game);
+                return true;
+            }
+
+            SetResources(processOptions, options, game);
+
 
             _notifier.Notify(PopstationEventEnum.Info, $"Using Title '{game.GameName}'");
 
@@ -635,7 +604,9 @@ namespace Popstation
             return popstation.Convert(options, cancellationToken);
         }
 
-        private bool RepackPBP(string srcPbp,
+        private bool RepackPBP(
+            string originalFile, 
+            string srcPbp,
             ProcessOptions processOptions,
             CancellationToken cancellationToken)
         {
@@ -643,17 +614,6 @@ namespace Popstation
             var gameId = GetPBPGameId(srcPbp);
             var game = GetGameEntry(gameId, srcPbp, false);
 
-            if (!string.IsNullOrEmpty(processOptions.GenerateResourceFolders))
-            {
-                var path = GetResouceFolderPath(processOptions, processOptions.GenerateResourceFolders, game, srcPbp, true);
-
-                if (!Directory.Exists(path))
-                {
-                    Directory.CreateDirectory(path);
-                }
-
-                return true;
-            }
 
             var options = new ConvertOptions()
             {
@@ -669,7 +629,9 @@ namespace Popstation
                         SourceIso = srcPbp,
                     }
                 },
-                DestinationPbp = Path.Combine(processOptions.OutputPath, $"{game.GameName}.PBP"),
+                OriginalFilename = Path.GetFileNameWithoutExtension(originalFile),
+                OriginalPath = Path.GetDirectoryName(originalFile),
+                OutputPath = processOptions.OutputPath,
                 MainGameTitle = game.GameName,
                 MainGameRegion = game.Format,
                 MainGameID = game.SaveFolderName,
@@ -681,8 +643,14 @@ namespace Popstation
                 SkipIfFileExists = processOptions.SkipIfFileExists,
                 FileNameFormat = processOptions.FileNameFormat,
             };
+            
+            if (processOptions.GenerateResourceFolders)
+            {
+                GenerateResourceFolders(processOptions, options, game);
+                return true;
+            }
 
-            SetResources(processOptions, options, game, srcPbp);
+            SetResources(processOptions, options, game);
 
             _notifier.Notify(PopstationEventEnum.Info, $"Using Title '{game.GameName}'");
 
@@ -712,23 +680,9 @@ namespace Popstation
                 FileNameFormat = processOptions.FileNameFormat,
                 ExtractResources = processOptions.ExtractResources,
                 GenerateResourceFolders = processOptions.GenerateResourceFolders,
+                CustomResourceFormat = processOptions.CustomResourceFormat,
                 ResourceFoldersPath = processOptions.ResourceFoldersPath,
-                GetGameInfo = (gameId) =>
-                {
-                    var game = GetGameEntry(gameId, srcPbp, false);
-                    if (game == null)
-                    {
-                        return null;
-                    }
-                    return new GameInfo()
-                    {
-                        GameID = game.ScannerID,
-                        GameName = game.GameName,
-                        Title = game.SaveDescription,
-                        MainGameID = game.SaveFolderName,
-                        Region = game.Format
-                    };
-                }
+                FindGame = (gameId) => GetGameEntry(gameId, srcPbp, false)
             };
 
             var popstation = new Popstation

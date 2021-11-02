@@ -32,15 +32,15 @@ namespace Popstation
             writer.ActionIfFileExists = ActionIfFileExists;
             writer.TempFiles = TempFiles;
 
-            var directory = Path.GetDirectoryName(convertInfo.DestinationPbp);
-            var ext = Path.GetExtension(convertInfo.DestinationPbp);
+            var directory = convertInfo.OutputPath;
+            var ext = ".pbp";
 
             var title = convertInfo.MainGameTitle;
             var code = convertInfo.MainGameID;
             var region = convertInfo.MainGameRegion;
 
             var outputFilename = GetFilename(convertInfo.FileNameFormat,
-                convertInfo.DestinationPbp,
+                convertInfo.OriginalFilename,
                 code,
                 code,
                 title,

@@ -1,4 +1,6 @@
-﻿namespace PSXPackagerGUI
+﻿using PSXPackagerGUI.Common;
+
+namespace PSXPackagerGUI.Models
 {
     public class MainModel : BaseNotifyModel
     {

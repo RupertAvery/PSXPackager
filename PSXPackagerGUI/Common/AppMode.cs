@@ -1,4 +1,4 @@
-﻿namespace PSXPackagerGUI
+﻿namespace PSXPackagerGUI.Common
 {
     public enum AppMode
     {

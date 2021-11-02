@@ -4,9 +4,10 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:PSXPackagerGUI.Pages"
+      xmlns:models="clr-namespace:PSXPackagerGUI.Models"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
-      d:DataContext="{d:DesignInstance local:SettingsModel, IsDesignTimeCreatable=True}"
+      d:DataContext="{d:DesignInstance models:SettingsModel, IsDesignTimeCreatable=True}"
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
       Title="Settings">
     <Grid>
@@ -21,31 +22,29 @@
             <TabItem Header="Compression">
                 <Grid Margin="20,20,20,20">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"></ColumnDefinition>
                         <ColumnDefinition Width="*"></ColumnDefinition>
                         <ColumnDefinition Width="Auto"></ColumnDefinition>
+                        <ColumnDefinition Width="300"></ColumnDefinition>
+                        <ColumnDefinition Width="Auto"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
-                    <Label Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3">Compression Level:</Label>
-                    <Label Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Margin="120,0,0,0" Content="{Binding CompressionLevel}"></Label>
-                    <Label Grid.Row="1" Grid.Column="0">None</Label>
-                    <Slider Grid.Row="1" Grid.Column="1" Margin="5,0,5,0" Ticks="0,1,2,3,4,5,6,7,8,9" TickPlacement="TopLeft" TickFrequency="1" Maximum="9" Minimum="0"
+                    <Label Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3">Compression Level:</Label>
+                    <Label Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3" Margin="120,0,0,0" Content="{Binding CompressionLevel}"></Label>
+                    <Label Grid.Row="1" Grid.Column="1">None</Label>
+                    <Slider Grid.Row="1" Grid.Column="2" Ticks="0,1,2,3,4,5,6,7,8,9" TickPlacement="TopLeft" TickFrequency="1" Maximum="9" Minimum="0"
                             Value="{Binding CompressionLevel}"></Slider>
-                    <Label Grid.Row="1" Grid.Column="2">Max</Label>
-                    <Grid Grid.Row="2" Grid.Column="1" Margin="0,10,0,0">
+                    <Label Grid.Row="1" Grid.Column="3">Max</Label>
+                    <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="5" Margin="50,50,50,0" Width="500">
                         <TextBlock TextWrapping="Wrap">
-                            Tips:<LineBreak/>
+                            NOTE:<LineBreak/>
                             <LineBreak/>
-                            0 - No Compression. Fastest, largest filesize.<LineBreak/>
-                            5 - Fast. Good for single-disc games.<LineBreak/>
-                            9 - Slowest. Good for multi-disc games.<LineBreak/>
-                            <LineBreak/>
-                            Compression level 9 yields little savings over level 5 when it comes to single-disc games, and is very slow. 
-                            However for multi-disc games such as Riven, you can save  almost 1GB at level 9 compared to level5.
+                            Compression level 9 usually offers only slightly better compression (hundreds of Kbs to a few MBs smaller) compared to level 5 when it comes to single-disc games, 
+                            and can take a bit longer to compress. However, this may vary from game to game. Compression level usually has no noticeable effect on loading times on a PSP.
                         </TextBlock>
                     </Grid>
                 </Grid>
@@ -93,7 +92,70 @@
                 </Grid>
             </TabItem>
             <TabItem Header="Resources">
-
+                <Grid Margin="20,20,20,20">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <CheckBox VerticalAlignment="Center" Grid.Column="0" IsChecked="{Binding UseCustomResources}">Use Custom Resources</CheckBox>
+                    </Grid>
+                    <Grid IsEnabled="{Binding UseCustomResources}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="190"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="100"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.Column="0" Grid.Row="1">Source Path:</Label>
+                        <TextBox Grid.Column="1" Grid.Row="1" Margin="2,2,2,2" VerticalContentAlignment="Center" Text="{Binding CustomResourcesPath}">
+                            <TextBox.ToolTip>
+                                The location to start searching for resources. Leave empty to use the same path as the input file.
+                            </TextBox.ToolTip>
+                        </TextBox>
+                        <Button Grid.Column="2" Grid.Row="1" Margin="2,2,2,2" Command="{Binding BrowseCustomResourcePath}">Browse</Button>
+                        <Label Grid.Column="0" Grid.Row="2">Match Path:</Label>
+                        <TextBox Grid.Column="1" Grid.Row="2" Margin="2,2,2,2" VerticalContentAlignment="Center" Text="{Binding CustomResourcesFormat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBox.ToolTip>
+                                The match path will be appended to the source path to produce the final path that will be used to load a specified resource.
+                            </TextBox.ToolTip>
+                        </TextBox>
+                        <Grid Grid.Row="3" Grid.Column="1" Margin="0,10,0,0">
+                            <TextBlock>
+                            Use the following tokens to format the match path: 
+                            <LineBreak/>
+                            <LineBreak/>
+                            %FILENAME% - Use the input filename without the extension<LineBreak/>
+                            %GAMEID% - Use the Game ID of the current disc<LineBreak/>
+                            %MAINGAMEID% - Use the Disc ID of the first disc of the game<LineBreak/>
+                            %TITLE% - Use the title of the game from GAMEINFO.DB (includes disc number)<LineBreak/>
+                            %MAINTITLE% - Use the main title of the game from GAMEINFO.DB (no disc number)<LineBreak/>
+                            %REGION% - Use the region of the game from GAMEINFO.DB (NTSC/PAL)<LineBreak/>
+                            %RESOURCE% - Use the Resource type name (ICON0,ICON1,PIC0,PIC1, SND0)<LineBreak/>
+                            %EXT% - Use file extension of the resource (.PNG, .PMF, .AT3)<LineBreak/>
+                            <LineBreak/>
+                            </TextBlock>
+                        </Grid>
+                        <Grid Grid.Row="4" Grid.Column="1" Margin="0,10,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="30"/>
+                                <RowDefinition Height="30"/>
+                                <RowDefinition Height="30"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Label Grid.Row="0">Input Filename:</Label>
+                            <Label Grid.Row="1" Content="{Binding SourceFilename}"></Label>
+                            <Label Grid.Row="2">Match Path:</Label>
+                            <Label Grid.Row="3" Content="{Binding SampleResourcePath}"></Label>
+                        </Grid>
+                    </Grid>
+                </Grid>
             </TabItem>
         </TabControl>
     </Grid>

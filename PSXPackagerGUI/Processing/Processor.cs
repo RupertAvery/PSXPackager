@@ -1,16 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using System.Windows.Threading;
-using Popstation;
 using Popstation.Database;
 using PSXPackager.Common;
 using PSXPackager.Common.Notification;
+using PSXPackagerGUI.Models;
+using PSXPackagerGUI.Pages;
 
-namespace PSXPackagerGUI.Pages
+namespace PSXPackagerGUI.Processing
 {
     public class Processor
     {
@@ -61,14 +62,15 @@ namespace PSXPackagerGUI.Pages
                 var notifier = new ProcessNotifier(_dispatcher);
                 notifier.Entry = job.Entry;
 
-                var processing = new Processing(notifier, _eventHandler, _gameDb);
+                var processing = new Popstation.Processing(notifier, _eventHandler, _gameDb);
+
 
                 var processOptions = new ProcessOptions()
                 {
                     ////Files = files,
-                    OutputPath = model.OutputPath,
+                    OutputPath = model.Settings.OutputPath,
                     TempPath = tempPath,
-                    ////Discs = discs,
+                    Discs = Enumerable.Range(1, 5).ToList(),
                     //CheckIfFileExists = !o.OverwriteIfExists,
                     //SkipIfFileExists = o.SkipIfExists,
                     FileNameFormat = _settings.FileNameFormat,
@@ -76,14 +78,15 @@ namespace PSXPackagerGUI.Pages
                     ////Verbosity = o.Verbosity,
                     ////Log = o.Log,
                     //ExtractResources = o.ExtractResources,
-                    //ImportResources = o.ImportResources,
+                    ImportResources = _settings.UseCustomResources,
+                    CustomResourceFormat = _settings.CustomResourcesFormat,
                     //GenerateResourceFolders = o.GenerateResourceFolders,
-                    //ResourceFoldersPath = o.ResourceFoldersPath, 
+                    ResourceFoldersPath = _settings.CustomResourcesPath, 
                 };
 
                 await Task.Run(() =>
                 {
-                    processing.ProcessFile(Path.Combine(model.InputPath, job.Entry.RelativePath), processOptions, token);
+                    processing.ProcessFile(Path.Combine(model.Settings.InputPath, job.Entry.RelativePath), processOptions, token);
                 });
 
             }

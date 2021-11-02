@@ -2,7 +2,7 @@
 using PSXPackager.Common;
 using PSXPackager.Common.Notification;
 
-namespace PSXPackagerGUI.Pages
+namespace PSXPackagerGUI.Processing
 {
     public class ProcessEventHandler : IEventHandler
     {

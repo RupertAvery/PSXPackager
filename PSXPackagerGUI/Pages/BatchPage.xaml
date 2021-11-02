@@ -5,8 +5,9 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:PSXPackagerGUI.Pages"
       xmlns:converters="clr-namespace:PSXPackagerGUI.Converters"
+      xmlns:models="clr-namespace:PSXPackagerGUI.Models"
       mc:Ignorable="d" 
-      d:DataContext="{d:DesignInstance local:BatchModel, IsDesignTimeCreatable=True}"
+      d:DataContext="{d:DesignInstance models:BatchModel, IsDesignTimeCreatable=True}"
       d:DesignHeight="450" d:DesignWidth="800"
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
       Title="Batch">
@@ -38,35 +39,41 @@
                 <RowDefinition Height="30"/>
             </Grid.RowDefinitions>
             <Label Grid.Row="0" Grid.Column="0" Margin="2,2,2,2">Input Folder:</Label>
-            <TextBox Grid.Row="0" Grid.Column="1" Margin="2,2,2,2" VerticalContentAlignment="Center" Text="{Binding InputPath}"></TextBox>
+            <TextBox Grid.Row="0" Grid.Column="1" Margin="2,2,2,2" VerticalContentAlignment="Center" Text="{Binding Settings.InputPath}"></TextBox>
             <Button Grid.Row="0" Grid.Column="2" Margin="2,2,2,2" Command="{Binding BrowseInputCommand}">Browse</Button>
 
-            <Label Grid.Row="1" Grid.Column="0" Margin="2,2,2,2">Convert From:</Label>
+            <Label Grid.Row="1" Grid.Column="0" Margin="2,2,2,2">Process:</Label>
             <RadioButton Grid.Row="1" Grid.Column="1" Margin="2,8,2,7" Grid.ColumnSpan="2" IsChecked="{Binding ConvertImageToPbp}">Image to .PBP</RadioButton>
-            <RadioButton Grid.Row="1" Grid.Column="1" Margin="120,8,2,7" Grid.ColumnSpan="2"  IsChecked="{Binding ConvertPbpToImage}">.PBP to .BIN</RadioButton>
+            <RadioButton Grid.Row="1" Grid.Column="1" Margin="120,8,2,7" Grid.ColumnSpan="2" IsChecked="{Binding ConvertPbpToImage}">.PBP to .BIN</RadioButton>
+            <RadioButton Grid.Row="1" Grid.Column="1" Margin="230,8,2,7" Grid.ColumnSpan="2" IsChecked="{Binding GenerateResourceFolders}" ToolTip="See Settings for more info">Generate Resource Folders</RadioButton>
+            <RadioButton Grid.Row="1" Grid.Column="1" Margin="410,8,2,7" Grid.ColumnSpan="2" IsChecked="{Binding ExtractResources}" ToolTip="See Settings for more info">Extract Resources</RadioButton>
 
             <Label Grid.Row="2" Grid.Column="0" Margin="2,2,2,2">Image types:</Label>
-            <StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" Orientation="Horizontal">
-                <CheckBox Margin="2,8,2,2" IsChecked="{Binding IsBinChecked}">.BIN / .CUE</CheckBox>
-                <CheckBox Margin="2,8,2,2" IsChecked="{Binding IsM3uChecked}">.M3U</CheckBox>
-                <CheckBox Margin="2,8,2,2" IsChecked="{Binding IsImgChecked}">.IMG</CheckBox>
-                <CheckBox Margin="2,8,2,2" IsChecked="{Binding IsIsoChecked}">.ISO</CheckBox>
+            <StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" Orientation="Horizontal" IsEnabled="{Binding ConvertImageToPbp}">
+                <CheckBox Margin="2,8,2,2" IsChecked="{Binding Settings.IsBinChecked}">.BIN / .CUE</CheckBox>
+                <CheckBox Margin="2,8,2,2" IsChecked="{Binding Settings.IsM3uChecked}">.M3U</CheckBox>
+                <CheckBox Margin="2,8,2,2" IsChecked="{Binding Settings.IsImgChecked}">.IMG</CheckBox>
+                <CheckBox Margin="2,8,2,2" IsChecked="{Binding Settings.IsIsoChecked}">.ISO</CheckBox>
                 <!--<CheckBox Margin="2,8,2,2">.7Z</CheckBox>
                 <CheckBox Margin="2,8,2,2">.ZIP</CheckBox>
                 <CheckBox Margin="2,8,2,2">.RAR</CheckBox>-->
             </StackPanel>
             <Label Grid.Row="3" Grid.Column="0" Margin="2,2,2,2">Output Folder:</Label>
-            <TextBox Grid.Row="3" Grid.Column="1" Margin="2,2,2,2" VerticalContentAlignment="Center" Text="{Binding OutputPath}"></TextBox>
+            <TextBox Grid.Row="3" Grid.Column="1" Margin="2,2,2,2" VerticalContentAlignment="Center" Text="{Binding Settings.OutputPath}"></TextBox>
             <Button Grid.Row="3" Grid.Column="2" Margin="2,2,2,2" Command="{Binding BrowseOutputCommand}">Browse</Button>
 
 
         </Grid>
-        <Grid Grid.Row="0" Margin="740,0,0,0">
+        <Grid Grid.Row="0" Margin="0,0,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="60"/>
+            </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition/>
                 <RowDefinition/>
             </Grid.RowDefinitions>
-            <Button Grid.Row="0" Margin="2,2,2,2" ToolTip="Scan" Command="{Binding ScanCommand}" IsEnabled="{Binding IsProcessing, Converter={StaticResource NotConverter}}">
+            <Button Grid.Column="1" Grid.Row="0" Margin="2,2,2,2" ToolTip="Scan" Command="{Binding ScanCommand}" IsEnabled="{Binding IsProcessing, Converter={StaticResource NotConverter}}">
                 <Grid>
                     <Image Margin="5,5,5,5" Visibility="{Binding IsScanning, Converter={StaticResource InvisibilityConverter}}">
                         <Image.Source>
@@ -80,7 +87,7 @@
                     </Image>
                 </Grid>
             </Button>
-            <Button Grid.Row="1" Margin="2,2,2,2" ToolTip="Start" Command="{Binding ProcessCommand}" IsEnabled="{Binding IsScanning, Converter={StaticResource NotConverter}}">
+            <Button Grid.Column="1" Grid.Row="1" Margin="2,2,2,2" ToolTip="Start" Command="{Binding ProcessCommand}" IsEnabled="{Binding IsScanning, Converter={StaticResource NotConverter}}">
                 <Grid>
                     <Image Margin="5,5,5,5" Visibility="{Binding IsProcessing, Converter={StaticResource InvisibilityConverter}}">
                         <Image.Source>
@@ -101,20 +108,23 @@
                 <ListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem">
                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                        <Setter Property="Margin" Value="2,2,2,2"></Setter>
+                        <Setter Property="BorderBrush" Value="#509090AA"></Setter>
+                        <Setter Property="BorderThickness" Value="0,0,0,1"></Setter>
                     </Style>
                 </ListView.ItemContainerStyle>
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <Grid ToolTip="{Binding ErrorMessage}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" Name="TitleColumnDefinition"/>
-                                <ColumnDefinition Width="120"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock TextTrimming="CharacterEllipsis" Width="{Binding ActualWidth, ElementName=TitleColumnWidth}" VerticalAlignment="Center" HorizontalAlignment="Left" Grid.Column="0" Text="{Binding RelativePath}"></TextBlock>
-                            <ProgressBar Grid.Column="1" Maximum="{Binding MaxProgress}" Value="{Binding Progress}" Foreground="{Binding HasError, Converter={StaticResource HasErrorBrushConverter}}"></ProgressBar>
-                            <Label Grid.Column="1" Content="{Binding Status}"></Label>
-                        </Grid>
+                        <Border BorderBrush="#30000000" BorderThickness="0,0,0,0" Margin="2,2,0,2">
+                            <Grid ToolTip="{Binding ErrorMessage}" Margin="2,2,2,2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" Name="TitleColumnDefinition"/>
+                                    <ColumnDefinition Width="120"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock TextTrimming="CharacterEllipsis" Width="{Binding ActualWidth, ElementName=TitleColumnWidth}" VerticalAlignment="Center" HorizontalAlignment="Left" Grid.Column="0" Text="{Binding RelativePath}"></TextBlock>
+                                <ProgressBar Grid.Column="1" Maximum="{Binding MaxProgress}" Value="{Binding Progress}" Foreground="{Binding HasError, Converter={StaticResource HasErrorBrushConverter}}"></ProgressBar>
+                                <Label Grid.Column="1" Content="{Binding Status}"></Label>
+                            </Grid>
+                        </Border>
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>

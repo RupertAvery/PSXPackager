@@ -2,7 +2,10 @@
 using System.IO;
 using System.Threading;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
+using Popstation.Database;
 using Popstation.Pbp;
 using PSXPackager.Common;
 using PSXPackager.Common.Cue;
@@ -22,6 +25,14 @@ namespace Popstation
     //0x20	Offset of the file DATA.PSP
     //0x24	Offset of the file DATA.PSAR
 
+    public static class StringExtensions
+    {
+        public static string ReplaceIngoreCase(this string input, string find, string replace)
+        {
+            return Regex.Replace(input, find, replace, RegexOptions.IgnoreCase);
+        }
+    }
+
     public partial class Popstation
     {
 
@@ -36,22 +47,59 @@ namespace Popstation
             return output;
         }
 
-        public static string GetFilename(string filenameFormat, string sourceFilename, string gameid, string maingameId, string title, string maintitle, string region)
+        public static bool CheckResourceFormat(string filenameFormat)
         {
-            var output = filenameFormat.ToUpper().Replace("%FILENAME%", Path.GetFileNameWithoutExtension(sourceFilename));
-            output = output.Replace("%GAMEID%", gameid);
-            output = output.Replace("%MAINGAMEID%", maingameId);
-            output = output.Replace("%TITLE%", title);
-            output = output.Replace("%MAINTITLE%", maintitle);
-            output = output.Replace("%REGION%", region);
+            var output = filenameFormat.Contains("%FILENAME%");
+            output |= filenameFormat.Contains("%GAMEID%");
+            output |= filenameFormat.Contains("%MAINGAMEID%");
+            output |= filenameFormat.Contains("%TITLE%");
+            output |= filenameFormat.Contains("%MAINTITLE%");
+            output |= filenameFormat.Contains("%REGION%");
+            output |= filenameFormat.Contains("%RESOURCE%");
             return output;
         }
 
-        private void ExtractResource(Stream stream, string path, string filename)
+
+        public static string GetFilename(string filenameFormat, string sourceFilename, string gameid, string maingameId, string title, string maintitle, string region)
+        {   
+            var output = filenameFormat.ReplaceIngoreCase("%FILENAME%", Path.GetFileNameWithoutExtension(sourceFilename));
+            output = output.ReplaceIngoreCase("%GAMEID%", gameid);
+            output = output.ReplaceIngoreCase("%MAINGAMEID%", maingameId);
+            output = output.ReplaceIngoreCase("%TITLE%", title);
+            output = output.ReplaceIngoreCase("%MAINTITLE%", maintitle);
+            output = output.ReplaceIngoreCase("%REGION%", region);
+            return output;
+        }
+
+        public static string GetResourceFilename(string filenameFormat, string sourceFilename, string gameid, string maingameId, string title, string maintitle, string region, ResourceType resourceType, string ext)
+        {
+            var output = filenameFormat.ReplaceIngoreCase("%FILENAME%", Path.GetFileNameWithoutExtension(sourceFilename));
+            output = output.ReplaceIngoreCase("%GAMEID%", gameid);
+            output = output.ReplaceIngoreCase("%MAINGAMEID%", maingameId);
+            output = output.ReplaceIngoreCase("%TITLE%", title);
+            output = output.ReplaceIngoreCase("%MAINTITLE%", maintitle);
+            output = output.ReplaceIngoreCase("%REGION%", region);
+            output = output.ReplaceIngoreCase("%RESOURCE%", resourceType.ToString());
+            output = output.ReplaceIngoreCase("%EXT%", ext);
+            return output;
+        }
+
+        public static string GetResourceFolder(string filenameFormat, string sourceFilename, string gameid, string maingameId, string title, string maintitle, string region)
+        {
+            var output = filenameFormat.ReplaceIngoreCase("%FILENAME%", Path.GetFileNameWithoutExtension(sourceFilename));
+            output = output.ReplaceIngoreCase("%GAMEID%", gameid);
+            output = output.ReplaceIngoreCase("%MAINGAMEID%", maingameId);
+            output = output.ReplaceIngoreCase("%TITLE%", title);
+            output = output.ReplaceIngoreCase("%MAINTITLE%", maintitle);
+            output = output.ReplaceIngoreCase("%REGION%", region);
+            return output;
+        }
+
+        private void ExtractResource(Stream stream, string path)
         {
             if (stream.Length > 0)
             {
-                using (var file = new FileStream(Path.Combine(path, filename), FileMode.OpenOrCreate, FileAccess.Write))
+                using (var file = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write))
                 {
                     stream.CopyTo(file);
                     stream.Flush();
@@ -59,47 +107,9 @@ namespace Popstation
             }
             stream.Dispose();
         }
+        
 
-        private string GetResouceFolderPath(ExtractOptions processOptions, string mode, GameInfo entry, string srcIso)
-        {
-            string path;
-
-            if (!string.IsNullOrEmpty(mode))
-            {
-                string filename = Path.GetFileNameWithoutExtension(srcIso);
-                path = Path.GetDirectoryName(srcIso);
-
-                if (!string.IsNullOrEmpty(processOptions.ResourceFoldersPath))
-                {
-                    path = processOptions.ResourceFoldersPath;
-                }
-
-                switch (mode.ToLower())
-                {
-                    case "gameid":
-                        path = Path.Combine(path, entry.GameID);
-                        break;
-                    case "title":
-                        path = Path.Combine(path, entry.GameName);
-                        break;
-                    case "filename":
-                        path = Path.Combine(path, filename);
-                        break;
-                    default:
-                        path = Path.Combine(path, filename);
-                        break;
-                }
-
-            }
-            else
-            {
-                path = Path.GetDirectoryName(srcIso);
-            }
-
-            return path;
-        }
-
-        private void ExtractResources(Stream stream, string path)
+        private void ExtractResources(Stream stream, Func<ResourceType, string, string> getResourcePath)
         {
             Stream resourceStream;
 
@@ -107,29 +117,58 @@ namespace Popstation
 
             if (pbpStreamReader.TryGetResourceStream(ResourceType.ICON0, stream, out resourceStream))
             {
-                ExtractResource(resourceStream, path, "ICON0.png");
+                ExtractResource(resourceStream, getResourcePath(ResourceType.ICON0, ".png"));
             }
 
             if (pbpStreamReader.TryGetResourceStream(ResourceType.ICON1, stream, out resourceStream))
             {
-                ExtractResource(resourceStream, path, "ICON1.pmf");
+                ExtractResource(resourceStream, getResourcePath(ResourceType.ICON1, ".pmf"));
             }
 
             if (pbpStreamReader.TryGetResourceStream(ResourceType.PIC0, stream, out resourceStream))
             {
-                ExtractResource(resourceStream, path, "PIC0.png");
+                ExtractResource(resourceStream, getResourcePath(ResourceType.PIC0, ".png"));
             }
 
             if (pbpStreamReader.TryGetResourceStream(ResourceType.PIC1, stream, out resourceStream))
             {
-                ExtractResource(resourceStream, path, "PIC1.png");
+                ExtractResource(resourceStream, getResourcePath(ResourceType.PIC1, ".png"));
             }
 
             if (pbpStreamReader.TryGetResourceStream(ResourceType.SND0, stream, out resourceStream))
             {
-                ExtractResource(resourceStream, path, "SND0.at3");
+                ExtractResource(resourceStream, getResourcePath(ResourceType.SND0, ".at3"));
             }
 
+        }
+
+        private string GetResourcePath(ExtractOptions options, GameEntry entry, ResourceType type, string ext)
+        {
+            var path= GetResourceFilename(options.CustomResourceFormat, Path.GetFileNameWithoutExtension(options.SourcePbp), entry.GameID, entry.SaveFolderName, entry.GameName, entry.SaveDescription, entry.Format, type, ext);
+
+            if (string.IsNullOrEmpty(options.ResourceFoldersPath))
+            {
+                options.ResourceFoldersPath = Path.GetDirectoryName(options.SourcePbp);
+            }
+
+            return Path.Combine(options.ResourceFoldersPath, path);
+        }
+
+        private void EnsureResourcePathExists(ExtractOptions options, GameEntry entry)
+        {
+            var path = GetResourceFolder(options.CustomResourceFormat, Path.GetFileNameWithoutExtension(options.SourcePbp), entry.GameID, entry.SaveFolderName, entry.GameName, entry.SaveDescription, entry.Format);
+
+            if (string.IsNullOrEmpty(options.ResourceFoldersPath))
+            {
+                options.ResourceFoldersPath = Path.GetDirectoryName(options.SourcePbp);
+            }
+
+            path = Path.Combine(options.ResourceFoldersPath, path);
+
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
         }
 
         public void Extract(ExtractOptions options, CancellationToken cancellationToken)
@@ -138,50 +177,31 @@ namespace Popstation
             {
                 var pbpStreamReader = new PbpReader(stream);
 
-                if (!string.IsNullOrEmpty(options.GenerateResourceFolders))
+                if (options.GenerateResourceFolders)
                 {
                     var disc = pbpStreamReader.Discs[0];
 
-                    var gameInfo = options.GetGameInfo(disc.DiscID);
+                    var gameInfo = options.FindGame(disc.DiscID);
 
-                    var path = GetResouceFolderPath(options, options.GenerateResourceFolders, gameInfo, options.SourcePbp);
-
-                    if (!Directory.Exists(path))
-                    {
-                        Directory.CreateDirectory(path);
-                    }
-
-                    if (options.GenerateResourceFolders.ToLower() == "gameid")
-                    {
-                        using (File.Create(Path.Combine(path, gameInfo.GameName)))
-                        {
-                        }
-                    }
+                    EnsureResourcePathExists(options, gameInfo);
 
                     return;
                 }
 
-                if (!string.IsNullOrEmpty(options.ExtractResources))
+                if (options.ExtractResources)
                 {
                     var disc = pbpStreamReader.Discs[0];
 
-                    var gameInfo = options.GetGameInfo(disc.DiscID);
+                    var gameInfo = options.FindGame(disc.DiscID);
 
-                    var path = GetResouceFolderPath(options, options.ExtractResources, gameInfo, options.SourcePbp);
+                    EnsureResourcePathExists(options, gameInfo);
 
-                    if (!Directory.Exists(path))
+                    if (string.IsNullOrEmpty(options.ResourceFoldersPath))
                     {
-                        Directory.CreateDirectory(path);
+                        options.ResourceFoldersPath = Path.GetDirectoryName(options.SourcePbp);
                     }
 
-                    ExtractResources(stream, path);
-
-                    if (options.ExtractResources.ToLower() == "gameid")
-                    {
-                        using (File.Create(Path.Combine(path, gameInfo.GameName)))
-                        {
-                        }
-                    }
+                    ExtractResources(stream, (type, extension) => GetResourcePath(options, gameInfo, type, extension));
 
                     return;
                 }
@@ -192,22 +212,22 @@ namespace Popstation
                 {
                     foreach (var disc in pbpStreamReader.Discs.Where(d => options.Discs.Contains(d.Index)))
                     {
-                        var gameInfo = options.GetGameInfo(disc.DiscID);
+                        var gameInfo = options.FindGame(disc.DiscID);
 
                         if (gameInfo == null)
                         {
                             //var mainGameId = (string)pbpStreamReader.SFOData.Entries.FirstOrDefault(x => x.Key == SFOKeys.DISC_ID)?.Value;
                             options.FileNameFormat = "%FILENAME%";
-                            gameInfo = new GameInfo();
+                            gameInfo = new GameEntry();
                         }
 
                         var title = GetFilename(options.FileNameFormat,
                             options.SourcePbp,
                             disc.DiscID,
-                            gameInfo.MainGameID,
+                            gameInfo.SaveFolderName,
                             gameInfo.GameName,
-                            gameInfo.Title,
-                            gameInfo.Region
+                            gameInfo.SaveDescription,
+                            gameInfo.Format
                         );
 
                         Notify?.Invoke(PopstationEventEnum.Info, $"Using Title '{title}'");
@@ -229,22 +249,22 @@ namespace Popstation
                 {
                     var disc = pbpStreamReader.Discs[0];
 
-                    var gameInfo = options.GetGameInfo(disc.DiscID);
+                    var gameInfo = options.FindGame(disc.DiscID);
 
                     if (gameInfo == null)
                     {
                         //var mainGameId = (string)pbpStreamReader.SFOData.Entries.FirstOrDefault(x => x.Key == SFOKeys.DISC_ID)?.Value;
                         options.FileNameFormat = "%FILENAME%";
-                        gameInfo = new GameInfo();
+                        gameInfo = new GameEntry();
                     }
 
                     var title = GetFilename(options.FileNameFormat,
                         options.SourcePbp,
                         disc.DiscID,
-                        gameInfo.MainGameID,
+                        gameInfo.SaveFolderName,
                         gameInfo.GameName,
-                        gameInfo.Title,
-                        gameInfo.Region
+                        gameInfo.SaveDescription,
+                        gameInfo.Format
                     );
 
                     var isoPath = Path.Combine(options.OutputPath, $"{title}{ext}");
