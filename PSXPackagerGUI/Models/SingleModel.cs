@@ -3,7 +3,7 @@ using System.Windows.Media.Imaging;
 
 namespace PSXPackagerGUI.Models
 {
-    public class Model : BaseNotifyModel
+    public class SingleModel : BaseNotifyModel
     {
         private IEnumerable<Disc> _discs;
         private bool _isDirty;
@@ -17,7 +17,7 @@ namespace PSXPackagerGUI.Models
         private ResourceModel _snd0;
         private string _status;
 
-        public Model()
+        public SingleModel()
         {
         }
         

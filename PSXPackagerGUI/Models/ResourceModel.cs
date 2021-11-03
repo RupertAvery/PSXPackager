@@ -16,6 +16,15 @@ namespace PSXPackagerGUI.Models
             IsLoadEnabled = true;
         }
 
+        public void Reset()
+        {
+            Icon = null;
+            IsLoadEnabled = true;
+            IsSaveAsEnabled = false;
+            IsRemoveEnabled = false;
+            SourceUrl = null;
+        }
+
         public ResourceType Type { get; set; }
 
         public ImageSource Icon

@@ -5,6 +5,17 @@ namespace PSXPackager.Common.Cue
     [DebuggerDisplay("{Minutes}:{Seconds}:{Frames}")]
     public partial class IndexPosition
     {
+        public IndexPosition()
+        {
+
+        }
+        public IndexPosition(int minutes, int seconds, int frames)
+        {
+            Minutes = minutes;
+            Seconds = seconds;
+            Frames = frames;
+        }
+
         public int Minutes { get; set; }
         public int Seconds { get; set; }
         public int Frames { get; set; }

@@ -29,6 +29,7 @@ namespace PSXPackagerGUI
 
             _singlePage = new SinglePage(_settings.Model, _gameDb);
             _batchPage = new BatchPage(_settings.Model, _gameDb);
+            _singlePage.Model.PropertyChanged += ModelOnPropertyChanged;
 
             _model = new MainModel();
             
@@ -39,6 +40,14 @@ namespace PSXPackagerGUI
             CurrentPage.Content = _singlePage;
         }
 
+        private void ModelOnPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(SingleModel.IsDirty))
+            {
+                _model.IsDirty = _singlePage.Model.IsDirty;
+            }
+        }
+
         private void OnClosing(object sender, CancelEventArgs e)
         {
             _singlePage.OnClosing(e);
@@ -47,13 +56,7 @@ namespace PSXPackagerGUI
 
         private void OpenFile_OnClick(object sender, RoutedEventArgs e)
         {
-            var openFileDialog = new Ookii.Dialogs.Wpf.VistaOpenFileDialog();
-            openFileDialog.Filter = "PBP Files|*.pbp|All files|*.*";
-            openFileDialog.ShowDialog();
-            if (!string.IsNullOrEmpty(openFileDialog.FileName))
-            {
-                _singlePage.LoadPbp(openFileDialog.FileName);
-            }
+            _singlePage.LoadPbp();
         }
 
         private void Save_OnClick(object sender, RoutedEventArgs e)
@@ -76,6 +79,11 @@ namespace PSXPackagerGUI
         {
             _model.Mode = AppMode.Batch;
             CurrentPage.Content = _batchPage;
+        }
+
+        private void CreateFile_OnClick(object sender, RoutedEventArgs e)
+        {
+            _singlePage.NewPBP();
         }
     }
 }

@@ -26,7 +26,7 @@ namespace PSXPackagerGUI.Pages
     public partial class SinglePage : Page
     {
         private CancellationTokenSource _cancellationTokenSource;
-        private readonly Model _viewModel;
+        private SingleModel _model;
         private readonly SettingsModel _settings;
         private readonly GameDB _gameDb;
 
@@ -62,7 +62,7 @@ namespace PSXPackagerGUI.Pages
 
             InitializeComponent();
 
-            _viewModel = new Model
+            Model = new SingleModel
             {
                 Icon0 = new ResourceModel() { Type = ResourceType.ICON0 },
                 Icon1 = new ResourceModel() { Type = ResourceType.ICON1 },
@@ -75,15 +75,45 @@ namespace PSXPackagerGUI.Pages
                 Discs = DummyDisc(0, 5).ToList()
             };
 
-            DataContext = _viewModel;
+            DataContext = Model;
 
             //Closing += OnClosing;
         }
 
 
-
-        public void LoadPbp(string path)
+        private void ResetModel()
         {
+            Model.Icon0.Reset();
+            Model.Icon1.Reset();
+            Model.Pic0.Reset();
+            Model.Pic1.Reset();
+            Model.Snd0.Reset();
+            Model.IsDirty = false;
+            Model.MaxProgress = 100;
+            Model.Progress = 0;
+            Model.Discs = DummyDisc(0, 5).ToList();
+        }
+
+        public void LoadPbp()
+        {
+            if (IsBusy)
+            {
+                MessageBox.Show(Window, "An operation is in progress. Please wait for the current operation to complete.", "PSXPackager",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var openFileDialog = new Ookii.Dialogs.Wpf.VistaOpenFileDialog();
+            openFileDialog.Filter = "PBP Files|*.pbp|All files|*.*";
+            var result = openFileDialog.ShowDialog();
+
+            if (!result.GetValueOrDefault(false))
+            {
+                return;
+            }
+
+            var path = openFileDialog.FileName;
+
             try
             {
                 using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read))
@@ -115,7 +145,7 @@ namespace PSXPackagerGUI.Pages
 
                     var dummyDiscs = DummyDisc(discs.Count, 5 - discs.Count);
 
-                    _viewModel.Discs = discs.Concat(dummyDiscs).ToList();
+                    Model.Discs = discs.Concat(dummyDiscs).ToList();
 
 
                     void LoadResource(ResourceType type, ResourceModel model)
@@ -131,10 +161,10 @@ namespace PSXPackagerGUI.Pages
                     }
 
 
-                    LoadResource(ResourceType.ICON0, _viewModel.Icon0);
-                    LoadResource(ResourceType.ICON1, _viewModel.Icon1);
-                    LoadResource(ResourceType.PIC0, _viewModel.Pic0);
-                    LoadResource(ResourceType.PIC1, _viewModel.Pic1);
+                    LoadResource(ResourceType.ICON0, Model.Icon0);
+                    LoadResource(ResourceType.ICON1, Model.Icon1);
+                    LoadResource(ResourceType.PIC0, Model.Pic0);
+                    LoadResource(ResourceType.PIC1, Model.Pic1);
                 }
             }
             catch (Exception e)
@@ -147,8 +177,8 @@ namespace PSXPackagerGUI.Pages
 
         private void Remove(Disc disc)
         {
-            _viewModel.Discs = _viewModel.Discs.Select(d => d == disc ? Disc.EmptyDisc(d.Index) : d).ToList();
-            _viewModel.IsDirty = true;
+            Model.Discs = Model.Discs.Select(d => d == disc ? Disc.EmptyDisc(d.Index) : d).ToList();
+            Model.IsDirty = true;
         }
 
         public static BitmapImage GetBitmapImage(Stream stream)
@@ -189,11 +219,24 @@ namespace PSXPackagerGUI.Pages
 
         private Window Window => Window.GetWindow(this);
 
-        public bool IsBusy => _viewModel.IsBusy;
+        public bool IsBusy => Model.IsBusy;
+
+        public SingleModel Model
+        {
+            get => _model;
+            set => _model = value;
+        }
 
         public void Save()
         {
-            var discs = _viewModel.Discs.Where(d => d.SourceUrl != null).OrderBy(d => d.Index).ToList();
+            if (IsBusy)
+            {
+                MessageBox.Show(Window, "An operation is in progress. Please wait for the current operation to complete.", "PSXPackager",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var discs = Model.Discs.Where(d => d.SourceUrl != null).OrderBy(d => d.Index).ToList();
 
             if (discs.Count == 0)
             {
@@ -231,7 +274,7 @@ namespace PSXPackagerGUI.Pages
             {
                 string format = "";
 
-                var game = _gameDb.GetEntryByScannerID(_viewModel.Discs.First().GameID);
+                var game = _gameDb.GetEntryByScannerID(Model.Discs.First().GameID);
                 var appPath = ApplicationInfo.AppPath;
 
                 var options = new ConvertOptions()
@@ -239,11 +282,11 @@ namespace PSXPackagerGUI.Pages
                     OutputPath = Path.GetDirectoryName(saveFileDialog.FileName),
                     OriginalFilename = Path.GetFileName(saveFileDialog.FileName),
                     DiscInfos = discs.Select(GetDiscInfo).ToList(),
-                    Icon0 = GetResource(_viewModel.Icon0),
-                    Icon1 = GetResource(_viewModel.Icon1),
-                    Pic0 = GetResource(_viewModel.Pic0),
-                    Pic1 = GetResource(_viewModel.Pic1),
-                    Snd0 = GetResource(_viewModel.Snd0),
+                    Icon0 = GetResource(Model.Icon0),
+                    Icon1 = GetResource(Model.Icon1),
+                    Pic0 = GetResource(Model.Pic0),
+                    Pic1 = GetResource(Model.Pic1),
+                    Snd0 = GetResource(Model.Snd0),
                     MainGameTitle = game.SaveDescription,
                     MainGameID = game.SaveFolderName,
                     MainGameRegion = game.Format,
@@ -265,11 +308,21 @@ namespace PSXPackagerGUI.Pages
 
                 Task.Run(() =>
                 {
-                    using (var stream =
-                        new FileStream(saveFileDialog.FileName, FileMode.OpenOrCreate, FileAccess.Write))
+                    Model.IsBusy = true;
+
+                    using (var stream = new FileStream(saveFileDialog.FileName, FileMode.OpenOrCreate, FileAccess.Write))
                     {
                         writer.Write(stream, _cancellationTokenSource.Token);
                     }
+                    
+                    Dispatcher.Invoke(() =>
+                    {
+                        MessageBox.Show(Window, $"EBOOT has been saved to \"{saveFileDialog.FileName}\"",
+                            "PSXPackager",
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+                    });
+
+                    Model.IsBusy = false;
                 });
             }
         }
@@ -286,9 +339,9 @@ namespace PSXPackagerGUI.Pages
                     break;
 
                 case PopstationEventEnum.ProcessingComplete:
-                    _viewModel.MaxProgress = 100;
-                    _viewModel.Progress = 0;
-                    _viewModel.IsBusy = false;
+                    Model.MaxProgress = 100;
+                    Model.Progress = 0;
+                    Model.IsBusy = false;
                     break;
 
                 case PopstationEventEnum.Error:
@@ -303,23 +356,23 @@ namespace PSXPackagerGUI.Pages
 
                 case PopstationEventEnum.GetIsoSize:
                     _lastvalue = 0;
-                    _viewModel.MaxProgress = (uint)value;
-                    _viewModel.Progress = 0;
+                    Model.MaxProgress = (uint)value;
+                    Model.Progress = 0;
                     break;
 
                 case PopstationEventEnum.ConvertSize:
                 case PopstationEventEnum.ExtractSize:
                 case PopstationEventEnum.WriteSize:
                     _lastvalue = 0;
-                    _viewModel.MaxProgress = (uint)value;
-                    _viewModel.Progress = 0;
+                    Model.MaxProgress = (uint)value;
+                    Model.Progress = 0;
                     break;
 
                 case PopstationEventEnum.ConvertStart:
                     _action = "Converting";
                     Dispatcher.Invoke(() =>
                     {
-                        _viewModel.IsBusy = true;
+                        Model.IsBusy = true;
                     });
                     break;
 
@@ -327,7 +380,7 @@ namespace PSXPackagerGUI.Pages
                     _action = "Writing";
                     Dispatcher.Invoke(() =>
                     {
-                        _viewModel.IsBusy = true;
+                        Model.IsBusy = true;
                     });
                     break;
 
@@ -335,7 +388,7 @@ namespace PSXPackagerGUI.Pages
                     _action = "Extracting";
                     Dispatcher.Invoke(() =>
                     {
-                        _viewModel.IsBusy = true;
+                        Model.IsBusy = true;
                     });
                     break;
 
@@ -343,16 +396,16 @@ namespace PSXPackagerGUI.Pages
                     _action = "Decompressing";
                     Dispatcher.Invoke(() =>
                     {
-                        _viewModel.IsBusy = true;
+                        Model.IsBusy = true;
                     });
                     break;
 
                 case PopstationEventEnum.ExtractComplete:
                 case PopstationEventEnum.WriteComplete:
                 case PopstationEventEnum.DecompressComplete:
-                    _viewModel.MaxProgress = 100;
-                    _viewModel.Progress = 0;
-                    _viewModel.IsBusy = false;
+                    Model.MaxProgress = 100;
+                    Model.Progress = 0;
+                    Model.IsBusy = false;
                     break;
 
                 case PopstationEventEnum.ConvertComplete:
@@ -369,12 +422,11 @@ namespace PSXPackagerGUI.Pages
                 case PopstationEventEnum.WriteProgress:
                     Dispatcher.Invoke(() =>
                     {
-                        var percent = (uint)value / (float)_viewModel.MaxProgress * 100f;
+                        var percent = (uint)value / (float)Model.MaxProgress * 100f;
                         if (percent - _lastvalue >= 0.25)
                         {
-                            _viewModel.Status = $"{_action} ({percent:F0}%)";
-                            _viewModel.Progress = (uint)value;
-                            _viewModel.IsBusy = false;
+                            Model.Status = $"{_action} ({percent:F0}%)";
+                            Model.Progress = (uint)value;
                             _lastvalue = percent;
                         }
                     });
@@ -392,8 +444,8 @@ namespace PSXPackagerGUI.Pages
         {
             if (TryGetFilename(e.Data, imageExtensions, out var filename))
             {
-                _viewModel.Icon0.Icon = GetBitmapImage(GetImageStream(filename));
-                _viewModel.Icon0.SourceUrl = filename;
+                Model.Icon0.Icon = GetBitmapImage(GetImageStream(filename));
+                Model.Icon0.SourceUrl = filename;
                 return;
             }
             MessageBox.Show(Window, "Invalid fie type", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -403,8 +455,8 @@ namespace PSXPackagerGUI.Pages
         {
             if (TryGetFilename(e.Data, imageExtensions, out var filename))
             {
-                _viewModel.Icon1.Icon = GetBitmapImage(GetImageStream(filename));
-                _viewModel.Icon1.SourceUrl = filename;
+                Model.Icon1.Icon = GetBitmapImage(GetImageStream(filename));
+                Model.Icon1.SourceUrl = filename;
                 return;
             }
             MessageBox.Show(Window, "Invalid fie type", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -414,8 +466,8 @@ namespace PSXPackagerGUI.Pages
         {
             if (TryGetFilename(e.Data, imageExtensions, out var filename))
             {
-                _viewModel.Pic0.Icon = GetBitmapImage(GetImageStream(filename));
-                _viewModel.Pic0.SourceUrl = filename;
+                Model.Pic0.Icon = GetBitmapImage(GetImageStream(filename));
+                Model.Pic0.SourceUrl = filename;
                 return;
             }
             MessageBox.Show(Window, "Invalid fie type", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -425,8 +477,8 @@ namespace PSXPackagerGUI.Pages
         {
             if (TryGetFilename(e.Data, imageExtensions, out var filename))
             {
-                _viewModel.Pic1.Icon = GetBitmapImage(GetImageStream(filename));
-                _viewModel.Pic1.SourceUrl = filename;
+                Model.Pic1.Icon = GetBitmapImage(GetImageStream(filename));
+                Model.Pic1.SourceUrl = filename;
                 return;
             }
             MessageBox.Show(Window, "Invalid fie type", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -437,7 +489,7 @@ namespace PSXPackagerGUI.Pages
             if (TryGetFilename(e.Data, new[] { ".at3" }, out var filename))
             {
                 //_viewModel.Snd0.Icon = GetBitmapImage(GetImageStream(filename));
-                _viewModel.Snd0.SourceUrl = filename;
+                Model.Snd0.SourceUrl = filename;
 
             }
             MessageBox.Show(Window, "Invalid fie type", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -512,7 +564,7 @@ namespace PSXPackagerGUI.Pages
                 disc.IsSaveAsEnabled = false;
                 disc.RemoveCommand = new RelayCommand((o) => Remove(disc));
 
-                _viewModel.IsDirty = true;
+                Model.IsDirty = true;
             }
 
         }
@@ -535,7 +587,7 @@ namespace PSXPackagerGUI.Pages
 
             if (result.GetValueOrDefault(false))
             {
-                var sourceUrl = _viewModel.Discs.Single(d => d.Index == context.Index).SourceUrl;
+                var sourceUrl = Model.Discs.Single(d => d.Index == context.Index).SourceUrl;
 
                 var match = pbpRegex.Match(sourceUrl);
                 if (match.Success)
@@ -549,9 +601,9 @@ namespace PSXPackagerGUI.Pages
                                 FileAccess.Write))
                             {
                                 var disc = pbpReader.Discs[int.Parse(match.Groups[1].Value)];
-                                _viewModel.Status = "Extracting disc image...";
-                                _viewModel.MaxProgress = disc.IsoSize;
-                                _viewModel.IsBusy = true;
+                                Model.Status = "Extracting disc image...";
+                                Model.MaxProgress = disc.IsoSize;
+                                Model.IsBusy = true;
                                 _lastvalue = 0;
                                 disc.ProgressEvent = ProgressEvent;
                                 disc.CopyTo(output, _cancellationTokenSource.Token);
@@ -565,10 +617,10 @@ namespace PSXPackagerGUI.Pages
 
                                 CueFileWriter.Write(cueFile, cuePath);
 
-                                _viewModel.Status = "";
-                                _viewModel.MaxProgress = 100;
-                                _viewModel.Progress = 0;
-                                _viewModel.IsBusy = false;
+                                Model.Status = "";
+                                Model.MaxProgress = 100;
+                                Model.Progress = 0;
+                                Model.IsBusy = false;
                                 Dispatcher.Invoke(() =>
                                 {
                                     MessageBox.Show(Window, $"Disc image has been extracted to \"{saveFileDialog.FileName}\"",
@@ -586,11 +638,11 @@ namespace PSXPackagerGUI.Pages
 
         private void ProgressEvent(uint progress)
         {
-            var percent = progress / (float)_viewModel.MaxProgress * 100f;
+            var percent = progress / (float)Model.MaxProgress * 100f;
             if (percent - _lastvalue > 0.25)
             {
-                _viewModel.Progress = progress;
-                _viewModel.Status = $"Extracting disc image... ({percent:F0}%)";
+                Model.Progress = progress;
+                Model.Status = $"Extracting disc image... ({percent:F0}%)";
                 _lastvalue = percent;
             }
         }
@@ -650,7 +702,7 @@ namespace PSXPackagerGUI.Pages
                 context.IsSaveAsEnabled = false;
                 context.IsRemoveEnabled = true;
                 context.SourceUrl = openFileDialog.FileName;
-                _viewModel.IsDirty = true;
+                Model.IsDirty = true;
             }
 
         }
@@ -733,8 +785,28 @@ namespace PSXPackagerGUI.Pages
             context.Icon = null;
             context.IsSaveAsEnabled = false;
             context.SourceUrl = null;
-            _viewModel.IsDirty = true;
+            Model.IsDirty = true;
         }
 
+        public void NewPBP()
+        {
+            if (IsBusy)
+            {
+                var result = MessageBox.Show(Window, "An operation is in progress. Do you want to cancel?", "PSXPackager",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
+                if (result == MessageBoxResult.No)
+                    return;
+            }
+
+            if (Model.IsDirty)
+            {
+                var result = MessageBox.Show(Window, "You have unsaved changes. Are you sure you want to continue?", "PSXPackager",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
+                if (result == MessageBoxResult.No)
+                    return;
+            }
+
+            ResetModel();
+        }
     }
 }

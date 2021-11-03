@@ -55,7 +55,7 @@
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>
-            <MenuItem x:Name="OpenFile" Click="OpenFile_OnClick" ToolTip="Open File">
+            <MenuItem x:Name="OpenFile" Click="OpenFile_OnClick" ToolTip="Open PBP">
                 <MenuItem.Visibility >
                     <MultiBinding Converter="{StaticResource ModeVisibilityConverter}">
                         <Binding Path="Mode"></Binding>
@@ -66,6 +66,21 @@
                     <controls:AutoDisableImage Height="32" Width="32">
                         <Image.Source>
                             <BitmapImage  UriSource="./Resources/open-48x48.png"/>
+                        </Image.Source>
+                    </controls:AutoDisableImage>
+                </MenuItem.Header>
+            </MenuItem>
+            <MenuItem x:Name="CreateFile" Click="CreateFile_OnClick" ToolTip="New PBP">
+                <MenuItem.Visibility >
+                    <MultiBinding Converter="{StaticResource ModeVisibilityConverter}">
+                        <Binding Path="Mode"></Binding>
+                        <Binding Source="{StaticResource Single}"></Binding>
+                    </MultiBinding>
+                </MenuItem.Visibility>
+                <MenuItem.Header>
+                    <controls:AutoDisableImage Height="32" Width="32">
+                        <Image.Source>
+                            <BitmapImage UriSource="./Resources/new-48x48.png"/>
                         </Image.Source>
                     </controls:AutoDisableImage>
                 </MenuItem.Header>
@@ -86,7 +101,7 @@
                 </MenuItem.Header>
             </MenuItem>
             <Separator Width="2"/>
-            <MenuItem x:Name="Settings" Click="Settings_OnClick" ToolTip="Save">
+            <MenuItem x:Name="Settings" Click="Settings_OnClick" ToolTip="Settings">
                 <MenuItem.Header>
                     <controls:AutoDisableImage Height="32" Width="32">
                         <Image.Source>

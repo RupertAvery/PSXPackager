@@ -183,6 +183,11 @@ namespace PSXPackagerGUI.Pages
                     });
                 }
 
+                _dispatcher.Invoke(() =>
+                {
+                    MessageBox.Show(Window, $"Scan found {_model.BatchEntries.Count} entries", "Batch", MessageBoxButton.OK, MessageBoxImage.Information);
+                });
+
             });
         }
 

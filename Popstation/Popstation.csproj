@@ -20,7 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\DiscUtils.Core\DiscUtils.Core.csproj" />
     <ProjectReference Include="..\DiscUtils.Iso9660\DiscUtils.Iso9660.csproj" />
-    <ProjectReference Include="..\GameDB\Popstation.Database.csproj" />
+    <ProjectReference Include="..\Popstation.Database\Popstation.Database.csproj" />
     <ProjectReference Include="..\PSXPackager.Common\PSXPackager.Common.csproj" />
   </ItemGroup>
 

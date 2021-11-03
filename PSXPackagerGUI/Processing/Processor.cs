@@ -77,10 +77,10 @@ namespace PSXPackagerGUI.Processing
                     CompressionLevel = _settings.CompressionLevel,
                     ////Verbosity = o.Verbosity,
                     ////Log = o.Log,
-                    //ExtractResources = o.ExtractResources,
+                    ExtractResources = model.ExtractResources,
                     ImportResources = _settings.UseCustomResources,
+                    GenerateResourceFolders = model.GenerateResourceFolders,
                     CustomResourceFormat = _settings.CustomResourcesFormat,
-                    //GenerateResourceFolders = o.GenerateResourceFolders,
                     ResourceFoldersPath = _settings.CustomResourcesPath, 
                 };
 

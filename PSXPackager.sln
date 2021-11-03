@@ -19,7 +19,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PSXPackagerGUI", "PSXPackag
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PSXPackager.Common", "PSXPackager.Common\PSXPackager.Common.csproj", "{52B20BFE-93BE-4167-9F58-D04508698881}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Popstation.Database", "GameDB\Popstation.Database.csproj", "{0C859033-57EF-49C0-B201-E9F4D4F4428F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Popstation.Database", "Popstation.Database\Popstation.Database.csproj", "{0C859033-57EF-49C0-B201-E9F4D4F4428F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

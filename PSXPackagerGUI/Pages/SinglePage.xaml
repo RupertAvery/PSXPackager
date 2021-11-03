@@ -8,7 +8,7 @@
       xmlns:controls="clr-namespace:PSXPackagerGUI.Controls"
       xmlns:models="clr-namespace:PSXPackagerGUI.Models"
       mc:Ignorable="d" 
-      d:DataContext="{d:DesignInstance models:Model, IsDesignTimeCreatable=True}"
+      d:DataContext="{d:DesignInstance models:SingleModel, IsDesignTimeCreatable=True}"
       d:DesignHeight="450" d:DesignWidth="800"
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
       Title="Single">
@@ -103,8 +103,8 @@
                         </Grid.RowDefinitions>
                         <Label Grid.Column="0" Grid.Row="0" >Game ID</Label>
                         <Label Grid.Column="0" Grid.Row="1" >Title</Label>
-                        <TextBox Grid.Column="1" Grid.Row="0" HorizontalAlignment="Stretch" Margin="5,5,5,5" Text="{Binding SelectedDisc.GameID}"></TextBox>
-                        <TextBox Grid.Column="1" Grid.Row="1" HorizontalAlignment="Stretch" Margin="5,5,5,5" Text="{Binding SelectedDisc.Title}"></TextBox>
+                        <Label Grid.Column="1" Grid.Row="0" Content="{Binding SelectedDisc.GameID}"></Label>
+                        <Label Grid.Column="1" Grid.Row="1" Content="{Binding SelectedDisc.Title}"></Label>
 
                     </Grid>
                 </Grid>
@@ -133,7 +133,7 @@
                         </Grid>
                     </ScrollViewer>
                 </TabItem>
-                <TabItem Header="PARAM.SFO">
+                <TabItem Header="PARAM.SFO" Visibility="Hidden">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="60"/>

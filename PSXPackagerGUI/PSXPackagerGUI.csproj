@@ -1,15 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../psxpackager.props" />
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>Resources\package-64x64.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="Resources\disc.png" />
     <None Remove="Resources\floppy-48x48.png" />
     <None Remove="Resources\gear-48x48.png" />
+    <None Remove="Resources\new-48x48.png" />
     <None Remove="Resources\open-48x48.png" />
     <None Remove="Resources\package-16x16.png" />
     <None Remove="Resources\package-24x24.png" />
@@ -26,12 +29,14 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Popstation\Popstation.csproj" />
+    <ProjectReference Include="..\Popstation.Database\Popstation.Database.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Resource Include="Resources\disc.png" />
     <Resource Include="Resources\floppy-48x48.png" />
     <Resource Include="Resources\gear-48x48.png" />
+    <Resource Include="Resources\new-48x48.png" />
     <Resource Include="Resources\open-48x48.png" />
     <Resource Include="Resources\package-16x16.png" />
     <Resource Include="Resources\package-24x24.png" />
@@ -39,6 +44,12 @@
     <Resource Include="Resources\search-48x48.png" />
     <Resource Include="Resources\start-48x48.png" />
     <Resource Include="Resources\stop-48x48.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="README.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

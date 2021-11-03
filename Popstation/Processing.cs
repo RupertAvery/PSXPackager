@@ -94,14 +94,7 @@ namespace Popstation
 
                     if (FileExtensionHelper.IsPbp(file))
                     {
-                        if (options.ImportResources)
-                        {
-                            RepackPBP(originalFile, file, options, cancellationToken);
-                        }
-                        else
-                        {
-                            ExtractPbp(file, options, cancellationToken);
-                        }
+                        ExtractPbp(file, options, cancellationToken);
                     }
                     else
                     {
@@ -201,7 +194,7 @@ namespace Popstation
             return result;
         }
 
-        private (string, string) ProcessCue(string file, string tempPath)
+        public (string, string) ProcessCue(string file, string tempPath)
         {
             var filePath = Path.GetDirectoryName(file);
 
@@ -504,20 +497,15 @@ namespace Popstation
 
             Resource GetResourceOrDefault(ResourceType type, string ext)
             {
-                if (!processOptions.ImportResources)
-                {
-                    var defaultResourcePath = Path.Combine(defaultPath, type.ToString(), ext);
-                    return new Resource(type, defaultResourcePath);
-                }
-
                 var filename = Popstation.GetResourceFilename(processOptions.CustomResourceFormat, options.OriginalFilename, entry.GameID, entry.SaveFolderName, entry.GameName, entry.SaveDescription, entry.Format, type, ext);
 
                 var resourcePath = Path.Combine(processOptions.ResourceFoldersPath, filename);
 
-                if (!File.Exists(resourcePath))
+                if (!File.Exists(resourcePath) || !processOptions.ImportResources)
                 {
                     resourcePath = Path.Combine(defaultPath, $"{type}{ext}");
                 }
+
                 return new Resource(type, resourcePath);
             }
 
@@ -530,7 +518,11 @@ namespace Popstation
 
         private void GenerateResourceFolders(ProcessOptions processOptions, ConvertOptions options, GameEntry entry)
         {
-            var path = Popstation.GetResourceFolder(processOptions.CustomResourceFormat, options.OriginalFilename, entry.GameID, entry.SaveFolderName, entry.GameName, entry.SaveDescription, entry.Format);
+            var path = Popstation.GetResourceFilename(processOptions.CustomResourceFormat, options.OriginalFilename, entry.GameID, entry.SaveFolderName, entry.GameName, entry.SaveDescription, entry.Format, ResourceType.ICON0, "png");
+
+            path = Path.GetDirectoryName(path);
+
+            path = Path.Combine(options.OriginalPath, path);
 
             if (!Directory.Exists(path))
             {
@@ -604,7 +596,7 @@ namespace Popstation
             return popstation.Convert(options, cancellationToken);
         }
 
-        private bool RepackPBP(
+        public bool RepackPBP(
             string originalFile, 
             string srcPbp,
             ProcessOptions processOptions,

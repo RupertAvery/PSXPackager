@@ -1,13 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../psxpackager.props" />
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net462;net48;netcoreapp3.1</TargetFrameworks>
     <PublishTrimmed>true</PublishTrimmed>
-    <FileVersion>1.4.1.0</FileVersion>
-    <AssemblyVersion>1.4.1.0</AssemblyVersion>
-    <Authors>RupertAvery</Authors>
-    <Version>1.4.1</Version>
   </PropertyGroup>
 
 

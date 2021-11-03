@@ -225,7 +225,7 @@ namespace PSXPackager
 
                 try
                 {
-                    foreach (var file in options.Files)
+                    foreach (var file in options.  Files)
                     {
                         if (!File.Exists(file))
                         {

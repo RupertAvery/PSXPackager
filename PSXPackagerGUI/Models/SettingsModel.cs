@@ -71,6 +71,7 @@ namespace PSXPackagerGUI.Models
         [JsonIgnore]
         public string SourceFilename { get; set; }
 
-
+        [JsonIgnore]
+        public string Version { get; set; }
     }
 }

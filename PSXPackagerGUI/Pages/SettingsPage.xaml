@@ -5,11 +5,14 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:PSXPackagerGUI.Pages"
       xmlns:models="clr-namespace:PSXPackagerGUI.Models"
+      xmlns:controls="clr-namespace:PSXPackagerGUI.Controls"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       d:DataContext="{d:DesignInstance models:SettingsModel, IsDesignTimeCreatable=True}"
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
       Title="Settings">
+    <Page.Resources>
+    </Page.Resources>
     <Grid>
         <TabControl  TabStripPlacement="Left">
             <TabControl.ItemContainerStyle>
@@ -98,9 +101,9 @@
                             <RowDefinition Height="30"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
-                        <CheckBox VerticalAlignment="Center" Grid.Column="0" IsChecked="{Binding UseCustomResources}">Use Custom Resources</CheckBox>
+                        <CheckBox VerticalAlignment="Center" Grid.Column="0" IsChecked="{Binding UseCustomResources}">Use custom resources when batch creating PBPs</CheckBox>
                     </Grid>
-                    <Grid IsEnabled="{Binding UseCustomResources}">
+                    <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="30"/>
                             <RowDefinition Height="30"/>
@@ -126,9 +129,10 @@
                                 The match path will be appended to the source path to produce the final path that will be used to load a specified resource.
                             </TextBox.ToolTip>
                         </TextBox>
-                        <Grid Grid.Row="3" Grid.Column="1" Margin="0,10,0,0">
-                            <TextBlock>
-                            Use the following tokens to format the match path: 
+                        <Grid Grid.Row="3" Grid.Column="1" Margin="0,10,0,0" Grid.ColumnSpan="2">
+                            <TextBlock TextWrapping="Wrap">
+                                These settings are used when importing and extracting resources, as well as when generating resource folders. 
+                                Use the following tokens to format the match path: 
                             <LineBreak/>
                             <LineBreak/>
                             %FILENAME% - Use the input filename without the extension<LineBreak/>
@@ -155,6 +159,94 @@
                             <Label Grid.Row="3" Content="{Binding SampleResourcePath}"></Label>
                         </Grid>
                     </Grid>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Tools">
+                <Grid Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="150"/>
+                    </Grid.ColumnDefinitions>
+                    <Label VerticalContentAlignment="Center">
+                        Merge Multi-track BIN/CUE to Single BIN+CUE
+                    </Label>
+                    <Button x:Name="ConvertMultiToSingleBin" Click="ConvertMultiToSingleBin_OnClick" Grid.Row="0" Grid.Column="1" Margin="2">Browse</Button>
+                    <TextBlock TextWrapping="Wrap"  Grid.Row="1" Grid.Column="0" Margin="0,20,0,0">
+                        This tool allows you to merge multi-track .BINs without a .CUE file into a single .BIN and generate a .CUE file.
+                        <LineBreak/> 
+                        <LineBreak/> 
+                        To use this tool, select either ALL .bin files that have (Track #) in the filename, OR the .CUE file that references
+                        all the .BINs.
+                        <LineBreak/> 
+                        <LineBreak/> 
+                        <Bold>WARNING:</Bold> Only use this tool if you know what you are doing. This will create a .CUE file that assumes Track 1 is the game file
+                        and the rest of the tracks are Audio. For accurate CUE files, go to
+                        <Hyperlink NavigateUri="https://github.com/opsxcq/psx-cue-sbi-collection"
+                                   controls:HyperlinkExtensions.IsExternal="true"
+                        >https://github.com/opsxcq/psx-cue-sbi-collection</Hyperlink>
+                        and look for your game there. You may have to rename your files or update the .CUE file so that they match.
+                        <LineBreak/> 
+                        <LineBreak/> 
+                        <Bold>NOTE:</Bold> If you already have a correct .CUE file, you do not need to manually merge them here. PSXPackager can directly convert a multi-track .CUE with separate .BINs into a PBP.
+                    </TextBlock>
+                </Grid>
+            </TabItem>
+            <TabItem Header="GameDB">
+                <Grid Margin="20">
+                    <TextBlock>Not yet implemented</TextBlock>
+                </Grid>
+            </TabItem>
+            <TabItem Header="About">
+                <Grid Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="42"/>
+                        <RowDefinition Height="20"/>
+                        <RowDefinition Height="20"/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <TextBlock FontSize="28" Text="{Binding Version}"></TextBlock>
+                    <TextBlock Grid.Row="1" FontSize="14" VerticalAlignment="Bottom">
+                        ©2021 RupertAvery
+                    </TextBlock>
+                    <TextBlock Grid.Row="2" FontSize="14" VerticalAlignment="Bottom">
+                        Github:
+                        <Hyperlink NavigateUri="https://github.com/RupertAvery/PSXPackager"
+                                   controls:HyperlinkExtensions.IsExternal="true"
+                        >https://github.com/RupertAvery/PSXPackager</Hyperlink>
+                    </TextBlock>
+                    <TextBlock Grid.Row="3" Margin="0,20,0,0">
+                        PSXPackager is based off the popstation_md C source.
+                        <LineBreak/>
+                        <LineBreak/>
+                        PSXPackager uses code from
+                        <Hyperlink NavigateUri="https://github.com/DiscUtils/DiscUtils"
+                                   controls:HyperlinkExtensions.IsExternal="true"
+                        >https://github.com/DiscUtils/DiscUtils</Hyperlink>
+
+                        <LineBreak/>
+                        <LineBreak/>
+                        Programmers like to relax, too!
+                        <LineBreak/>                                    
+
+                        <Hyperlink NavigateUri="https://www.paypal.me/rupertavery/5.00?locale.x=en_US"
+                                   controls:HyperlinkExtensions.IsExternal="true"
+                        >Buy me a nice beer</Hyperlink>
+                        <LineBreak/>
+                        <Hyperlink NavigateUri="https://www.paypal.me/rupertavery/2.50?locale.x=en_US"
+                                   controls:HyperlinkExtensions.IsExternal="true"
+                        >Buy me a good beer</Hyperlink>
+                        <LineBreak/>
+                        <Hyperlink NavigateUri="https://www.paypal.me/rupertavery/1.50?locale.x=en_US"
+                                   controls:HyperlinkExtensions.IsExternal="true"
+                        >Buy me a decent beer</Hyperlink>
+                    </TextBlock>
+
                 </Grid>
             </TabItem>
         </TabControl>

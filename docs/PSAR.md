@@ -106,7 +106,7 @@ Offset	| Type/Size  | Purpose
 `0x06`	| 1 byte	 | Always `0x00`
 `0x07`	| 3 bytes	 | The "relative" track address - same as before, and uses MM:SS:FF format
   
-Note that there are three special tracks at the beginning. These have track "numbers" `0xA0`, `0xA1` and `0xA2`. Also note that a TOC cannot have more than 99 tracks.
+There are three special tracks at the beginning. These have track "numbers" `0xA0`, `0xA1` and `0xA2`. Note that a TOC cannot have more than 99 tracks.
 
 The structure of these are slightly different - the absolute track field is always null:
 

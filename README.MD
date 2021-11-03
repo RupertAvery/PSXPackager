@@ -170,71 +170,7 @@ Note that when extracting from a multi-disc PBP PSXPackager will append the disc
 
 # Customizing PBPs
 
-A PBP also contains 5 resource media files that are used by the PSP/PS3.
-
-* ICON0.PNG - the icon displayed for the game in the XMB
-* PIC0.PNG - information about the game
-* PIC1.PNG - the background to display when the game is selected in the XMB
-* ICON1.PMF - The animation to display in the icon area (optional)
-* SND0.AT3 - The sound to play when the game is selected in the XMB (optional)
-
-When creating a PBP, the default PSX2PSP resource files that are embedded in the application are used.
-
-## Extracting resource files
-
-To extract resource files from an existing PBP, use the following option.
-
-```
---extract-resources <gameid|title|filename> 
-```
-
-* `gameid` - extract resources into a folder named using the GameID
-* `title` - extract resources into a new folder named using the game Title in the game database
-* `filename` - extract resources into a new folder named using the input filename 
-* none specified - use `filename`
-
-If the filename is `EBOOT.PBP`, the game title will be used.
-
-## Importing resource files
-
-To import resource files when converting to a PBP, use the following option.
-
-```
---import-resources <gameid|title|filename> 
-```
-
-```
-psxpackager "Final Fantasy VII - Disc1.iso" --import-resources gameid 
-
-SCUS94163
-   ICON0.PNG
-   ICON1.PMF
-   PIC0.PNG
-   PIC1.PNG
-   SND0.AT3
-Final Fantasy VII - Disc1.iso
-```
-
-If the corresponding resouce does not exist, the default internal one will be used.
-
-
-## Generating resource folders
-
-To simplify resource preparation, PSXPackager can generate empty folders that match the GameID, title, or filename.
-
-```
---generate-resource-folder <gameid|title|filename> 
-```
-
-If the filename is `EBOOT.PBP`, the game title will be used.
-
-## Resource folders location
-
-The default the location where resource folders will be searched or created is the same path as the ISO or PBP.  You may also specify the location with the following option, to locate the resource folders separate from the ISOs.
-
-```
---resource-folder-location <path> 
-```
+See [Customizing PBPs](docs/Customizing.md)
 
 # Multi-track .CUE files (Audio tracks)
 

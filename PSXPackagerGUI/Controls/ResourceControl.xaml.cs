@@ -40,17 +40,20 @@ namespace PSXPackagerGUI.Controls
 
         public static readonly DependencyProperty ResourceProperty =
             DependencyProperty.Register(nameof(Resource), typeof(ResourceModel),
-                typeof(ResourceControl),
-                new FrameworkPropertyMetadata(OnResourceChanged));
+                typeof(ResourceControl), new PropertyMetadata(null, OnResourceChanged));
+        //new FrameworkPropertyMetadata(OnResourceChanged));
+
 
         private static void OnIconChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             ((ResourceControl)d).Icon = (BitmapImage)e.NewValue;
+            ((ResourceControl)d).InvalidateVisual();
         }
 
         private static void OnResourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             ((ResourceControl)d).Resource = (ResourceModel)e.NewValue;
+            ((ResourceControl)d).InvalidateVisual();
         }
 
         protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
@@ -77,7 +80,7 @@ namespace PSXPackagerGUI.Controls
         public ResourceModel Resource
         {
             get => (ResourceModel)GetValue(ResourceProperty);
-            set { SetValue(ResourceProperty, value); DataContext = value; }
+            set { SetValue(ResourceProperty, value); DataContext = value; InvalidateVisual(); }
         }
 
         public bool IsMoreEnabled
