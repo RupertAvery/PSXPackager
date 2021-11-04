@@ -22,6 +22,7 @@ namespace PSXPackagerGUI
 
         public MainWindow()
         {
+            SevenZip.SevenZipBase.SetLibraryPath(Path.Combine(ApplicationInfo.AppPath, $"{(System.Environment.Is64BitOperatingSystem ? "x64" : "x86")}/7z.dll"));
 
             InitializeComponent();
 

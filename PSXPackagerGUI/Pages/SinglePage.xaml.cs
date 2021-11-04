@@ -217,6 +217,14 @@ namespace PSXPackagerGUI.Pages
         }
 
 
+        private Resource GetResourceOrDefault(ResourceType type, string ext, ResourceModel resource)
+        {
+            // If resource is from PBP
+            var defaultUrl = Path.Combine(PSXPackager.Common.ApplicationInfo.AppPath, "Resources", $"{type}.{ext}");
+
+            return resource.SourceUrl == null ? new Resource(resource.Type, defaultUrl) : new Resource(resource.Type, resource.SourceUrl);
+        }
+
         private Window Window => Window.GetWindow(this);
 
         public bool IsBusy => Model.IsBusy;
@@ -266,7 +274,7 @@ namespace PSXPackagerGUI.Pages
 
             var saveFileDialog = new Ookii.Dialogs.Wpf.VistaSaveFileDialog();
             saveFileDialog.AddExtension = true;
-
+            saveFileDialog.DefaultExt = ".pbp";
             saveFileDialog.Filter = "EBOOT files|*.pbp|All files|*.*";
             saveFileDialog.ShowDialog();
 
@@ -282,10 +290,10 @@ namespace PSXPackagerGUI.Pages
                     OutputPath = Path.GetDirectoryName(saveFileDialog.FileName),
                     OriginalFilename = Path.GetFileName(saveFileDialog.FileName),
                     DiscInfos = discs.Select(GetDiscInfo).ToList(),
-                    Icon0 = GetResource(Model.Icon0),
+                    Icon0 = GetResourceOrDefault(ResourceType.ICON0, "png", Model.Icon0),
                     Icon1 = GetResource(Model.Icon1),
-                    Pic0 = GetResource(Model.Pic0),
-                    Pic1 = GetResource(Model.Pic1),
+                    Pic0 = GetResourceOrDefault(ResourceType.PIC0, "png", Model.Pic0),
+                    Pic1 = GetResourceOrDefault(ResourceType.PIC1, "png", Model.Pic1),
                     Snd0 = GetResource(Model.Snd0),
                     MainGameTitle = game.SaveDescription,
                     MainGameID = game.SaveFolderName,
