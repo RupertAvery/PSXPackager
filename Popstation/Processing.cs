@@ -503,7 +503,7 @@ namespace Popstation
 
                 if (!File.Exists(resourcePath) || !processOptions.ImportResources)
                 {
-                    resourcePath = Path.Combine(defaultPath, $"{type}{ext}");
+                    resourcePath = Path.Combine(defaultPath, $"{type}.{ext}");
                 }
 
                 return new Resource(type, resourcePath);
