@@ -69,7 +69,7 @@ namespace PSXPackagerGUI.Processing
                     _action = "Converting";
                     break;
 
-                case PopstationEventEnum.WriteStart:
+                case PopstationEventEnum.DiscStart:
                     _action = $"Writing Disc {value}";
 
                     break;
@@ -84,7 +84,7 @@ namespace PSXPackagerGUI.Processing
                     break;
 
                 case PopstationEventEnum.ExtractComplete:
-                case PopstationEventEnum.WriteComplete:
+                case PopstationEventEnum.DiscComplete:
                 case PopstationEventEnum.DecompressComplete:
                     break;
 

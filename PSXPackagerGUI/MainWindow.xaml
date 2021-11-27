@@ -9,6 +9,7 @@
         xmlns:converters="clr-namespace:PSXPackagerGUI.Converters"
         xmlns:common="clr-namespace:PSXPackagerGUI.Common"
         mc:Ignorable="d"
+        Loaded="MainWindow_OnLoaded"
         d:DataContext="{d:DesignInstance models:MainModel, IsDesignTimeCreatable=True}"
         Closing="OnClosing"
         Title="PSXPackager" Height="609" Width="807">
@@ -16,6 +17,14 @@
         <converters:ModeVisibilityConverter x:Key="ModeVisibilityConverter"></converters:ModeVisibilityConverter>
         <common:AppMode x:Key="Single">Single</common:AppMode>
         <common:AppMode x:Key="Batch">Batch</common:AppMode>
+        <Style x:Key="SeparatorStyle"
+               TargetType="{x:Type Border}">
+            <Setter Property="BorderThickness" Value="1,0,0,0"/>
+            <Setter Property="BorderBrush" Value="#FFC5C5C5"/>
+            <Setter Property="Margin" Value="0,0,0,0"/>
+            <Setter Property="Width" Value="2"/>
+            <Setter Property="Background" Value="White"/>
+        </Style>
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -100,6 +109,22 @@
                     </controls:AutoDisableImage>
                 </MenuItem.Header>
             </MenuItem>
+            <MenuItem x:Name="SavePSP" Click="SavePSP_OnClick" ToolTip="Save for PSP" IsEnabled="{Binding IsDirty}">
+                <MenuItem.Visibility >
+                    <MultiBinding Converter="{StaticResource ModeVisibilityConverter}">
+                        <Binding Path="Mode"></Binding>
+                        <Binding Source="{StaticResource Single}"></Binding>
+                    </MultiBinding>
+                </MenuItem.Visibility>
+                <MenuItem.Header>
+                    <controls:AutoDisableImage Height="32" Width="32">
+                        <Image.Source>
+                            <BitmapImage  UriSource="./Resources/psp-48x48.png"/>
+                        </Image.Source>
+                    </controls:AutoDisableImage>
+                </MenuItem.Header>
+            </MenuItem>
+
             <Separator Width="2"/>
             <MenuItem x:Name="Settings" Click="Settings_OnClick" ToolTip="Settings">
                 <MenuItem.Header>

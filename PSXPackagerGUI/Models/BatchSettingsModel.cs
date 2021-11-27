@@ -8,6 +8,10 @@
         private bool _isM3UChecked;
         private bool _isIsoChecked;
         private bool _isImgChecked;
+        private bool _is7zChecked;
+        private bool _isZipChecked;
+        private bool _isRarChecked;
+        private bool _recurseFolders;
 
         public string InputPath
         {
@@ -45,6 +49,28 @@
             set => SetProperty(ref _isImgChecked, value);
         }
 
+        public bool Is7zChecked
+        {
+            get => _is7zChecked;
+            set => SetProperty(ref _is7zChecked, value);
+        }
 
+        public bool IsZipChecked
+        {
+            get => _isZipChecked;
+            set => SetProperty(ref _isZipChecked, value);
+        }
+
+        public bool IsRarChecked
+        {
+            get => _isRarChecked;
+            set => SetProperty(ref _isRarChecked, value);
+        }
+
+        public bool RecurseFolders
+        {
+            get => _recurseFolders;
+            set => SetProperty(ref _recurseFolders, value);
+        }
     }
 }

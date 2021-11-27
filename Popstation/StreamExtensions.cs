@@ -10,11 +10,11 @@ namespace Popstation
     {
         public static void Read(this Stream stream, uint[] buffer, int count)
         {
+            var uintBuffer = new byte[sizeof(uint)];
             for (var i = 0; i < count; i++)
             {
-                var temp_buffer = new byte[sizeof(uint)];
-                stream.Read(temp_buffer, 0, 4);
-                buffer[i] = BitConverter.ToUInt32(temp_buffer, 0);
+                stream.Read(uintBuffer, 0, 4);
+                buffer[i] = BitConverter.ToUInt32(uintBuffer, 0);
             }
         }
 
@@ -92,20 +92,6 @@ namespace Popstation
             }
         }
 
-        public static void Read(this Stream stream, uint[] buffer, int count, int size)
-        {
-            var p = 0;
-            var i = 0;
-            var b = new byte[sizeof(uint)];
-            while (p < size)
-            {
-                stream.Read(b, 0, sizeof(uint));
-                buffer[i] = BitConverter.ToUInt32(b, 0);
-                p += sizeof(uint);
-                i++;
-            }
-        }
-
         public static void WriteRandom(this Stream stream, int count)
         {
             var buffer = new byte[count];
@@ -130,7 +116,7 @@ namespace Popstation
             stream.WriteByte((byte)value);
         }
 
-        public static void WriteShort(this Stream stream, ushort value, int count)
+        public static void WriteUInt16(this Stream stream, ushort value, int count)
         {
             var p = 0;
             while (p < count)
@@ -141,7 +127,7 @@ namespace Popstation
             }
         }
 
-        public static void WriteShort(this Stream stream, short value, int count)
+        public static void WriteInt16(this Stream stream, short value, int count)
         {
             var p = 0;
             while (p < count)
@@ -152,7 +138,7 @@ namespace Popstation
             }
         }
 
-        public static void WriteInteger(this Stream stream, uint value, int count)
+        public static void WriteUInt32(this Stream stream, uint value, int count)
         {
             var p = 0;
             while (p < count)
@@ -163,7 +149,7 @@ namespace Popstation
             }
         }
 
-        public static void WriteInteger(this Stream stream, int value, int count)
+        public static void WriteInt32(this Stream stream, int value, int count)
         {
             var p = 0;
             while (p < count)
@@ -174,22 +160,22 @@ namespace Popstation
             }
         }
 
-        public static void Write(this Stream stream, SFOData sfo)
+        public static void WriteSFO(this Stream stream, SFOData sfo)
         {
-            stream.WriteInteger(sfo.Magic, 1);
-            stream.WriteInteger(sfo.Version, 1);
-            stream.WriteInteger(sfo.KeyTableOffset, 1);
-            stream.WriteInteger(sfo.DataTableOffset, 1);
-            stream.WriteInteger((ushort)sfo.Entries.Count, 1);
+            stream.WriteUInt32(sfo.Magic, 1);
+            stream.WriteUInt32(sfo.Version, 1);
+            stream.WriteUInt32(sfo.KeyTableOffset, 1);
+            stream.WriteUInt32(sfo.DataTableOffset, 1);
+            stream.WriteInt32((ushort)sfo.Entries.Count, 1);
 
             for (var i = 0; i < sfo.Entries.Count; i++)
             {
                 var entry = sfo.Entries[i];
-                stream.WriteShort(entry.KeyOffset, 1);
-                stream.WriteShort(entry.Format, 1);
-                stream.WriteInteger(entry.Length, 1);
-                stream.WriteInteger(entry.MaxLength, 1);
-                stream.WriteInteger(entry.DataOffset, 1);
+                stream.WriteUInt16(entry.KeyOffset, 1);
+                stream.WriteUInt16(entry.Format, 1);
+                stream.WriteUInt32(entry.Length, 1);
+                stream.WriteUInt32(entry.MaxLength, 1);
+                stream.WriteUInt32(entry.DataOffset, 1);
             }
 
             for (var i = 0; i < sfo.Entries.Count; i++)
@@ -219,7 +205,7 @@ namespace Popstation
                         }
                         break;
                     case 0x0404:
-                        stream.WriteInteger(Convert.ToInt32(value), 1);
+                        stream.WriteInt32(Convert.ToInt32(value), 1);
                         break;
                 }
             }

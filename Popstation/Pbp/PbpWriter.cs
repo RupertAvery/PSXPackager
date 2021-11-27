@@ -50,7 +50,7 @@ namespace Popstation.Pbp
                 outputStream.Write(header, 0, 0x28);
 
                 Notify?.Invoke(PopstationEventEnum.WriteSfo, null);
-                outputStream.Write(sfo);
+                outputStream.WriteSFO(sfo);
 
                 Notify?.Invoke(PopstationEventEnum.WriteIcon0Png, null);
                 convertInfo.Icon0.Write(outputStream);
@@ -78,6 +78,7 @@ namespace Popstation.Pbp
 
                 var offset = (uint)outputStream.Position;
 
+                // fill with NULL
                 for (var i = 0; i < psarOffset - offset; i++)
                 {
                     outputStream.WriteByte(0);
@@ -85,12 +86,11 @@ namespace Popstation.Pbp
 
                 uint totSize = 0;
 
-                for (var ciso = 0; ciso < convertInfo.DiscInfos.Count; ciso++)
+                foreach (var disc in convertInfo.DiscInfos)
                 {
-                    var disc = convertInfo.DiscInfos[ciso];
                     if (File.Exists(disc.SourceIso))
                     {
-                        var t = new FileInfo(convertInfo.DiscInfos[ciso].SourceIso);
+                        var t = new FileInfo(disc.SourceIso);
                         var isosize = (uint)t.Length;
                         disc.IsoSize = isosize;
                         totSize += isosize;
@@ -136,12 +136,12 @@ namespace Popstation.Pbp
 
             using (var basePbp = new FileStream(convertInfo.BasePbp, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                uint[] base_header = new uint[0x28 / 4];
+                uint[] base_header = new uint[10];
                 byte[] buffer = new byte[1 * 1048576];
 
-                basePbp.Read(base_header, 1, 0x28);
+                basePbp.Read(base_header, 10);
 
-                if (base_header[0] != 0x50425000)
+                if (base_header[0] != PBPMAGIC)
                 {
                     throw new Exception($"{convertInfo.BasePbp} is not a PBP file.");
                 }
@@ -160,13 +160,14 @@ namespace Popstation.Pbp
 
                 if (tempstr != "STARTDAT")
                 {
-                    throw new Exception($"Cannot find STARTDAT _in {convertInfo.BasePbp}. Not a valid PSX eboot.pbp");
+                    throw new Exception($"Cannot find STARTDAT in {convertInfo.BasePbp}. Not a valid PSX eboot.pbp");
                 }
 
                 var header = new uint[2];
 
                 basePbp.Seek(x + 16, SeekOrigin.Begin);
-                basePbp.Read(header, 0, 8);
+                basePbp.Read(header, 2);  // Read 2 ints into header
+
                 basePbp.Seek(x, SeekOrigin.Begin);
                 basePbp.Read(buffer, 0, (int)header[0]);
 
@@ -211,8 +212,10 @@ namespace Popstation.Pbp
             }
         }
 
-        protected void WriteDisc(DiscInfo disc, uint iso_position, uint psarOffset, bool isMultiDisc, Stream outputStream, CancellationToken cancellationToken)
+        protected void WriteDisc(Stream outputStream, DiscInfo disc, uint psarOffset, bool isMultiDisc, CancellationToken cancellationToken)
         {
+            var isoPosition = outputStream.Position - psarOffset;
+
             var t = new FileInfo(disc.SourceIso);
             var isoSize = (uint)t.Length;
             var actualIsoSize = isoSize;
@@ -235,13 +238,13 @@ namespace Popstation.Pbp
 
             if (isMultiDisc)
             {
-                outputStream.WriteInteger(0, 0xFD);
+                outputStream.WriteInt32(0, 0xFD);
             }
             else
             {
                 p1_offset = (uint)outputStream.Position;
-                outputStream.WriteInteger(isoSize + 0x100000, 1);
-                outputStream.WriteInteger(0, 0xFC);
+                outputStream.WriteUInt32(isoSize + 0x100000, 1);
+                outputStream.WriteInt32(0, 0xFC);
             }
 
             // Overlay the GameID onto the data1 template
@@ -254,7 +257,7 @@ namespace Popstation.Pbp
                 throw new Exception("Invalid TOC");
             }
 
-            Notify?.Invoke(PopstationEventEnum.WriteToc, null);
+            Notify?.Invoke(PopstationEventEnum.WriteTOC, null);
 
             // Overlay the TOC data onto the data1 template
             Array.Copy(disc.TocData, 0, Popstation.data1, 1024, disc.TocData.Length);
@@ -263,12 +266,12 @@ namespace Popstation.Pbp
 
             if (isMultiDisc)
             {
-                outputStream.WriteInteger(0, 1);
+                outputStream.WriteInt32(0, 1);
             }
             else
             {
                 p2_offset = (uint)outputStream.Position;
-                outputStream.WriteInteger(isoSize + 0x100000 + 0x2d31, 1);
+                outputStream.WriteUInt32(isoSize + 0x100000 + 0x2d31, 1);
             }
 
             // Overlay the title onto the data2 template
@@ -298,8 +301,8 @@ namespace Popstation.Pbp
 
             for (var i = 0; i < isoSize / BLOCK_SIZE; i++)
             {
-                outputStream.WriteInteger(offset, 1);
-                outputStream.WriteInteger(x, 1);
+                outputStream.WriteUInt32(offset, 1);
+                outputStream.WriteUInt32(x, 1);
                 outputStream.Write(dummy, 0, sizeof(uint) * dummy.Length);
 
                 if (convertInfo.CompressionLevel == 0)
@@ -308,7 +311,7 @@ namespace Popstation.Pbp
 
             offset = (uint)outputStream.Position;
 
-            for (var i = 0; i < (iso_position + psarOffset + 0x100000) - offset; i++)
+            for (var i = 0; i < (isoPosition + psarOffset + 0x100000) - offset; i++)
             {
                 outputStream.WriteByte(0);
             }
@@ -438,11 +441,11 @@ namespace Popstation.Pbp
                     if (!isMultiDisc)
                     {
                         outputStream.Seek(p1_offset, SeekOrigin.Begin);
-                        outputStream.WriteInteger(end_offset, 1);
+                        outputStream.WriteUInt32(end_offset, 1);
 
                         end_offset += 0x2d31;
                         outputStream.Seek(p2_offset, SeekOrigin.Begin);
-                        outputStream.WriteInteger(end_offset, 1);
+                        outputStream.WriteUInt32(end_offset, 1);
                     }
 
                     outputStream.Seek(index_offset, SeekOrigin.Begin);
@@ -470,34 +473,39 @@ namespace Popstation.Pbp
             return sfoBuilder.Build();
         }
 
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sfo"></param>
+        /// <returns></returns>
         private uint[] BuildHeader(SFOData sfo)
         {
-            uint curoffs = 0x28;
+            // point to the end of the header
+            uint currentOffset = 0x28;
             uint[] header = new uint[0x28 / 4];
 
-            header[0] = 0x50425000;
+            header[0] = PBPMAGIC;  // Header: PBP<null>
             header[1] = 0x10000;
 
-            header[2] = curoffs;
+            header[2] = currentOffset; // Start of SFO
 
-            curoffs += sfo.Size;
-            header[3] = curoffs;
+            currentOffset += sfo.Size;
+            header[3] = currentOffset; // Start of ICON0
 
-            curoffs += convertInfo.Icon0.Size;
-            header[4] = curoffs;
+            currentOffset += convertInfo.Icon0.Size;
+            header[4] = currentOffset; // Start of ICON1
 
-            curoffs += convertInfo.Icon1.Size;
-            header[5] = curoffs;
+            currentOffset += convertInfo.Icon1.Size;
+            header[5] = currentOffset; // Start of PIC0
 
-            curoffs += convertInfo.Pic0.Size;
-            header[6] = curoffs;
+            currentOffset += convertInfo.Pic0.Size;
+            header[6] = currentOffset; // Start of PIC1
 
-            curoffs += convertInfo.Pic1.Size;
-            header[7] = curoffs;
+            currentOffset += convertInfo.Pic1.Size;
+            header[7] = currentOffset; // Start of SND0
 
-            curoffs += convertInfo.Snd0.Size;
-            header[8] = curoffs;
+            currentOffset += convertInfo.Snd0.Size;
+            header[8] = currentOffset; // Start of DATA.PSP
 
             var psarOffset = header[8] + convertInfo.DataPsp.Size;
 
@@ -506,28 +514,31 @@ namespace Popstation.Pbp
                 psarOffset = psarOffset + (0x10000 - (psarOffset % 0x10000));
             }
 
-            header[9] = psarOffset;
+            header[9] = psarOffset;  // Start of DATA.PSAR
 
             return header;
         }
 
+        const uint PBPMAGIC = 0x50425000;
+
         private void EnsureRequiredResourcesExist()
         {
             byte[] buffer = new byte[1 * 1048576];
-            uint[] base_header = new uint[0x28 / 4];
+            uint[] base_header = new uint[10];
 
             using (var basePbp = new FileStream(convertInfo.BasePbp, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
+                // Read the header from the PSP
+                basePbp.Read(base_header, 10);
 
-                basePbp.Read(base_header, 1, 0x28);
-
-                if (base_header[0] != 0x50425000)
+                if (base_header[0] != PBPMAGIC)
                 {
                     throw new Exception($"{convertInfo.BasePbp} is not a PBP file.");
                 }
 
                 if (!convertInfo.Icon0.Exists)
                 {
+                    // Grab ICON0 from BASE.PBP
                     var icon0_size = base_header[4] - base_header[3];
                     var icon0_buffer = new byte[icon0_size];
 
@@ -539,11 +550,12 @@ namespace Popstation.Pbp
 
                 if (convertInfo.DataPsp == null || !convertInfo.DataPsp.Exists)
                 {
-                    uint[] psp_header = new uint[0x30 / 4];
+                    uint[] psp_header = new uint[12];
+                    // Go to the offset for DATA.PSAR
                     basePbp.Seek(base_header[8], SeekOrigin.Begin);
-                    basePbp.Read(psp_header, 1, 0x30);
+                    basePbp.Read(psp_header, 12);
 
-                    var prx_size = psp_header[0x2C / 4];
+                    var prx_size = psp_header[11];
 
                     basePbp.Seek(base_header[8], SeekOrigin.Begin);
                     basePbp.Read(buffer, 0, (int)prx_size);

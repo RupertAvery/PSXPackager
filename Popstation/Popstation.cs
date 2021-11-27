@@ -50,6 +50,12 @@ namespace Popstation
 
             var outputPath = Path.Combine(directory, $"{outputFilename}{ext}");
 
+            var finalDirectory = Directory.GetParent(outputPath);
+
+            if (finalDirectory != null && !finalDirectory.Exists)
+            {
+                finalDirectory.Create();
+            }
 
             using (var outputStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.Write))
             {

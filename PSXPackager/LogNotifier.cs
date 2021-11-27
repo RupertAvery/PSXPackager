@@ -44,7 +44,7 @@ namespace PSXPackager
                 case PopstationEventEnum.ConvertStart:
                     WriteLine(@event, $"Converting Disc {value}");
                     break;
-                case PopstationEventEnum.WriteStart:
+                case PopstationEventEnum.DiscStart:
                     WriteLine(@event, $"Writing Disc {value}");
                     break;
                 case PopstationEventEnum.ExtractStart:

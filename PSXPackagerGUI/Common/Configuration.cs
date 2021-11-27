@@ -8,6 +8,8 @@ namespace PSXPackagerGUI.Common
     {
         private readonly string _settingsPath;
 
+        public string SettingsPath => _settingsPath;
+
         public Configuration(string appName, string configName = "config.json")
         {
             var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);

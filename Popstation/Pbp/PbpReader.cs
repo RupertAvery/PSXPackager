@@ -194,7 +194,7 @@ namespace Popstation.Pbp
                 //stream.WriteInteger(0, 0x76);
 
                 uint[] iso_positions = new uint[5];
-                stream.Read(iso_positions, 0, sizeof(uint) * 5);
+                stream.Read(iso_positions, 5);
 
                 Discs = iso_positions
                     .Where(x => x > 0)

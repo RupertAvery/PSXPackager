@@ -27,6 +27,7 @@ namespace PSXPackagerGUI.Pages
     {
         private CancellationTokenSource _cancellationTokenSource;
         private SingleModel _model;
+        private readonly Window _window;
         private readonly SettingsModel _settings;
         private readonly GameDB _gameDb;
 
@@ -54,8 +55,9 @@ namespace PSXPackagerGUI.Pages
             _cancellationTokenSource.Dispose();
         }
 
-        public SinglePage(SettingsModel settings, GameDB gameDb)
+        public SinglePage(Window window, SettingsModel settings, GameDB gameDb)
         {
+            _window = window;
             _settings = settings;
             _gameDb = gameDb;
             _cancellationTokenSource = new CancellationTokenSource();
@@ -92,6 +94,7 @@ namespace PSXPackagerGUI.Pages
             Model.MaxProgress = 100;
             Model.Progress = 0;
             Model.Discs = DummyDisc(0, 5).ToList();
+            Model.IsNew = true;
         }
 
         public void LoadPbp()
@@ -165,6 +168,8 @@ namespace PSXPackagerGUI.Pages
                     LoadResource(ResourceType.ICON1, Model.Icon1);
                     LoadResource(ResourceType.PIC0, Model.Pic0);
                     LoadResource(ResourceType.PIC1, Model.Pic1);
+
+                    Model.IsNew = false;
                 }
             }
             catch (Exception e)
@@ -225,7 +230,7 @@ namespace PSXPackagerGUI.Pages
             return resource.SourceUrl == null ? new Resource(resource.Type, defaultUrl) : new Resource(resource.Type, resource.SourceUrl);
         }
 
-        private Window Window => Window.GetWindow(this);
+        private Window Window => _window;
 
         public bool IsBusy => Model.IsBusy;
 
@@ -235,8 +240,15 @@ namespace PSXPackagerGUI.Pages
             set => _model = value;
         }
 
-        public void Save()
+        public void Save(bool pspMode = false)
         {
+            if (!Model.IsNew)
+            {
+                MessageBox.Show(Window, "Modifying and saving existing PBPs is not supported yet.", "PSXPackager",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
             if (IsBusy)
             {
                 MessageBox.Show(Window, "An operation is in progress. Please wait for the current operation to complete.", "PSXPackager",
@@ -271,14 +283,43 @@ namespace PSXPackagerGUI.Pages
                 expectedIndex++;
             }
 
+            var filename = "";
 
-            var saveFileDialog = new Ookii.Dialogs.Wpf.VistaSaveFileDialog();
-            saveFileDialog.AddExtension = true;
-            saveFileDialog.DefaultExt = ".pbp";
-            saveFileDialog.Filter = "EBOOT files|*.pbp|All files|*.*";
-            saveFileDialog.ShowDialog();
+            var gameId = Model.Discs.First().GameID;
 
-            if (!string.IsNullOrEmpty(saveFileDialog.FileName))
+            if (pspMode)
+            {
+                var ebootPath = Path.Combine(gameId, "EBOOT.PBP");
+
+                MessageBox.Show(Window, $"Select the folder to generate {ebootPath}", "Save for PSP",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+
+                var selectFolderDialog = new Ookii.Dialogs.Wpf.VistaFolderBrowserDialog();
+                selectFolderDialog.ShowDialog();
+                filename = Path.Combine(selectFolderDialog.SelectedPath, ebootPath);
+                if (File.Exists(filename))
+                {
+                    var result = MessageBox.Show(Window, $"The file {filename} exists! Overwrite?", "Save for PSP", MessageBoxButton.YesNo, MessageBoxImage.Warning,
+                        MessageBoxResult.No);
+                    if (result == MessageBoxResult.No)
+                    {
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                var saveFileDialog = new Ookii.Dialogs.Wpf.VistaSaveFileDialog();
+                saveFileDialog.AddExtension = true;
+                saveFileDialog.DefaultExt = ".pbp";
+                saveFileDialog.Filter = "EBOOT files|*.pbp|All files|*.*";
+                saveFileDialog.ShowDialog();
+                filename = saveFileDialog.FileName;
+            }
+
+
+
+            if (!string.IsNullOrEmpty(filename))
             {
                 string format = "";
 
@@ -287,8 +328,8 @@ namespace PSXPackagerGUI.Pages
 
                 var options = new ConvertOptions()
                 {
-                    OutputPath = Path.GetDirectoryName(saveFileDialog.FileName),
-                    OriginalFilename = Path.GetFileName(saveFileDialog.FileName),
+                    OutputPath = Path.GetDirectoryName(filename),
+                    OriginalFilename = Path.GetFileName(filename),
                     DiscInfos = discs.Select(GetDiscInfo).ToList(),
                     Icon0 = GetResourceOrDefault(ResourceType.ICON0, "png", Model.Icon0),
                     Icon1 = GetResource(Model.Icon1),
@@ -318,14 +359,14 @@ namespace PSXPackagerGUI.Pages
                 {
                     Model.IsBusy = true;
 
-                    using (var stream = new FileStream(saveFileDialog.FileName, FileMode.OpenOrCreate, FileAccess.Write))
+                    using (var stream = new FileStream(filename, FileMode.OpenOrCreate, FileAccess.Write))
                     {
                         writer.Write(stream, _cancellationTokenSource.Token);
                     }
                     
                     Dispatcher.Invoke(() =>
                     {
-                        MessageBox.Show(Window, $"EBOOT has been saved to \"{saveFileDialog.FileName}\"",
+                        MessageBox.Show(Window, $"EBOOT has been saved to \"{filename}\"",
                             "PSXPackager",
                             MessageBoxButton.OK, MessageBoxImage.Information);
                     });
@@ -384,7 +425,7 @@ namespace PSXPackagerGUI.Pages
                     });
                     break;
 
-                case PopstationEventEnum.WriteStart:
+                case PopstationEventEnum.DiscStart:
                     _action = "Writing";
                     Dispatcher.Invoke(() =>
                     {
@@ -409,7 +450,7 @@ namespace PSXPackagerGUI.Pages
                     break;
 
                 case PopstationEventEnum.ExtractComplete:
-                case PopstationEventEnum.WriteComplete:
+                case PopstationEventEnum.DiscComplete:
                 case PopstationEventEnum.DecompressComplete:
                     Model.MaxProgress = 100;
                     Model.Progress = 0;
@@ -815,6 +856,11 @@ namespace PSXPackagerGUI.Pages
             }
 
             ResetModel();
+        }
+
+        public void SavePSP()
+        {
+            Save(true);
         }
     }
 }

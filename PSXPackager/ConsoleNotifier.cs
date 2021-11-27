@@ -47,7 +47,7 @@ namespace PSXPackager
                     return -1;
 
                 case PopstationEventEnum.ConvertStart:
-                case PopstationEventEnum.WriteStart:
+                case PopstationEventEnum.DiscStart:
                 case PopstationEventEnum.ExtractStart:
                 case PopstationEventEnum.DecompressStart:
 
@@ -58,7 +58,7 @@ namespace PSXPackager
 
                 case PopstationEventEnum.ConvertComplete:
                 case PopstationEventEnum.ExtractComplete:
-                case PopstationEventEnum.WriteComplete:
+                case PopstationEventEnum.DiscComplete:
                 case PopstationEventEnum.DecompressComplete:
                     return 2;
             }
@@ -115,7 +115,7 @@ namespace PSXPackager
                     Console.CursorVisible = false;
                     break;
 
-                case PopstationEventEnum.WriteStart:
+                case PopstationEventEnum.DiscStart:
                     Write(@event, $"Writing Disc {value} - ");
                     _cursorYPos = Console.CursorTop;
                     Console.CursorVisible = false;
@@ -135,7 +135,7 @@ namespace PSXPackager
 
                 case PopstationEventEnum.ConvertComplete:
                 case PopstationEventEnum.ExtractComplete:
-                case PopstationEventEnum.WriteComplete:
+                case PopstationEventEnum.DiscComplete:
                 case PopstationEventEnum.DecompressComplete:
                     _charsToDelete = 0;
                     Console.CursorVisible = true;

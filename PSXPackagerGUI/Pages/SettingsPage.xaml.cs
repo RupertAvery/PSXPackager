@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -18,16 +19,22 @@ namespace PSXPackagerGUI.Pages
     /// </summary>
     public partial class SettingsPage : Page
     {
+        private readonly Window _window;
         private readonly Configuration<SettingsModel> _configuration;
         public SettingsModel Model { get; set; }
-        public SettingsPage()
+
+        public bool IsFirstRun { get; }
+
+        public SettingsPage(Window window)
         {
+            _window = window;
             InitializeComponent();
 
             _configuration = new Configuration<SettingsModel>("PSXPackagerUI");
 
             if (!_configuration.TryLoad(out var settings))
             {
+                IsFirstRun = true;
                 settings = new SettingsModel
                 {
                     CompressionLevel = 5,
@@ -50,7 +57,7 @@ namespace PSXPackagerGUI.Pages
 
             if (string.IsNullOrEmpty(settings.FileNameFormat))
             {
-                settings.FileNameFormat = "%FILENAME%";
+                settings.FileNameFormat = "%GAMEID%\\EBOOT";
             }
 
             if (string.IsNullOrEmpty(settings.CustomResourcesFormat))
@@ -84,7 +91,7 @@ namespace PSXPackagerGUI.Pages
 
         }
 
-        private Window Window => Window.GetWindow(this);
+        private Window Window => _window;
 
         private void BrowseCustomResourcePath(object obj)
         {
@@ -264,6 +271,27 @@ namespace PSXPackagerGUI.Pages
             MessageBox.Show(Window, $"Merged .bins to {outputPath}", "PSXPackager",
                 MessageBoxButton.OK, MessageBoxImage.Information);
 
+        }
+
+        private void PSPDefault_OnClick(object sender, RoutedEventArgs e)
+        {
+            Model.FileNameFormat = "%GAMEID%\\EBOOT";
+        }
+
+        private void EmulatorDefault_OnClick(object sender, RoutedEventArgs e)
+        {
+            Model.FileNameFormat = "%FILENAME%";
+        }
+
+        private void OpenSettingsFolderButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            ProcessStartInfo startInfo = new ProcessStartInfo
+            {
+                Arguments = Path.GetDirectoryName(_configuration.SettingsPath),
+                FileName = "explorer.exe"
+            };
+
+            Process.Start(startInfo);
         }
     }
 }

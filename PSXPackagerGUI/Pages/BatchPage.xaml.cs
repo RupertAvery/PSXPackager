@@ -13,12 +13,14 @@ namespace PSXPackagerGUI.Pages
     /// </summary>
     public partial class BatchPage : Page
     {
+        private readonly Window _window;
         private CancellationTokenSource _cancellationTokenSource;
         private readonly BatchModel _model;
         private BatchController _controller;
 
-        public BatchPage(SettingsModel settings, GameDB gameDb)
+        public BatchPage(Window window, SettingsModel settings, GameDB gameDb)
         {
+            _window = window;
             _cancellationTokenSource = new CancellationTokenSource();
             InitializeComponent();
 
@@ -27,7 +29,7 @@ namespace PSXPackagerGUI.Pages
                 Settings = settings.Batch
             };
 
-            _controller = new BatchController(_model, settings, this, Dispatcher, gameDb, _cancellationTokenSource.Token);
+            _controller = new BatchController(_model, settings, _window, Dispatcher, gameDb, _cancellationTokenSource.Token);
             _controller.Cancel = () =>
             {
                 _cancellationTokenSource.Cancel();
@@ -41,12 +43,13 @@ namespace PSXPackagerGUI.Pages
 
         public bool IsBusy => _model.IsBusy;
 
+        public Window Window => _window;
 
         public void OnClosing(CancelEventArgs e)
         {
             if (IsBusy)
             {
-                var result = MessageBox.Show("An operation is in progress. Are you sure you want to cancel?", "PSXPackager",
+                var result = MessageBox.Show(Window, "An operation is in progress. Are you sure you want to cancel?", "PSXPackager",
                     MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.Yes);
                 if (result == MessageBoxResult.No)
                 {

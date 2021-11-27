@@ -14,16 +14,14 @@ namespace Popstation.Pbp
         {
             var disc = convertInfo.DiscInfos[0];
 
-            var iso_position = (uint)outputStream.Position - psarOffset;
+            Notify?.Invoke(PopstationEventEnum.DiscStart, 1);
 
-            Notify?.Invoke(PopstationEventEnum.WriteStart, 1);
-
-            WriteDisc(disc, iso_position, psarOffset, false, outputStream, cancellationToken);
+            WriteDisc(outputStream, disc, psarOffset, false, cancellationToken);
 
 
             if (!cancellationToken.IsCancellationRequested)
             {
-                Notify?.Invoke(PopstationEventEnum.WriteComplete, null);
+                Notify?.Invoke(PopstationEventEnum.DiscComplete, 1);
             }
 
 

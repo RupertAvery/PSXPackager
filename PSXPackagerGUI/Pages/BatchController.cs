@@ -21,14 +21,13 @@ namespace PSXPackagerGUI.Pages
     {
         private readonly BatchModel _model;
         private readonly SettingsModel _settings;
-        private readonly Page _page;
         private readonly Dispatcher _dispatcher;
         private readonly GameDB _gameDb;
         private CancellationToken _token;
+        private Window _window;
+        private Window Window => _window;
 
-        private Window Window => Window.GetWindow(_page);
-
-        public BatchController(BatchModel model, SettingsModel settings, Page page, Dispatcher dispatcher, GameDB gameDb,
+        public BatchController(BatchModel model, SettingsModel settings, Window window, Dispatcher dispatcher, GameDB gameDb,
             CancellationToken token)
         {
             _dispatcher = dispatcher;
@@ -36,7 +35,7 @@ namespace PSXPackagerGUI.Pages
             _token = token;
             _model = model;
             _settings = settings;
-            _page = page;
+            _window = window;
 
             _model.MaxProgress = 100;
             _model.Progress = 0;
@@ -100,6 +99,18 @@ namespace PSXPackagerGUI.Pages
                 {
                     patterns.Add("*.iso");
                 }
+                if (_model.Settings.Is7zChecked)
+                {
+                    patterns.Add("*.7z");
+                }
+                if (_model.Settings.IsZipChecked)
+                {
+                    patterns.Add("*.zip");
+                }
+                if (_model.Settings.IsRarChecked)
+                {
+                    patterns.Add("*.rar");
+                }
             }
 
 
@@ -120,6 +131,13 @@ namespace PSXPackagerGUI.Pages
 
                 var ignoreFileSet = new HashSet<string>();
 
+                string GetAbsolutePath(string currentDirectory, string file)
+                {
+                    if (Path.IsPathFullyQualified(file)) return file;
+                    return Path.Combine(currentDirectory, file);
+                }
+
+
                 string GetFullPath(string file)
                 {
                     return Path.Combine(_model.Settings.InputPath, file);
@@ -129,26 +147,42 @@ namespace PSXPackagerGUI.Pages
                 {
                     if (_token.IsCancellationRequested) break;
 
-                    var files = Directory.EnumerateFiles(_model.Settings.InputPath, pattern, SearchOption.TopDirectoryOnly);
+                    var searchOption = SearchOption.TopDirectoryOnly;
+
+                    if (_model.Settings.RecurseFolders)
+                    {
+                        searchOption = SearchOption.AllDirectories;
+                    }
+
+                    var files = Directory.EnumerateFiles(_model.Settings.InputPath, pattern, searchOption);
 
                     foreach (var file in files.Select(GetFullPath))
                     {
+                        var currentPath = Path.GetDirectoryName(file);
+
                         if (_token.IsCancellationRequested) break;
 
-                        if (pattern == "*.m3u")
+                        switch (pattern)
                         {
-                            var playlist = M3uFileReader.Read(file);
-                            foreach (var fileEntry in playlist.FileEntries)
+                            case "*.m3u":
                             {
-                                ignoreFileSet.Add(GetFullPath(fileEntry));
+                                var playlist = M3uFileReader.Read(file);
+                                foreach (var fileEntry in playlist.FileEntries)
+                                {
+                                    ignoreFileSet.Add(GetAbsolutePath(currentPath, fileEntry));
+                                }
+
+                                break;
                             }
-                        }
-                        if (pattern == "*.cue")
-                        {
-                            var cueFiles = CueFileReader.Read(file);
-                            foreach (var fileEntry in cueFiles.FileEntries)
+                            case "*.cue":
                             {
-                                ignoreFileSet.Add(GetFullPath(fileEntry.FileName));
+                                var cueFiles = CueFileReader.Read(file);
+                                foreach (var fileEntry in cueFiles.FileEntries)
+                                {
+                                    ignoreFileSet.Add(GetAbsolutePath(currentPath, fileEntry.FileName));
+                                }
+
+                                break;
                             }
                         }
 

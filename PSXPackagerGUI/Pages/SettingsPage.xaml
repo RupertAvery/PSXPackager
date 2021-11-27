@@ -56,6 +56,7 @@
                 <Grid Margin="20,20,20,20">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="30"/>
+                        <RowDefinition Height="30"/>
                         <RowDefinition Height="160"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
@@ -64,9 +65,14 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Label Grid.Row="0" Grid.Column="0">Filename Format:</Label>
-                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding FileNameFormat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center"></TextBox>
-
-                    <Grid Grid.Row="1" Grid.Column="1" Margin="0,10,0,0">
+                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding FileNameFormat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center"
+                             ToolTip="When batch processing, this will be the format of the output PBP filename. Paths are allowed."
+                             ></TextBox>
+                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
+                        <Button Margin="2" Width="150" x:Name="PSPDefault" Click="PSPDefault_OnClick">PSP Default</Button>
+                        <Button Margin="2" Width="150" x:Name="EmulatorDefault"  Click="EmulatorDefault_OnClick">Emulator Default</Button>
+                    </StackPanel>
+                    <Grid Grid.Row="2" Grid.Column="1" Margin="0,10,0,0">
                         <TextBlock>
                             Use the following tokens to format the generated output filename: 
                             <LineBreak/>
@@ -80,7 +86,7 @@
                             <LineBreak/>
                         </TextBlock>
                     </Grid>
-                    <Grid Grid.Row="2" Grid.Column="1" Margin="0,10,0,0">
+                    <Grid Grid.Row="3" Grid.Column="1" Margin="0,10,0,0">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="30"/>
                             <RowDefinition Height="30"/>
@@ -167,6 +173,7 @@
                         <RowDefinition Height="30"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="30"/>
+                        <RowDefinition Height="30"/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
@@ -195,6 +202,10 @@
                         <LineBreak/> 
                         <Bold>NOTE:</Bold> If you already have a correct .CUE file, you do not need to manually merge them here. PSXPackager can directly convert a multi-track .CUE with separate .BINs into a PBP.
                     </TextBlock>
+                    <Button x:Name="OpenSettingsFolderButton" Grid.Row="3" 
+                            Grid.ColumnSpan="2"
+                            Width="150"
+                            Click="OpenSettingsFolderButton_OnClick">Open Settings Folder</Button>
                 </Grid>
             </TabItem>
             <TabItem Header="GameDB">
