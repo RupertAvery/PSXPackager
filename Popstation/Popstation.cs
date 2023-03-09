@@ -39,8 +39,14 @@ namespace Popstation
             var code = convertInfo.MainGameID;
             var region = convertInfo.MainGameRegion;
 
+            var originalFilename = convertInfo.OriginalFilename;
+            if (Directory.Exists(convertInfo.OriginalPath)) 
+            {
+                originalFilename += ".dir";
+            }
+
             var outputFilename = GetFilename(convertInfo.FileNameFormat,
-                convertInfo.OriginalFilename,
+                originalFilename,
                 code,
                 code,
                 title,
