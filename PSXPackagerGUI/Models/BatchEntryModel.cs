@@ -8,6 +8,7 @@
         private string _status;
         private string _errorMessage;
         private bool _hasError;
+        private bool _isSelected;
 
         public string RelativePath
         {
@@ -43,6 +44,12 @@
         {
             get => _hasError;
             set => SetProperty(ref _hasError, value);
+        }
+
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set => SetProperty(ref _isSelected, value);
         }
     }
 }

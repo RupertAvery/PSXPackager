@@ -19,12 +19,15 @@ namespace PSXPackager.Common
             return Path.GetExtension(filename).ToLower() == ".m3u";
         }
 
+#if SEVENZIP
         public static bool IsArchive(string filename)
         {
-            return Path.GetExtension(filename).ToLower() == ".7z" ||
+            return
+            Path.GetExtension(filename).ToLower() == ".7z" ||
             Path.GetExtension(filename).ToLower() == ".rar" ||
             Path.GetExtension(filename).ToLower() == ".zip";
         }
+#endif
 
         public static bool IsBin(string filename)
         {

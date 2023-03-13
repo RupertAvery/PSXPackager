@@ -9,7 +9,10 @@ using Popstation.Pbp;
 using PSXPackager.Common;
 using PSXPackager.Common.Cue;
 using PSXPackager.Common.Notification;
-using SevenZip;
+
+#if SEVENZIP
+    using SevenZip;
+#endif
 
 namespace Popstation
 {
@@ -46,6 +49,7 @@ namespace Popstation
             {
                 var originalFile = file;
 
+#if SEVENZIP
                 if (FileExtensionHelper.IsArchive(file))
                 {
 
@@ -88,6 +92,7 @@ namespace Popstation
                         }
                     }
                 }
+#endif
 
                 if (!string.IsNullOrEmpty(file))
                 {
@@ -98,6 +103,12 @@ namespace Popstation
                     }
                     else
                     {
+                        if (options.ExtractResources)
+                        {
+                            _notifier?.Notify(PopstationEventEnum.Error, "Input file for Resource Extract must be .PBP");
+                            return false;
+                        }
+
                         if (FileExtensionHelper.IsCue(file))
                         {
                             var (outfile, srcToc) = ProcessCue(file, options.TempPath);
@@ -303,7 +314,8 @@ namespace Popstation
             }
         }
 
-        void Unpack(string file, string tempPath, CancellationToken cancellationToken)
+#if SEVENZIP
+          void Unpack(string file, string tempPath, CancellationToken cancellationToken)
         {
             List<string> files;
 
@@ -363,6 +375,8 @@ namespace Popstation
         {
             _notifier.Notify(PopstationEventEnum.DecompressProgress, e.PercentDone);
         }
+#endif
+
 
         static string GetPBPGameId(string srcPbp)
         {
@@ -490,16 +504,16 @@ namespace Popstation
             var defaultPath = Path.Combine(appPath, "Resources");
 
 
-            if (string.IsNullOrEmpty(processOptions.ResourceFoldersPath))
+            if (string.IsNullOrEmpty(processOptions.ResourceRoot))
             {
-                processOptions.ResourceFoldersPath = options.OriginalPath;
+                processOptions.ResourceRoot = options.OriginalPath;
             }
 
             Resource GetResourceOrDefault(ResourceType type, string ext)
             {
-                var filename = Popstation.GetResourceFilename(processOptions.CustomResourceFormat, options.OriginalFilename, entry.GameID, entry.SaveFolderName, entry.GameName, entry.SaveDescription, entry.Format, type, ext);
+                var filename = Popstation.GetResourceFilename(processOptions.ResourceFormat, options.OriginalFilename, entry.GameID, entry.SaveFolderName, entry.GameName, entry.SaveDescription, entry.Format, type, ext);
 
-                var resourcePath = Path.Combine(processOptions.ResourceFoldersPath, filename);
+                var resourcePath = Path.Combine(processOptions.ResourceRoot, filename);
 
                 if (!File.Exists(resourcePath) || !processOptions.ImportResources)
                 {
@@ -518,7 +532,7 @@ namespace Popstation
 
         private void GenerateResourceFolders(ProcessOptions processOptions, ConvertOptions options, GameEntry entry)
         {
-            var path = Popstation.GetResourceFilename(processOptions.CustomResourceFormat, options.OriginalFilename, entry.GameID, entry.SaveFolderName, entry.GameName, entry.SaveDescription, entry.Format, ResourceType.ICON0, "png");
+            var path = Popstation.GetResourceFilename(processOptions.ResourceFormat, options.OriginalFilename, entry.GameID, entry.SaveFolderName, entry.GameName, entry.SaveDescription, entry.Format, ResourceType.ICON0, "png");
 
             path = Path.GetDirectoryName(path);
 
@@ -672,8 +686,8 @@ namespace Popstation
                 FileNameFormat = processOptions.FileNameFormat,
                 ExtractResources = processOptions.ExtractResources,
                 GenerateResourceFolders = processOptions.GenerateResourceFolders,
-                CustomResourceFormat = processOptions.CustomResourceFormat,
-                ResourceFoldersPath = processOptions.ResourceFoldersPath,
+                ResourceFormat = processOptions.ResourceFormat,
+                ResourceFoldersPath = processOptions.ResourceRoot,
                 FindGame = (gameId) => GetGameEntry(gameId, srcPbp, false)
             };
 

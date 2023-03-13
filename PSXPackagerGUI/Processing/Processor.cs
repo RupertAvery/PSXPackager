@@ -80,8 +80,8 @@ namespace PSXPackagerGUI.Processing
                     ExtractResources = model.ExtractResources,
                     ImportResources = _settings.UseCustomResources,
                     GenerateResourceFolders = model.GenerateResourceFolders,
-                    CustomResourceFormat = _settings.CustomResourcesFormat,
-                    ResourceFoldersPath = _settings.CustomResourcesPath, 
+                    ResourceFormat = _settings.CustomResourcesFormat,
+                    ResourceRoot = _settings.CustomResourcesPath, 
                 };
 
                 await Task.Run(() =>

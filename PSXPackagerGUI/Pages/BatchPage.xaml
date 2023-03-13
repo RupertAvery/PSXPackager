@@ -145,7 +145,23 @@
         </Grid>
 
         <Grid Grid.Row="1">
-            <ListView ItemsSource="{Binding BatchEntries}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="34"/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Border BorderBrush="#30000000" BorderThickness="0,0,0,0" Margin="2,2,0,2">
+                <Grid Margin="8,2,2,2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="30"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="120"/>
+                    </Grid.ColumnDefinitions>
+                    <CheckBox IsThreeState="True" IsChecked="{Binding SelectAll}" VerticalAlignment="Center" HorizontalAlignment="Center"></CheckBox>
+                    <Label Grid.Column="1" VerticalAlignment="Center" Margin="-5,0,0,0">Item</Label>
+                    <Label Grid.Column="2" VerticalAlignment="Center" Margin="-6,0,0,0">Status</Label>
+                </Grid>
+            </Border>
+            <ListView Grid.Row="1" ItemsSource="{Binding BatchEntries}">
                 <ListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem">
                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -158,24 +174,26 @@
                         <Border BorderBrush="#30000000" BorderThickness="0,0,0,0" Margin="2,2,0,2">
                             <Grid ToolTip="{Binding ErrorMessage}" Margin="2,2,2,2">
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="30"/>
                                     <ColumnDefinition Width="*" Name="TitleColumnDefinition"/>
                                     <ColumnDefinition Width="120"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock TextTrimming="CharacterEllipsis" Width="{Binding ActualWidth, ElementName=TitleColumnWidth}" VerticalAlignment="Center" HorizontalAlignment="Left" Grid.Column="0" Text="{Binding RelativePath}"></TextBlock>
-                                <ProgressBar Grid.Column="1" Maximum="{Binding MaxProgress}" Value="{Binding Progress}" Foreground="{Binding HasError, Converter={StaticResource HasErrorBrushConverter}}"></ProgressBar>
-                                <Label Grid.Column="1" Content="{Binding Status}"></Label>
+                                <CheckBox IsChecked="{Binding IsSelected}" VerticalAlignment="Center" HorizontalAlignment="Center"></CheckBox>
+                                <TextBlock Grid.Column="1" TextTrimming="CharacterEllipsis" Width="{Binding ActualWidth, ElementName=TitleColumnWidth}" VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding RelativePath}"></TextBlock>
+                                <ProgressBar Grid.Column="2" Maximum="{Binding MaxProgress}" Value="{Binding Progress}" Foreground="{Binding HasError, Converter={StaticResource HasErrorBrushConverter}}"></ProgressBar>
+                                <Label Grid.Column="2" Content="{Binding Status}"></Label>
                             </Grid>
                         </Border>
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
-            <Grid>
+            <!--<Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="180"/>
                 </Grid.ColumnDefinitions>
                 <Border Grid.Column="0" x:Name="TitleColumnWidth"/>
-            </Grid>
+            </Grid>-->
         </Grid>
         <Grid Grid.Row="2">
             <ProgressBar Margin="2,5,5,5" Maximum="{Binding MaxProgress}" Value="{Binding Progress}"></ProgressBar>

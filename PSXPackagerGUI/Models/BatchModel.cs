@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows.Input;
 
 namespace PSXPackagerGUI.Models
@@ -20,6 +21,55 @@ namespace PSXPackagerGUI.Models
         private bool _convertPbpToImage;
         private bool _generateResourceFolders;
         private bool _extractResources;
+        private bool? _selectAll;
+
+        public BatchModel()
+        {
+            BatchEntries = new ObservableCollection<BatchEntryModel>()
+            {
+                new BatchEntryModel() { RelativePath = "Final Fantasy VII - Disc 1.bin", MaxProgress = 100, Progress = 50, Status = "Writing (50%)..."}
+            };
+            PropertyChanged += OnPropertyChanged;
+        }
+
+        private void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(BatchModel.SelectAll))
+            {
+                if (SelectAll.HasValue)
+                {
+                    if (SelectAll.Value)
+                    {
+                        foreach (var entry in BatchEntries)
+                        {
+                            entry.IsSelected = true;
+                        }
+                    }
+                    else
+                    {
+                        foreach (var entry in BatchEntries)
+                        {
+                            entry.IsSelected = false;
+                        }
+                    }
+                }
+            }
+
+            else if (e.PropertyName is nameof(BatchModel.ConvertImageToPbp) 
+                     or nameof(BatchModel.ConvertPbpToImage) 
+                     or nameof(BatchModel.GenerateResourceFolders) 
+                     or nameof(BatchModel.ExtractResources))
+            {
+                foreach (var entry in BatchEntries)
+                {
+                    entry.Status = "Ready";
+                    entry.Progress = 0;
+                    entry.HasError = false;
+                    entry.MaxProgress = 100;
+                    entry.ErrorMessage = null;
+                }
+            }
+        }
 
         public ObservableCollection<BatchEntryModel> BatchEntries
         {
@@ -56,8 +106,8 @@ namespace PSXPackagerGUI.Models
             get => _isScanning;
             set
             {
-                 SetProperty(ref _isScanning, value);
-                 OnPropertyChanged(nameof(IsBusy));
+                SetProperty(ref _isScanning, value);
+                OnPropertyChanged(nameof(IsBusy));
             }
         }
 
@@ -118,5 +168,10 @@ namespace PSXPackagerGUI.Models
 
         public bool IsBusy => IsProcessing || IsScanning;
 
+        public bool? SelectAll
+        {
+            get => _selectAll;
+            set => SetProperty(ref _selectAll, value);
+        }
     }
 }

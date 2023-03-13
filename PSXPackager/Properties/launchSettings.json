@@ -2,8 +2,8 @@
   "profiles": {
     "PSXPackager": {
       "commandName": "Project",
-      "commandLineArgs2": " -i \"D:\\roms\\PSX\\Castlevania - Symphony of the Night.PBP\" --extract-resources gameid",
-      "commandLineArgs": " -i \"D:\\roms\\PSX\\Castlevania - Symphony of the Night.PBP\" --import-resources gameid -o \"D:\\roms\\PSX\\Castlevania - Symphony of the Night\""
+      "commandLineArgs": " -i \"D:\\roms\\Rockman X3 (Rock Version)\\ROCKMAN.pbp\"",
+      "commandLineArgs2": " -i \"D:\\roms\\PSX\\Castlevania - Symphony of the Night.PBP\" --extract-resources gameid"
     }
   }
 }

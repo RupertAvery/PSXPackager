@@ -1,7 +1,5 @@
 # PSXPackagerGUI
 
-*Best viewed in a Markdown viewer (CTRL+SHIFT+V in Visual Studio Code)*
-
 A GUI for PSXPacakger
 
 # Features
@@ -18,9 +16,7 @@ A GUI for PSXPacakger
 
 # Requirements
 
-PSXPackagerGUI requires .NET Core 3.1.
-
-Download and install the **.NET Desktop Runtime** for 3.1 from https://dotnet.microsoft.com/download/dotnet/3.1
+PSXPackagerGUI requires .NET 7.0 Desktop Runtime.
 
 # Getting Started
 
@@ -72,7 +68,7 @@ How does this work?
 
 When PSXPackager processes a disc image and batch customizations are enabled, PSXPackager will search for resource files using the **Match Path** format.
 
-For example, if you have `Final Fanatsy VII - Disc 2.bin`, and your Match Path is `%FILENAME%\%RESOURCE%.%EXT%`, PSXPackager will try to look for the following files:
+For example, if you have `Final Fanatsy VII - Disc 2.bin`, and your Match Path is `%FILENAME%`, PSXPackager will try to look for the following files:
 
 ```
 Final Fanatsy VII - Disc 2.bin         -- input disc image

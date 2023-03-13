@@ -1,34 +1,27 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="../psxpackager.props" />
+	<Import Project="../psxpackager.props" />
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFrameworks>net462;net48;netcoreapp3.1</TargetFrameworks>
-    <PublishTrimmed>true</PublishTrimmed>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFrameworks>net6.0</TargetFrameworks>
+		<PublishTrimmed>true</PublishTrimmed>
+	</PropertyGroup>
 
+	<PropertyGroup>
+		<DefineConstants>$(DefineConstants);SEVENZIP</DefineConstants>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="7z.Libs" Version="19.0.2" />
-    <PackageReference Include="CommandLineParser" Version="2.8.0" />
-    <PackageReference Include="Squid-Box.SevenZipSharp" Version="1.3.283" />
-    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="7z.Libs" Version="19.0.2" />
+		<PackageReference Include="CommandLineParser" Version="2.8.0" />
+		<PackageReference Include="Squid-Box.SevenZipSharp" Version="1.3.283" />
+		<PackageReference Include="System.ValueTuple" Version="4.5.0" />
+	</ItemGroup>
 
-  <ItemGroup> 
-    <ProjectReference Include="..\DiscUtils.Iso9660\DiscUtils.Iso9660.csproj" />
-    <ProjectReference Include="..\Popstation\Popstation.csproj" />
-    <ProjectReference Include="..\PSXPackager.Common\PSXPackager.Common.csproj" />
-  </ItemGroup>
-
-
-  <ItemGroup>
-    <PackageReference Include="ILMerge" Version="3.0.29" />
-  </ItemGroup>
-
-  <Target Name="ILMerge">
-    <!-- the ILMergePath property points to the location of ILMerge.exe console application -->
-    <Exec Command="$(ILMergeConsolePath) bin\Debug\netcoreapp3.1\PSXPackager.exe ^&#xD;&#xA;/out:PSXPackager2.exe ^&#xD;&#xA;bin\Debug\netcoreapp3.1\CommandLine.dll ^&#xD;&#xA;bin\Debug\netcoreapp3.1\DiscUtils.Core.dll ^&#xD;&#xA;bin\Debug\netcoreapp3.1\DiscUtils.Iso9660.dll ^&#xD;&#xA;bin\Debug\netcoreapp3.1\DiscUtils.Streams.dll ^&#xD;&#xA;bin\Debug\netcoreapp3.1\ICSharpCode.SharpZipLib.dll ^&#xD;&#xA;bin\Debug\netcoreapp3.1\Popstation.dll ^&#xD;&#xA;bin\Debug\netcoreapp3.1\PSXPackager.dll ^&#xD;&#xA;bin\Debug\netcoreapp3.1\SevenZipExtractor.dll ^&#xD;&#xA;bin\Debug\netcoreapp3.1\System.ValueTuple.dll" />
-  </Target>
+	<ItemGroup>
+		<ProjectReference Include="..\DiscUtils.Iso9660\DiscUtils.Iso9660.csproj" />
+		<ProjectReference Include="..\Popstation\Popstation.csproj" />
+		<ProjectReference Include="..\PSXPackager.Common\PSXPackager.Common.csproj" />
+	</ItemGroup>
 
 </Project>

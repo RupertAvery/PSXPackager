@@ -2,23 +2,24 @@
 
 PSXPackager is a port of the `popstation-md` C source to C#.
 
-There is no GUI right now, it's just a command line tool to help batch process files. I may add a GUI later.
-
 Feel free to take the Popstation library and use it as you like.
 
 # Features
 
-* Supports direct conversion of .7z files using SevenZipExtractor
-* Supports merging multi-track .BIN + .CUE
+* Convert .BIN + .CUE or .IMG to .PBP
+* Extract .PBP to .BIN + .CUE file 
+* Supports conversion of .7z, .zip, .rar files (Windows only)
+* Supports merging of multi-track .BIN + .CUE into one .BIN + .CUE
 * Supports writing multi-track CUE information to PBP for audio 
-* Convert .BIN or .IMG to .PBP
-* Extract .BIN file from .PBP
 * PBP Compression levels from 0 to 9
-* Uses SharpZipLib for compression
 * Supports writing multi-disc PBP using .m3u files
 * Supports extracting multi-disc PBP
+* Linux CLI
+* GUI with PSX2PSP-like interface and batch processing
 
 # Usage
+
+PSXPackager requires .NET 7.0.
 
 The basic usage of PSXPackager accepts the file or path to convert.
 
@@ -30,30 +31,48 @@ The `-i` or `input` parameter is required. It specifies a path to a file, or a d
 
 The `-o` or `output` parameter is optional. It specifies the folder where the the converted or extracted files will be placed. If not specified, the folder specified on the input is ued.
 
+## Options
 
 ```
-  -i, --input        The input file or path to convert. The filename may contain wildcards.
+  -i, --input                (Group: input) The input file or path to convert. The filename may contain wildcards.
 
-  -o, --output       The output path where the converted file(s) will be written.
+  -o, --output               The output path where the converted file(s) will be written.
 
-  -l, --level        (Default: 5) Set compression level 0-9, default 5.
+  -l, --level                (Default: 5) Set compression level 0-9, default 5.
 
-  -d, --discs        A comma-separated list of disc numbers to extract from a PBP.
+  -r, --recursive            Recurse subdirectories
 
-  -v, --verbosity    (Default: 3) Set level of output messages. 1 = Files, Errors and Warnings only, 2 = No Info-level
-                     messages, 3 = All messages (default), 4 = Include timestamps
+  -d, --discs                A comma-separated list of disc numbers to extract from a PBP.
 
-  -x                 If this option is present, will overwrite a file if it exists, otherwise will ask confirmation.
+  -v, --verbosity            (Default: 3) Set level of output messages. 1 = Files, Errors and Warnings only, 2 = No
+                             Info-level messages, 3 = All messages (default), 4 = Include timestamps
 
-  -f, --format       (Default: %FILENAME%) Specify the filename format e.g. [%GAMEID%] [%MAINGAMEID%] %TITLE% (%REGION%)
-                     or %FILENAME%
+  -x                         If specified, overwrite a file if it exists, otherwise ask confirmation.
 
-  -g, --log          If this option is present, will log messages to a file.
+  -s, --skip                 If specified, will skip existing files.
 
-  --help             Display this help screen.
+  -f, --format               (Default: %FILENAME%) Specify the filename format e.g. [%GAMEID%] [%MAINGAMEID%] %TITLE%
+                             (%REGION%) or %FILENAME%
 
-  --version          Display version information.
+  -g, --log                  If specified, log messages to a file.
 
+  --extract                  If specified, extract resources using the path specified by resource-format. See README for
+                             more details.
+
+  --import                   If specified, import resources using the path specified by resource-format. See README for
+                             more details.
+
+  --generate                 If specified, create empty resources folder specified by resource-format. See README for
+                             more details.
+
+  --resource-format          The format to use with extract/import/generate. See README for more details.
+
+  --resource-root            The path where resource folders will be located. If not specified, the path will be the
+                             same as the input file
+
+  --help                     Display this help screen.
+
+  --version                  Display version information.
 ```
 
 ## Convert a .BIN, .CUE, .ISO, .IMG or .7z to a .PBP
@@ -83,6 +102,12 @@ Extracting from Multi-disc PBPs are supported. Specify the discs to extract with
 ```
 psxpackager -i <path_to_pbp> [-o <output_path>] [-d <list_of_discs>]
 ```
+
+## Filename formatting
+
+Use the `-f` or `format` option to specify the format of the output filename. By default, it will use `%FILENAME%`, the input filename as the output filename.
+
+See [Formatting](#formatting) for more info.
 
 ## Merging Multi-Track Games
 
@@ -136,9 +161,89 @@ This will convert all files matching `Legend of Dragoon - Disc ?.bin` in the fol
 psxpackager -i "C:\Roms\Legend of Dragoon - Disc ?.bin"
 ```
 
-## Filename Formatting
+# Customizing PBPs with Resources
 
-Use the `-f` or `format` option to specify the format of the output filename. By default, it will use the input filename as the output filename.
+Resource files are PBP-specific embedded resources that are normally used by the PSP, PSVita or PS3 to display an image or play audio on the XMB when the game is selected. These files usually named ICON0.PNG, PIC0.PNG, PIC1.PNG and SND0.AT3.
+
+PSXPackager can extract or embed resource files for a single conversion or batch conversion. To do this, the resource files must be located in a specific location.
+
+There are two options that let you set how and where the resource files are found.
+
+The `--resource-format` option lets you match a folder based on filename, gameid and other formats. See [Formatting](#formatting). omitting this option defaults the format to `%FILENAME%`, meaning the input filename without the extension will be used.
+
+The `--resource-root` option sets the root path of your resource folders. This allows you to separate your disc images from your resource folders.  You can omit this option to use the same folder as the input file as the root path of your resource folder.
+
+## Extract Resources
+
+Extracts resources from a PBP.
+
+```
+psxpackager -i <path_to_file> --extract [--resource-format <resource format>] [--resource-root <resource root folder>] [-o <output_path>]
+```
+
+`--resource-format` - the format of the folder name to extract the embedded resources to. See [Formatting](#formatting).  If not specified, the default value will be `%FILENAME%\%RESOURCE%.%EXT%`
+
+`--resource-root` - the root folder where to place the resource folders. Do not specify to place the resource folder next to the input file.
+
+For example, if you extract the resources from a `Final Fantasy VII (DISC 1).PBP` file using the commande below:
+
+```
+psxpackager -i "Final Fantasy VII (DISC 1).PBP" --extract --resource-path %GAMEID%\%RESOURCE%.%EXT%
+```
+
+You would have extracted the following files:
+
+```
+SCUS-94163\ICON0.PNG
+SCUS-94163\PIC0.PNG
+SCUS-94163\PIC1.PNG
+```
+
+## Import Resources
+
+Imports custom resources into PBP.
+
+```
+psxpackager -i <path_to_file> --import [--resource-format <resource format>] [--resource-folder <resource root folder>] [-o <output_path>]
+```
+
+`--resource-format` - the format of the folder name to import the embedded resources from. See [Formatting](#formatting).  If not specified, the default value will be `%FILENAME%\%RESOURCE%.%EXT%`
+
+`--resource-root` - the root folder where to start searching for the resource folders. Do not specify to look for the resource folder next to the input file.
+
+For example, if you want to build a PBP from a BIN+CUE file and you have the resources next to the file in a folder such as below:
+
+```
+Final Fantasy VII (Disc-1).bin
+Final Fantasy VII (Disc-1).cue
+SCUS-94163\ICON0.PNG
+SCUS-94163\PIC0.PNG
+SCUS-94163\PIC1.PNG
+```
+
+You can build your PBP using the following command:
+
+```
+psxpackager -i "Final Fantasy VII (Disc-1).cue" --import --resource-path %GAMEID%\%RESOURCE%.%EXT%
+```
+
+## Generate Resource Folders
+
+You might want to generate a bunch of resource folders prior to batch conversion. This option will create empty folders using the specified format.
+
+```
+psxpackager -i <path_to_file> --generate [--resource-format <resource format>] [--resource-folder <resource root folder>]
+```
+
+`--resource-format` - the format of the folder name to generate. See [Formatting](#formatting).  If not specified, the default value will be `%FILENAME%`
+
+For example, this will generate the empty folder `SCUS-94163`:
+
+```
+psxpackager -i "Final Fantasy VII (Disc-1).cue" --generate --resource-path %GAMEID%
+```
+
+# Formatting
 
 ```
 %FILENAME%   - The input filename
@@ -152,6 +257,11 @@ Use the `-f` or `format` option to specify the format of the output filename. By
 %MAINTITLE%  - The Main title of the game. This will be the actual title of the game.
 
 %REGION%     - The game region, i.e. NTSC or PAL.
+
+%RESOURCE%   - The resource type. (ICON0, ICON1, PIC0, PIC1, SND0). Only used for resource files
+
+%EXT%        - The resource extension. (PNG, AT3). Only used for resource files
+
 ```
 
 For example, processing `Final Fantasy VIII - Disc 1.iso` with the following format:
@@ -168,9 +278,6 @@ will generate the filename
 
 Note that when extracting from a multi-disc PBP PSXPackager will append the disc number to the file format.
 
-# Customizing PBPs
-
-See [Customizing PBPs](docs/Customizing.md)
 
 # Multi-track .CUE files (Audio tracks)
 
@@ -193,8 +300,3 @@ Hey programming is fun, but it's also tiring. I mean I could have just been drin
 * [Buy me a decent beer](https://www.paypal.me/rupertavery/1.50?locale.x=en_US)
 
 and I will raise one to you! Much appreciated!
-
-# TODO
-
-* Get DiscID from ISO in PBP
-* Add support for external tools - ECM and CHDMAN

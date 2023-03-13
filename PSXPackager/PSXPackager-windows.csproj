@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../psxpackager.props" />
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>psxpackager</AssemblyName>
+    <TargetFramework>net7.0</TargetFramework>
+	<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+	<SelfContained>false</SelfContained>
+	<PublishSingleFile>true</PublishSingleFile>
+	<PublishReadyToRun>false</PublishReadyToRun>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);SEVENZIP</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="7z.Libs" Version="19.0.2" />
+    <PackageReference Include="CommandLineParser" Version="2.8.0" />
+    <PackageReference Include="Squid-Box.SevenZipSharp" Version="1.3.283" />
+  </ItemGroup>
+
+  <ItemGroup> 
+    <ProjectReference Include="..\DiscUtils.Iso9660\DiscUtils.Iso9660.csproj" />
+    <ProjectReference Include="..\Popstation\Popstation.csproj" />
+    <ProjectReference Include="..\PSXPackager.Common\PSXPackager.Common.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+	<None Update="..\README.MD">
+	   <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</None>
+  </ItemGroup>
+
+</Project>

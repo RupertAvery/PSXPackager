@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Popstation;
@@ -27,8 +28,9 @@ namespace PSXPackager
 
         static void Main(string[] args)
         {
+#if SEVENZIP
             SevenZip.SevenZipBase.SetLibraryPath(Path.Combine(ApplicationInfo.AppPath, $"{(System.Environment.Is64BitOperatingSystem ? "x64" : "x86")}/7z.dll"));
-
+#endif
             _cancellationTokenSource = new CancellationTokenSource();
 
             Console.CancelKeyPress += CancelEventHandler;
@@ -43,7 +45,11 @@ namespace PSXPackager
             Parser.Default.ParseArguments<Options>(args)
                  .WithParsed<Options>(o =>
                  {
-                     Console.WriteLine($"PSXPackager v1.4.1 by RupertAvery\r\n");
+                     var version = Assembly.GetExecutingAssembly().GetName().Version;
+
+                     var intro = $"PSXPackager v{version.Major}.{version.Minor}.{version.Build} by RupertAvery\r\n";
+
+                     Console.WriteLine(intro);
 
                      if (o.CompressionLevel < 0 || o.CompressionLevel > 9)
                      {
@@ -75,10 +81,36 @@ namespace PSXPackager
 
                      Console.WriteLine($"Output: {o.OutputPath}");
                      Console.WriteLine($"Compression Level: {o.CompressionLevel}");
+
                      if (o.OverwriteIfExists)
                      {
                          Console.WriteLine("WARNING: You have chosen to overwrite all files in the output directory!");
                      }
+
+                     var resourceOptionsCount = (o.ExtractResources ? 1 : 0) + (o.ImportResources ? 1 : 0) + (o.GenerateResourceFolders ? 1 : 0);
+
+                     if (resourceOptionsCount > 1)
+                     {
+                         Console.WriteLine($"Invalid option, please select only one of extract, import, or generate");
+                         return;
+                     }
+
+                     if (string.IsNullOrEmpty(o.ResourceFormat))
+                     {
+                         if (o.ExtractResources)
+                         {
+                             o.ResourceFormat = "%FILENAME%\\%RESOURCE%.%EXT%";
+                         }
+                         else if (o.ImportResources)
+                         {
+                             o.ResourceFormat = "%FILENAME%\\%RESOURCE%.%EXT%";
+                         }
+                         else if (o.GenerateResourceFolders)
+                         {
+                             o.ResourceFormat = "%FILENAME%";
+                         }
+                     }
+
                      Console.WriteLine();
 
                      var files = new List<string>();
@@ -128,11 +160,11 @@ namespace PSXPackager
                          CompressionLevel = o.CompressionLevel,
                          Verbosity = o.Verbosity,
                          Log = o.Log,
-                         ExtractResources = o.ExtractResources != null,
-                         ImportResources = o.ImportResources != null,
-                         GenerateResourceFolders = o.GenerateResourceFolders != null,
-                         CustomResourceFormat = o.ImportResources ?? o.ExtractResources ?? o.GenerateResourceFolders,
-                         ResourceFoldersPath = o.ResourceFoldersPath,
+                         ExtractResources = o.ExtractResources,
+                         ImportResources = o.ImportResources,
+                         GenerateResourceFolders = o.GenerateResourceFolders,
+                         ResourceFormat = o.ResourceFormat,
+                         ResourceRoot = o.ResourceRoot,
                      };
 
                      ProcessFiles(options);
@@ -141,7 +173,12 @@ namespace PSXPackager
 
         private static IEnumerable<string> GetFilesFromDirectory(string path, string filterExpression, bool recursive)
         {
-            var supportedFiles = new List<string>() { ".7z", ".zip", ".gz", ".rar", ".tar", ".bin", ".cue", ".img", ".iso", ".pbp" };
+            var supportedFiles = new List<string>() {
+#if SEVENZIP
+            ".7z", ".gz", ".rar", ".tar", 
+#endif
+           ".bin", ".cue", ".img", ".iso", ".pbp"
+            };
 
             if (string.IsNullOrEmpty(filterExpression))
             {
@@ -149,14 +186,18 @@ namespace PSXPackager
             }
 
             var filters = filterExpression.Split(new char[] { ';', '|' });
+
             foreach (var filter in filters)
             {
                 string tempFilter = filter;
+
                 if (filter.StartsWith("."))
                 {
                     tempFilter = $"*{filter}";
                 }
+
                 var files = Directory.GetFiles(path, tempFilter);
+
                 foreach (var file in files)
                 {
                     if (supportedFiles.Contains(Path.GetExtension(file).ToLower()))
@@ -225,7 +266,7 @@ namespace PSXPackager
 
                 try
                 {
-                    foreach (var file in options.  Files)
+                    foreach (var file in options.Files)
                     {
                         if (!File.Exists(file))
                         {

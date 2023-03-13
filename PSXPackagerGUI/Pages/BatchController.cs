@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -44,12 +46,43 @@ namespace PSXPackagerGUI.Pages
 
 
             _model.BatchEntries = new ObservableCollection<BatchEntryModel>();
-
+            _model.BatchEntries.CollectionChanged += BatchEntriesOnCollectionChanged;
 
             _model.ScanCommand = new RelayCommand(Scan);
             _model.ProcessCommand = new RelayCommand((o) => ProcessFiles(_token));
             _model.BrowseInputCommand = new RelayCommand(BrowseInput);
             _model.BrowseOutputCommand = new RelayCommand(BrowseOutput);
+        }
+
+        private void BatchEntriesOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.Action == NotifyCollectionChangedAction.Add)
+            {
+                foreach (BatchEntryModel item in e.NewItems)
+                {
+                    item.PropertyChanged += ItemOnPropertyChanged;
+                }
+            }
+        }
+
+        private void ItemOnPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(BatchEntryModel.IsSelected))
+            {
+                if (_model.BatchEntries.All(e => e.IsSelected))
+                {
+                    _model.SelectAll = true;
+                }
+                else if (_model.BatchEntries.All(e => !e.IsSelected))
+                {
+                    _model.SelectAll = false;
+                }
+                else
+                {
+                    _model.SelectAll = null;
+                }
+
+            }
         }
 
         public Action Cancel { get; set; }
@@ -194,6 +227,7 @@ namespace PSXPackagerGUI.Pages
                             {
                                 _model.BatchEntries.Add(new BatchEntryModel()
                                 {
+                                    IsSelected = true,
                                     RelativePath = relativePath,
                                     MaxProgress = 100,
                                     Progress = 0,
@@ -255,9 +289,18 @@ namespace PSXPackagerGUI.Pages
                 return;
             }
 
+            var jobs = _model.BatchEntries.Where(e => e.Status != "Complete" && e.IsSelected).ToList();
+
+            if (jobs.Count == 0)
+            {
+                MessageBox.Show(Window, "Nothing to process. Please select one or more valid items to process.", "Batch", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+
             var processor = new Processor(_dispatcher, _gameDb, _settings, new ProcessEventHandler());
 
-            foreach (var entry in _model.BatchEntries.Where(e => e.Status != "Complete"))
+            foreach (var entry in jobs)
             {
                 entry.HasError = false;
                 entry.MaxProgress = 100;

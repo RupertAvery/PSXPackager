@@ -34,17 +34,20 @@ namespace PSXPackager
         [Option('g', "log", Required = false, HelpText = "If specified, log messages to a file.")]
         public bool Log { get; set; }
 
-        [Option("extract-resources", Required = false, Default = "%FILENAME%\\%RESOURCE%.%EXT%", HelpText = "If specified, extract resources into %FILENAME%\\%RESOURCE%.%EXT% by default. See README for more details.")]
-        public string ExtractResources { get; set; }
+        [Option("extract", Required = false, HelpText = "If specified, extract resources using the path specified by resource-format. See README for more details.")]
+        public bool ExtractResources { get; set; }
 
-        [Option("import-resources", Required = false, Default = "%FILENAME%\\%RESOURCE%.%EXT%", HelpText = "If specified, import resources from %FILENAME%\\%RESOURCE%.%EXT% by default. See README for more details.")]
-        public string ImportResources { get; set; }
+        [Option("import", Required = false,  HelpText = "If specified, import resources using the path specified by resource-format. See README for more details.")]
+        public bool ImportResources { get; set; }
 
-        [Option("generate-resource-folders", Required = false, Default = "%FILENAME%", HelpText = "If specified, create empty resources folder %FILENAME% by default. See README for more details.")]
-        public string GenerateResourceFolders { get; set; }
+        [Option("generate", Required = false, HelpText = "If specified, create empty resources folder specified by resource-format. See README for more details.")]
+        public bool GenerateResourceFolders { get; set; }
+        
+        [Option("resource-format", Required = false, HelpText = "The format to use with extract/import/generate. See README for more details.")]
+        public string ResourceFormat { get; set; }
 
-        [Option("resource-folders-path", Required = false, HelpText = "The path where resource folders will be located. If not specified, the path will be the same as the input file")]
-        public string ResourceFoldersPath { get; set; }
+        [Option("resource-root", Required = false, HelpText = "The path where resource folders will be located. If not specified, the path will be the same as the input file")]
+        public string ResourceRoot { get; set; }
 
     }
 }

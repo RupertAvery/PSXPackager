@@ -61,7 +61,7 @@ namespace Popstation
 
 
         public static string GetFilename(string filenameFormat, string sourceFilename, string gameid, string maingameId, string title, string maintitle, string region)
-        {   
+        {
             var output = filenameFormat.ReplaceIngoreCase("%FILENAME%", Path.GetFileNameWithoutExtension(sourceFilename));
             output = output.ReplaceIngoreCase("%GAMEID%", gameid);
             output = output.ReplaceIngoreCase("%MAINGAMEID%", maingameId);
@@ -107,7 +107,7 @@ namespace Popstation
             }
             stream.Dispose();
         }
-        
+
 
         private void ExtractResources(Stream stream, Func<ResourceType, string, string> getResourcePath)
         {
@@ -144,7 +144,7 @@ namespace Popstation
 
         private string GetResourcePath(ExtractOptions options, GameEntry entry, ResourceType type, string ext)
         {
-            var path= GetResourceFilename(options.CustomResourceFormat, Path.GetFileNameWithoutExtension(options.SourcePbp), entry.GameID, entry.SaveFolderName, entry.GameName, entry.SaveDescription, entry.Format, type, ext);
+            var path = GetResourceFilename(options.ResourceFormat, Path.GetFileNameWithoutExtension(options.SourcePbp), entry.GameID, entry.SaveFolderName, entry.GameName, entry.SaveDescription, entry.Format, type, ext);
 
             if (string.IsNullOrEmpty(options.ResourceFoldersPath))
             {
@@ -156,7 +156,7 @@ namespace Popstation
 
         private void EnsureResourcePathExists(ExtractOptions options, GameEntry entry)
         {
-            var path = GetResourceFolder(options.CustomResourceFormat, Path.GetFileNameWithoutExtension(options.SourcePbp), entry.GameID, entry.SaveFolderName, entry.GameName, entry.SaveDescription, entry.Format);
+            var path = GetResourceFolder(options.ResourceFormat, Path.GetFileNameWithoutExtension(options.SourcePbp), entry.GameID, entry.SaveFolderName, entry.GameName, entry.SaveDescription, entry.Format);
 
             if (string.IsNullOrEmpty(options.ResourceFoldersPath))
             {
@@ -351,7 +351,7 @@ namespace Popstation
             Notify.Invoke(PopstationEventEnum.ConvertProgress, bytes);
         }
 
-       
+
 
     }
 

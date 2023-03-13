@@ -17,7 +17,7 @@ namespace PSXPackager.Common
         public bool ExtractResources { get; set; }
         public bool ImportResources { get; set; }
         public bool GenerateResourceFolders { get; set; }
-        public string CustomResourceFormat { get; set; }
-        public string ResourceFoldersPath { get; set; }
+        public string ResourceFormat { get; set; }
+        public string ResourceRoot { get; set; }
     }
 }

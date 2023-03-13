@@ -15,7 +15,7 @@ When creating a PBP, the default PSX2PSP resource files that are embedded in the
 To extract resource files from an existing PBP, use the following option.  The input file must be a PBP, or a folder with a wildcard returning PBPs.
 
 ```
---extract-resources <format> 
+--extract  [--resource-format <resource format>] [--resource-root <resource root folder>] [-o <output_path>] 
 ```
 
 ## Format
@@ -39,12 +39,12 @@ To extract resource files from an existing PBP, use the following option.  The i
 
 ```
 
-If no format is specified, the default format `%FILENAME%\%RESOURCE%.%EXT%` is used.
+If no format is specified, the default format `%FILENAME%` is used.
 
 e.g.
 
 ```
-psxpackager "Final Fantasy VII - Disc1.pbp" --extract-resources
+psxpackager "Final Fantasy VII - Disc1.pbp" --extract
 ```
 
 will extract resources to:
@@ -64,13 +64,13 @@ You can also include a path in the format.
 To import resource files when converting to a PBP, use the following option.
 
 ```
---import-resources <format> 
+--import  [--resource-format <resource format>] [--resource-root <resource root folder>] [-o <output_path>]
 ```
 
 e.g.
 
 ```
-psxpackager "Final Fantasy VII - Disc1.iso" --import-resources "Custom Icons\%RESOURCE%\%FILENAME%.%EXT%"
+psxpackager "Final Fantasy VII - Disc1.iso" --import "Custom Icons\%RESOURCE%\%FILENAME%.%EXT%"
 ```
 
 will load resources from:
@@ -90,13 +90,13 @@ If a required resouce does not exist, the default internal one will be used.  Th
 To simplify resource preparation, PSXPackager can generate empty folders that match the format.  This command is primarily designed to work with wildcard inputs.
 
 ```
---generate-resource-folder <format> 
+--generate  [--resource-format <resource format>] [--resource-root <resource root folder>] [-o <output_path>]
 ```
 
 e.g.
 
 ```
-psxpackager "D:\roms\psx" --generate-resource-folder "Custom Icons\%FILENAME%"
+psxpackager "D:\roms\psx" --generate "Custom Icons\%FILENAME%"
 ```
 
 will generate folders
@@ -112,5 +112,5 @@ D:\roms\psx\Custom Icons\Person 2
 The default the location where resource folders will be searched or created is the same path as the ISO or PBP.  You may also specify the location with the following option, to locate the resource folders separate from the ISOs.
 
 ```
---resource-folder-location <path> 
+--resource-folders-path  <path> 
 ```

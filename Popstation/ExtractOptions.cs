@@ -23,7 +23,7 @@ namespace Popstation
         public Func<string, GameEntry> FindGame { get; set; }
         public string FileNameFormat { get; set; }
         public bool ExtractResources { get; set; }
-        public string CustomResourceFormat { get; set; }
+        public string ResourceFormat { get; set; }
         public bool GenerateResourceFolders { get; set; }
         public string ResourceFoldersPath { get; set; }
     }

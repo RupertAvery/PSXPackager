@@ -123,14 +123,14 @@
                             <ColumnDefinition Width="100"/>
                         </Grid.ColumnDefinitions>
                         <Label Grid.Column="0" Grid.Row="1">Source Path:</Label>
-                        <TextBox Grid.Column="1" Grid.Row="1" Margin="2,2,2,2" VerticalContentAlignment="Center" Text="{Binding CustomResourcesPath}">
+                        <TextBox IsEnabled="{Binding UseCustomResources}" Grid.Column="1" Grid.Row="1" Margin="2,2,2,2" VerticalContentAlignment="Center" Text="{Binding CustomResourcesPath}">
                             <TextBox.ToolTip>
                                 The location to start searching for resources. Leave empty to use the same path as the input file.
                             </TextBox.ToolTip>
                         </TextBox>
-                        <Button Grid.Column="2" Grid.Row="1" Margin="2,2,2,2" Command="{Binding BrowseCustomResourcePath}">Browse</Button>
+                        <Button IsEnabled="{Binding UseCustomResources}" Grid.Column="2" Grid.Row="1" Margin="2,2,2,2" Command="{Binding BrowseCustomResourcePath}">Browse</Button>
                         <Label Grid.Column="0" Grid.Row="2">Match Path:</Label>
-                        <TextBox Grid.Column="1" Grid.Row="2" Margin="2,2,2,2" VerticalContentAlignment="Center" Text="{Binding CustomResourcesFormat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        <TextBox IsEnabled="{Binding UseCustomResources}" Grid.Column="1" Grid.Row="2" Margin="2,2,2,2" VerticalContentAlignment="Center" Text="{Binding CustomResourcesFormat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                             <TextBox.ToolTip>
                                 The match path will be appended to the source path to produce the final path that will be used to load a specified resource.
                             </TextBox.ToolTip>
@@ -206,11 +206,6 @@
                             Grid.ColumnSpan="2"
                             Width="150"
                             Click="OpenSettingsFolderButton_OnClick">Open Settings Folder</Button>
-                </Grid>
-            </TabItem>
-            <TabItem Header="GameDB">
-                <Grid Margin="20">
-                    <TextBlock>Not yet implemented</TextBlock>
                 </Grid>
             </TabItem>
             <TabItem Header="About">
