@@ -2,6 +2,9 @@
 
 PSXPackager is a port of the `popstation-md` C source to C#.
 
+There is a command-line executable and a GUI available.
+The GUI allows you to process several images in a queue.
+
 Feel free to take the Popstation library and use it as you like.
 
 # Features
