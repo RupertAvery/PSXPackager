@@ -509,6 +509,12 @@ namespace Popstation
                 processOptions.ResourceRoot = options.OriginalPath;
             }
 
+            if (string.IsNullOrEmpty(processOptions.ResourceFormat))
+            {
+                processOptions.ResourceFormat = "%FILENAME%\\%RESOURCE%.%EXT%";
+            }
+
+
             Resource GetResourceOrDefault(ResourceType type, string ext)
             {
                 var filename = Popstation.GetResourceFilename(processOptions.ResourceFormat, options.OriginalFilename, entry.GameID, entry.SaveFolderName, entry.GameName, entry.SaveDescription, entry.Format, type, ext);
