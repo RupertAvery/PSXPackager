@@ -13,8 +13,6 @@ namespace Popstation.Pbp
 
         public override void WritePSAR(Stream outputStream, uint psarOffset, CancellationToken cancellationToken)
         {
-            uint totSize;
-
             var title = convertInfo.MainGameTitle;
             var code = convertInfo.MainGameID;
 
@@ -66,7 +64,6 @@ namespace Popstation.Pbp
             for (var discNo = 0; discNo < convertInfo.DiscInfos.Count; discNo++)
             {
                 var disc = convertInfo.DiscInfos[discNo];
-                uint curSize = 0;
 
                 offset = (uint)outputStream.Position;
 
