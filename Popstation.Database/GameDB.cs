@@ -55,14 +55,11 @@ namespace Popstation.Database
                 //        break;
                 //    }
                 //}
-                var syscnfFound = false;
 
                 foreach (var file in cdReader.GetFiles("\\"))
                 {
                     var filename = file.Substring(1, file.LastIndexOf(";") - 1);
                     if (filename != "SYSTEM.CNF") continue;
-
-                    syscnfFound = true;
 
                     using (var datastream = cdReader.OpenFile(file, FileMode.Open))
                     {
