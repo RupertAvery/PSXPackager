@@ -4,7 +4,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AssemblyName>psxpackager</AssemblyName>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
 	<RuntimeIdentifier>linux-x64</RuntimeIdentifier>
 	<SelfContained>false</SelfContained>
 	<PublishSingleFile>true</PublishSingleFile>
