@@ -15,8 +15,8 @@ clean:	clean-gui-win-x64 clean-win-x64 clean-linux-x64 clean-osx-x64
 
 
 build-gui-win-x64:
-	dotnet publish ./PSXPackagerGUI/PSXPackagerGUI.csproj -c Release -r win-x64 -o ./build/PsxPackagerGUI --no-self-contained /p:PublishSingleFile=true /p:PublishReadyToRun=false /p:DefineConstants="SEVENZIP" /p:DebugType=None /p:DebugSymbols=false /p:EnableWindowsTargeting=true
-	cp -a ./libs ./build/PsxPackagerGUI
+	dotnet publish ./PSXPackagerGUI/PSXPackagerGUI.csproj -c Release --no-self-contained -r win-x64 -o ./build/PSXPackagerGUI /p:PublishSingleFile=true /p:PublishReadyToRun=false /p:DefineConstants="SEVENZIP" /p:DebugType=None /p:DebugSymbols=false /p:EnableWindowsTargeting=true
+	cp -a ./libs ./build/PSXPackagerGUI
 	cp README.MD ./build/PSXPackagerGUI
 
 build-win-x64:
