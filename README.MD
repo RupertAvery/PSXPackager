@@ -22,7 +22,7 @@ Feel free to take the Popstation library and use it as you like.
 
 # Usage
 
-PSXPackager requires .NET 6.0.
+PSXPackager requires .NET 6.0 or above.
 
 The basic usage of PSXPackager accepts the file or path to convert.
 
