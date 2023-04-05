@@ -16,7 +16,7 @@ A GUI for PSXPacakger
 
 # Requirements
 
-PSXPackagerGUI requires .NET 7.0 Desktop Runtime.
+PSXPackagerGUI requires .NET 6.0(or above) Desktop Runtime.
 
 # Getting Started
 
