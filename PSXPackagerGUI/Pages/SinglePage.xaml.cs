@@ -321,8 +321,6 @@ namespace PSXPackagerGUI.Pages
 
             if (!string.IsNullOrEmpty(filename))
             {
-                string format = "";
-
                 var game = _gameDb.GetEntryByScannerID(Model.Discs.First().GameID);
                 var appPath = ApplicationInfo.AppPath;
 
@@ -376,7 +374,6 @@ namespace PSXPackagerGUI.Pages
             }
         }
 
-        private long _total;
         private string _action;
         private double _lastvalue;
 
