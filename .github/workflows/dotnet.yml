@@ -1,0 +1,42 @@
+name: .NET
+
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_NOLOGO: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 6.0.x
+
+      - name: Publish
+        run: make
+
+      - name: Tar linux-x64 files
+        run: cd build && tar cvf linux-x64.tar linux-x64
+      - name: Upload linux-x64 Tar
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-x64
+          path: build/linux-x64.tar
+      - name: Tar osx-x64 files
+        run : cd build && tar cvf osx-x64.tar osx-x64
+      - name: Upload osx-x64 Tar
+        uses: actions/upload-artifact@v3
+        with:
+          name: osx-x64
+          path: build/osx-x64.tar
+      - name: Tar osx-arm64 files
+        run : cd build && tar cvf osx-arm64.tar osx-arm64
+      - name: Upload osx-arm64 Tar
+        uses: actions/upload-artifact@v3
+        with:
+          name: osx-arm64
+          path: build/osx-arm64.tar

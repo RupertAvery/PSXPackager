@@ -1,0 +1,31 @@
+name: MSBuild
+
+on: push
+
+jobs:
+  build:
+    runs-on: windows-2022
+    env:
+      DOTNET_NOLOGO: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.1
+        with:
+          msbuild-architecture: x64
+
+      - name: Publish
+        run: .\build-all.cmd
+
+      - name: Upload PsxPackagerGUI Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: PsxPackagerGUI
+          path: build\PsxPackagerGUI\**
+      - name: Upload win-x64 Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: win-x64
+          path: build\win-x64\**
