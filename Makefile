@@ -16,24 +16,24 @@ clean:	clean-gui-win-x64 clean-win-x64 clean-linux-x64 clean-osx-x64 clean-osx-a
 
 
 build-gui-win-x64:
-	dotnet publish ./PSXPackagerGUI/PSXPackagerGUI.csproj -c Release --self-contained -r win-x64 -o ./build/PsxPackagerGUI /p:PublishSingleFile=true /p:PublishReadyToRun=false /p:DefineConstants="SEVENZIP" /p:DebugType=None /p:DebugSymbols=false /p:EnableWindowsTargeting=true
+	dotnet publish ./PSXPackagerGUI/PSXPackagerGUI.csproj -c Release --self-contained -r win-x64 -o ./build/PsxPackagerGUI -p:PublishSingleFile=true -p:PublishReadyToRun=false -p:DefineConstants="SEVENZIP" -p:DebugType=None -p:DebugSymbols=false -p:EnableWindowsTargeting=true
 	cp -a ./libs/* ./build/PsxPackagerGUI
 
 build-win-x64:
-	dotnet publish ./PSXPackager/PSXPackager-windows.csproj -c Release --self-contained -r win-x64 -o ./build/win-x64 /p:DefineConstants="SEVENZIP" /p:DebugType=None /p:DebugSymbols=false /p:EnableWindowsTargeting=true
+	dotnet publish ./PSXPackager/PSXPackager-windows.csproj -c Release --self-contained -r win-x64 -o ./build/win-x64 -p:DefineConstants="SEVENZIP" -p:DebugType=None -p:DebugSymbols=false -p:EnableWindowsTargeting=true
 	cp -a ./libs/* ./build/win-x64
 	cp README.md ./build/win-x64
 
 build-linux-x64:
-	dotnet publish ./PSXPackager/PSXPackager-linux.csproj -c Release --self-contained -r linux-x64 -o ./build/linux-x64 /p:DebugType=None /p:DebugSymbols=false
+	dotnet publish ./PSXPackager/PSXPackager-linux.csproj -c Release --self-contained -r linux-x64 -o ./build/linux-x64 -p:DebugType=None -p:DebugSymbols=false
 	cp README.md ./build/linux-x64
 
 build-osx-x64:
-	dotnet publish ./PSXPackager/PSXPackager-linux.csproj -c Release --self-contained -r osx-x64 -o ./build/osx-x64 /p:DebugType=None /p:DebugSymbols=false
+	dotnet publish ./PSXPackager/PSXPackager-linux.csproj -c Release --self-contained -r osx-x64 -o ./build/osx-x64 -p:DebugType=None -p:DebugSymbols=false
 	cp README.md ./build/osx-x64
 
 build-osx-arm64:
-	dotnet publish ./PSXPackager/PSXPackager-linux.csproj -c Release --self-contained -r osx-arm64 -o ./build/osx-arm64 /p:DebugType=None /p:DebugSymbols=false
+	dotnet publish ./PSXPackager/PSXPackager-linux.csproj -c Release --self-contained -r osx-arm64 -o ./build/osx-arm64 -p:DebugType=None -p:DebugSymbols=false
 	cp README.md ./build/osx-arm64
 
 clean-gui-win-x64:
