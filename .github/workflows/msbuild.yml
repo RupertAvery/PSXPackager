@@ -17,7 +17,8 @@ jobs:
           msbuild-architecture: x64
 
       - name: Publish
-        run: .\build-all.cmd
+        # run: .\build-all.cmd
+        run: make
 
       - name: Upload PsxPackagerGUI Artifact
         uses: actions/upload-artifact@v3
@@ -27,5 +28,5 @@ jobs:
       - name: Upload win-x64 Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: win-x64
+          name: psxpackager-win-x64
           path: build\win-x64\**
