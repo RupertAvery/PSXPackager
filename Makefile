@@ -22,34 +22,20 @@ build-gui-win-x64:
 	cp -a ./libs/* ./build/PsxPackagerGUI
 
 build-win-x64:
-	dotnet publish ./PSXPackager/PSXPackager-windows.csproj -c Release -r win-x64 -o ./build/win-x64 $(SELF_CONTAINED_PROPERTIES) $(WINDOWS_PROPERTIES)
-	cp -a ./libs/* ./build/win-x64
-	cp README.md ./build/win-x64
+	$(eval RID := $(subst build-,,$(@)))
+	dotnet publish ./PSXPackager/PSXPackager-windows.csproj -c Release -r ${RID} -o ./build/${RID} $(SELF_CONTAINED_PROPERTIES) $(WINDOWS_PROPERTIES)
+	cp -a ./libs/* ./build/${RID}
+	cp README.md ./build/${RID}
 
-build-linux-x64:
-	dotnet publish ./PSXPackager/PSXPackager-linux.csproj -c Release -r linux-x64 -o ./build/linux-x64 $(SELF_CONTAINED_PROPERTIES)
-	cp README.md ./build/linux-x64
-
-build-osx-x64:
-	dotnet publish ./PSXPackager/PSXPackager-linux.csproj -c Release -r osx-x64 -o ./build/osx-x64 $(SELF_CONTAINED_PROPERTIES)
-	cp README.md ./build/osx-x64
-
-build-osx-arm64:
-	dotnet publish ./PSXPackager/PSXPackager-linux.csproj -c Release -r osx-arm64 -o ./build/osx-arm64 $(SELF_CONTAINED_PROPERTIES)
-	cp README.md ./build/osx-arm64
+build-linux-x64 build-osx-x64 build-osx-arm64:
+	$(eval RID := $(subst build-,,$(@)))
+	dotnet publish ./PSXPackager/PSXPackager-linux.csproj   -c Release -r ${RID} -o ./build/${RID} $(SELF_CONTAINED_PROPERTIES)
+	cp README.md ./build/${RID}
 
 clean-gui-win-x64:
 	rm -rf ./build/PsxPackagerGUI
 
-clean-win-x64:
-	rm -rf ./build/win-x64
-
-clean-linux-x64:
-	rm -rf ./build/linux-x64
-
-clean-osx-x64:
-	rm -rf ./build/osx-x64
-
-clean-osx-arm64:
-	rm -rf ./build/osx-arm64
+clean-win-x64 clean-linux-x64 clean-osx-x64 clean-osx-arm64:
+	$(eval RID := $(subst clean-,,$(@)))
+	rm -rf ./build/${RID}
 
