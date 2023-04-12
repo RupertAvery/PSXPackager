@@ -16,6 +16,9 @@ jobs:
         with:
           msbuild-architecture: x64
 
+      - name: Test
+        run: make test
+
       - name: Publish
         # run: .\build-all.cmd
         run: make
