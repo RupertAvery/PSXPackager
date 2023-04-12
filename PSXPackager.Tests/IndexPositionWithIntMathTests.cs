@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PSXPackager.Common.Cue;
+﻿using PSXPackager.Common.Cue;
 
 namespace UnitTestProject
 {

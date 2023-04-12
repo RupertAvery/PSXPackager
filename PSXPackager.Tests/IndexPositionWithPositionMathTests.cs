@@ -1,4 +1,6 @@
-﻿namespace UnitTestProject
+﻿using PSXPackager.Common.Cue;
+
+namespace UnitTestProject
 {
     [TestClass]
     public class IndexPositionWithPositionMathTests
