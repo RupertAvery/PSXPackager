@@ -1,7 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PSXPackager.Common.Cue;
-
-namespace UnitTestProject
+﻿namespace UnitTestProject
 {
     [TestClass]
     public class IndexPositionWithPositionMathTests

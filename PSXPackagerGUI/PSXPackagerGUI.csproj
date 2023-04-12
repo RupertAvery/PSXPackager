@@ -35,8 +35,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Popstation\Popstation.csproj" />
-		<ProjectReference Include="..\Popstation.Database\Popstation.Database.csproj" />
+		<ProjectReference Include="..\Popstation\Popstation.csproj">
+		  <ReferenceSourceTarget></ReferenceSourceTarget>
+		</ProjectReference>
+		<ProjectReference Include="..\Popstation.Database\Popstation.Database.csproj">
+		  <ReferenceSourceTarget></ReferenceSourceTarget>
+		</ProjectReference>
 	</ItemGroup>
 
 	<ItemGroup>
