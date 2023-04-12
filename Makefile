@@ -1,6 +1,8 @@
 WINDOWS_PROPERTIES=-p:DefineConstants="SEVENZIP" -p:EnableWindowsTargeting=true
 SELF_CONTAINED_PROPERTIES=-p:PublishSingleFile=true -p:SelfContained=true -p:PublishTrimmed=true -p:InvariantGlobalization=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false
-.PHONY:	all build clean
+
+.PHONY:	all build clean test
+
 all:
 	$(MAKE) clean
 	$(MAKE) build
@@ -38,4 +40,7 @@ clean-gui-win-x64:
 clean-win-x64 clean-linux-x64 clean-osx-x64 clean-osx-arm64:
 	$(eval RID := $(subst clean-,,$(@)))
 	rm -rf ./build/${RID}
+
+test:
+	dotnet test PSXPackager.Tests
 
