@@ -19,7 +19,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PSXPackager.Common", "PSXPa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Popstation.Database", "Popstation.Database\Popstation.Database.csproj", "{0C859033-57EF-49C0-B201-E9F4D4F4428F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PSXPackager.Tests", "PSXPackager.Tests\PSXPackager.Tests.csproj", "{B4D77059-15BA-4D9C-86CB-9C7BDFA2DE28}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PSXPackager.Tests", "PSXPackager.Tests\PSXPackager.Tests.csproj", "{B4D77059-15BA-4D9C-86CB-9C7BDFA2DE28}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
