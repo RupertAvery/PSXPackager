@@ -32,6 +32,26 @@ jobs:
         with:
           name: psxpackager-linux-x64
           path: build/psxpackager-linux-x64.tar
+      - name: Tar linux-arm files
+        run: |
+          cd build
+          mv {,psxpackager-}linux-arm
+          tar cvf psxpackager-linux-arm{.tar,}
+      - name: Upload linux-arm Tar
+        uses: actions/upload-artifact@v3
+        with:
+          name: psxpackager-linux-arm
+          path: build/psxpackager-linux-arm.tar
+      - name: Tar linux-arm64 files
+        run: |
+          cd build
+          mv {,psxpackager-}linux-arm64
+          tar cvf psxpackager-linux-arm64{.tar,}
+      - name: Upload linux-arm64 Tar
+        uses: actions/upload-artifact@v3
+        with:
+          name: psxpackager-linux-arm64
+          path: build/psxpackager-linux-arm64.tar
       - name: Tar osx-x64 files
         run : |
           cd build

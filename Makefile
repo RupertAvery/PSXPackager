@@ -7,16 +7,18 @@ all:
 	$(MAKE) clean
 	$(MAKE) build
 
-.PHONY:	build-gui-win-x64 build-win-x64 build-linux-x64 build-osx-x64 build-osx-arm64
+.PHONY:	build-gui-win-x64 build-win-x64 build-linux-x64 build-linux-arm build-linux-arm64 build-osx-x64 build-osx-arm64
 build:
 	$(MAKE) build-gui-win-x64
 	$(MAKE) build-win-x64
 	$(MAKE) build-linux-x64
+	$(MAKE) build-linux-arm
+	$(MAKE) build-linux-arm64
 	$(MAKE) build-osx-x64
 	$(MAKE) build-osx-arm64
 
-.PHONY:	clean-gui-win-x64 clean-win-x64 clean-linux-x64 clean-osx-x64 clean-osx-arm64
-clean:	clean-gui-win-x64 clean-win-x64 clean-linux-x64 clean-osx-x64 clean-osx-arm64
+.PHONY:	clean-gui-win-x64 clean-win-x64 clean-linux-x64 clean-linux-arm clean-linux-arm64 clean-osx-x64 clean-osx-arm64
+clean:	clean-gui-win-x64 clean-win-x64 clean-linux-x64 clean-linux-arm clean-linux-arm64 clean-osx-x64 clean-osx-arm64
 
 
 build-gui-win-x64:
@@ -29,7 +31,7 @@ build-win-x64:
 	cp -a ./libs/* ./build/${RID}
 	cp README.md ./build/${RID}
 
-build-linux-x64 build-osx-x64 build-osx-arm64:
+build-linux-x64 build-linux-arm build-linux-arm64 build-osx-x64 build-osx-arm64:
 	$(eval RID := $(subst build-,,$(@)))
 	dotnet publish ./PSXPackager/PSXPackager-linux.csproj   -c Release -r ${RID} -o ./build/${RID} $(SELF_CONTAINED_PROPERTIES)
 	cp README.md ./build/${RID}
@@ -37,7 +39,7 @@ build-linux-x64 build-osx-x64 build-osx-arm64:
 clean-gui-win-x64:
 	rm -rf ./build/PsxPackagerGUI
 
-clean-win-x64 clean-linux-x64 clean-osx-x64 clean-osx-arm64:
+clean-win-x64 clean-linux-x64 clean-linux-arm clean-linux-arm64 clean-osx-x64 clean-osx-arm64:
 	$(eval RID := $(subst clean-,,$(@)))
 	rm -rf ./build/${RID}
 
