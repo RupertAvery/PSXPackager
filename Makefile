@@ -1,4 +1,4 @@
-WINDOWS_PROPERTIES=-p:DefineConstants="SEVENZIP" -p:EnableWindowsTargeting=true
+WINDOWS_PROPERTIES=-p:DefineConstants="SEVENZIP" -p:EnableWindowsTargeting=true -p:PublishTrimmed=false
 SELF_CONTAINED_PROPERTIES=-p:PublishSingleFile=true -p:SelfContained=true -p:PublishTrimmed=true -p:EnableCompressionInSingleFile=true -p:DebugType=None -p:DebugSymbols=false
 
 .PHONY:	all build clean test
@@ -22,7 +22,7 @@ clean:	clean-gui-win-x64 clean-win-x64 clean-linux-x64 clean-linux-arm clean-lin
 
 
 build-gui-win-x64:
-	dotnet publish ./PSXPackagerGUI/PSXPackagerGUI.csproj -c Release -r win-x64 -o ./build/PsxPackagerGUI $(SELF_CONTAINED_PROPERTIES) $(WINDOWS_PROPERTIES) -p:PublishTrimmed=false
+	dotnet publish ./PSXPackagerGUI/PSXPackagerGUI.csproj -c Release -r win-x64 -o ./build/PsxPackagerGUI $(SELF_CONTAINED_PROPERTIES) $(WINDOWS_PROPERTIES)
 	cp -a ./libs/* ./build/PsxPackagerGUI
 
 build-win-x64:

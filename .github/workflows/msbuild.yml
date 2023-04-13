@@ -17,10 +17,11 @@ jobs:
           msbuild-architecture: x64
 
       - name: Test
-        run: dotnet test PSXPackager.Tests
+        run: make test
 
       - name: Publish
-        run: .\build-all.cmd
+        # run: .\build-all.cmd
+        run: make build-gui-win-x64 build-win-x64
 
       - name: Upload PsxPackagerGUI Artifact
         uses: actions/upload-artifact@v3
