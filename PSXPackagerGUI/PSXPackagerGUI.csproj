@@ -30,13 +30,17 @@
 	<ItemGroup>
 		<PackageReference Include="7z.Libs" Version="21.7.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-		<PackageReference Include="Ookii.Dialogs.Wpf" Version="4.0.0" />
-		<PackageReference Include="Squid-Box.SevenZipSharp" Version="1.3.283" />
+		<PackageReference Include="Ookii.Dialogs.Wpf" Version="5.0.1" />
+		<PackageReference Include="Squid-Box.SevenZipSharp" Version="1.6.1.23" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Popstation\Popstation.csproj" />
-		<ProjectReference Include="..\Popstation.Database\Popstation.Database.csproj" />
+		<ProjectReference Include="..\Popstation\Popstation.csproj">
+		  <ReferenceSourceTarget></ReferenceSourceTarget>
+		</ProjectReference>
+		<ProjectReference Include="..\Popstation.Database\Popstation.Database.csproj">
+		  <ReferenceSourceTarget></ReferenceSourceTarget>
+		</ProjectReference>
 	</ItemGroup>
 
 	<ItemGroup>

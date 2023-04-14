@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29613.14
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33516.290
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PSXPackager", "PSXPackager\PSXPackager.csproj", "{782E9EB1-BE0D-411E-82EA-CB3A2860945C}"
 EndProject
@@ -13,13 +13,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DiscUtils.Iso9660", "DiscUt
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DiscUtils.Streams", "DiscUtils.Streams\DiscUtils.Streams.csproj", "{C76270B7-9FF7-400C-9A0C-D6A910C2B21D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTestProject", "UnitTestProject\UnitTestProject.csproj", "{477347DA-4397-413B-B3AB-F13200D31543}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PSXPackagerGUI", "PSXPackagerGUI\PSXPackagerGUI.csproj", "{6BC28EAD-061C-4E60-BFFC-25A5EFD3B117}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PSXPackager.Common", "PSXPackager.Common\PSXPackager.Common.csproj", "{52B20BFE-93BE-4167-9F58-D04508698881}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Popstation.Database", "Popstation.Database\Popstation.Database.csproj", "{0C859033-57EF-49C0-B201-E9F4D4F4428F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PSXPackager.Tests", "PSXPackager.Tests\PSXPackager.Tests.csproj", "{B4D77059-15BA-4D9C-86CB-9C7BDFA2DE28}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,10 +47,6 @@ Global
 		{C76270B7-9FF7-400C-9A0C-D6A910C2B21D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C76270B7-9FF7-400C-9A0C-D6A910C2B21D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C76270B7-9FF7-400C-9A0C-D6A910C2B21D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{477347DA-4397-413B-B3AB-F13200D31543}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{477347DA-4397-413B-B3AB-F13200D31543}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{477347DA-4397-413B-B3AB-F13200D31543}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{477347DA-4397-413B-B3AB-F13200D31543}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6BC28EAD-061C-4E60-BFFC-25A5EFD3B117}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6BC28EAD-061C-4E60-BFFC-25A5EFD3B117}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6BC28EAD-061C-4E60-BFFC-25A5EFD3B117}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -63,6 +59,10 @@ Global
 		{0C859033-57EF-49C0-B201-E9F4D4F4428F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0C859033-57EF-49C0-B201-E9F4D4F4428F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0C859033-57EF-49C0-B201-E9F4D4F4428F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B4D77059-15BA-4D9C-86CB-9C7BDFA2DE28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4D77059-15BA-4D9C-86CB-9C7BDFA2DE28}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4D77059-15BA-4D9C-86CB-9C7BDFA2DE28}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4D77059-15BA-4D9C-86CB-9C7BDFA2DE28}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
