@@ -1,4 +1,4 @@
-WINDOWS_PROPERTIES=-p:DefineConstants="SEVENZIP" -p:EnableWindowsTargeting=true -p:PublishTrimmed=false
+WINDOWS_PROPERTIES=-p:EnableWindowsTargeting=true -p:PublishTrimmed=false
 SELF_CONTAINED_PROPERTIES=-p:PublishSingleFile=true -p:SelfContained=true -p:PublishTrimmed=true -p:EnableCompressionInSingleFile=true -p:DebugType=None -p:DebugSymbols=false
 
 .PHONY:	all build clean test

@@ -19,15 +19,16 @@ namespace PSXPackager.Common
             return Path.GetExtension(filename).ToLower() == ".m3u";
         }
 
-#if SEVENZIP
         public static bool IsArchive(string filename)
         {
+            // https://github.com/adamhathcock/sharpcompress/blob/master/FORMATS.md
             return
-            Path.GetExtension(filename).ToLower() == ".7z" ||
             Path.GetExtension(filename).ToLower() == ".rar" ||
-            Path.GetExtension(filename).ToLower() == ".zip";
+            Path.GetExtension(filename).ToLower() == ".zip" ||
+            Path.GetExtension(filename).ToLower() == ".tar" ||
+            Path.GetExtension(filename).ToLower() == ".gz" ||
+            Path.GetExtension(filename).ToLower() == ".7z";
         }
-#endif
 
         public static bool IsBin(string filename)
         {

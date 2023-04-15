@@ -31,7 +31,7 @@
 		<PackageReference Include="7z.Libs" Version="21.7.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 		<PackageReference Include="Ookii.Dialogs.Wpf" Version="5.0.1" />
-		<PackageReference Include="Squid-Box.SevenZipSharp" Version="1.6.1.23" />
+		<PackageReference Include="SharpCompress" Version="0.33.0" />
 	</ItemGroup>
 
 	<ItemGroup>

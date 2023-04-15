@@ -6,7 +6,6 @@ using Popstation.Database;
 using PSXPackagerGUI.Common;
 using PSXPackagerGUI.Models;
 using PSXPackagerGUI.Pages;
-using SevenZip;
 
 namespace PSXPackagerGUI
 {
@@ -34,8 +33,6 @@ namespace PSXPackagerGUI
                 MessageBox.Show($"{dllPath} not found!", "PSXPackager GUI", MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 return;
             }
-
-            SevenZipBase.SetLibraryPath(sevenZipLibPath);
 
             InitializeComponent();
 
