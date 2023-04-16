@@ -20,7 +20,7 @@ jobs:
         run: make test
 
       - name: Publish
-        run: make
+        run: make build-linux build-osx
 
       - name: Tar linux-x64 files
         run: |
@@ -72,3 +72,4 @@ jobs:
         with:
           name: psxpackager-osx-arm64
           path: build/psxpackager-osx-arm64.tar
+
