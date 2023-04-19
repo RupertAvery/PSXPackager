@@ -137,6 +137,7 @@ namespace PSXPackager
                 case PopstationEventEnum.ExtractComplete:
                 case PopstationEventEnum.DiscComplete:
                 case PopstationEventEnum.DecompressComplete:
+                    Overwrite($"100%");
                     _charsToDelete = 0;
                     Console.CursorVisible = true;
                     Console.WriteLine();
