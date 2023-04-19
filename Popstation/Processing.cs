@@ -20,7 +20,7 @@ namespace Popstation
         private readonly INotifier _notifier;
         private readonly IEventHandler _eventHandler;
         private readonly GameDB _gameDb;
-        private long _archiveTotalSize;
+        private long _currentFileDecompressedSize;
 
         private List<string> tempFiles = new List<string>();
 
@@ -319,11 +319,22 @@ namespace Popstation
             using (Stream stream = File.OpenRead(file))
             using (var archive = ArchiveFactory.Open(stream))
             {
-                _archiveTotalSize = archive.TotalSize;
                 var fileNames = archive.Entries.Select(x => x.Key).ToList();
                 files = fileNames.Select(x => Path.Combine(tempPath, x)).ToList();
-                archive.EntryExtractionBegin += (sender, args) => _notifier.Notify(PopstationEventEnum.DecompressStart, args.Item.Key);
-                archive.EntryExtractionEnd   += (sender, args) => _notifier.Notify(PopstationEventEnum.DecompressComplete, null);
+
+                // https://github.com/RupertAvery/PSXPackager/pull/40
+                archive.EntryExtractionBegin += (sender, args) =>
+                {
+                    _notifier.Notify(PopstationEventEnum.DecompressStart, args.Item.Key);
+                    _currentFileDecompressedSize = args.Item.Size;
+                };
+
+                archive.EntryExtractionEnd += (sender, args) =>
+                {
+                    _notifier.Notify(PopstationEventEnum.DecompressProgress, 100);
+                    _notifier.Notify(PopstationEventEnum.DecompressComplete, null);
+                };
+
                 archive.CompressedBytesRead += ArchiveFileOnExtracting;
                 foreach (var entry in archive.Entries.Where(entry => !entry.IsDirectory))
                 {
@@ -334,16 +345,16 @@ namespace Popstation
                     });
                 }
                 archive.CompressedBytesRead -= ArchiveFileOnExtracting;
+
             }
 
             tempFiles.AddRange(files);
         }
 
 
-        // https://stackoverflow.com/questions/36682143
         private void ArchiveFileOnExtracting(object sender, CompressedBytesReadEventArgs e)
         {
-            var percentage = ((double)e.CompressedBytesRead / (double)_archiveTotalSize) * 100;
+            var percentage = ((double)e.CompressedBytesRead / (double)_currentFileDecompressedSize) * 100;
             _notifier.Notify(PopstationEventEnum.DecompressProgress, (int)percentage);
         }
 
