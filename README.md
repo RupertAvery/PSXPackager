@@ -2,8 +2,9 @@
 
 PSXPackager is a port of the `popstation-md` C source to C#.
 
-There is a command-line executable and a GUI available.
-The GUI allows you to process several images in a queue.
+There is a command-line executable (Windows/Linux/OSX) and a Windows-only GUI available.
+
+The GUI allows you to select and process several images in a queue (Batch mode).
 
 Feel free to take the Popstation library and use it as you like.
 
@@ -11,28 +12,41 @@ Feel free to take the Popstation library and use it as you like.
 
 * Convert .BIN + .CUE or .IMG to .PBP
 * Extract .PBP to .BIN + .CUE file 
-* Supports conversion of .7z, .zip, .rar files (Windows only)
-* Supports merging of multi-track .BIN + .CUE into one .BIN + .CUE
+* Supports conversion of .7z, .zip, .rar files to .PBP
+* Supports merging of single-disc, multi-track .BIN + .CUE into one .BIN + .CUE
 * Supports writing multi-track CUE information to PBP for audio 
 * PBP Compression levels from 0 to 9
 * Supports writing multi-disc PBP using .m3u files
 * Supports extracting multi-disc PBP
-* Linux CLI
+* Windows/Linux/OSX CLI
 * GUI with PSX2PSP-like interface and batch processing
 
 # Usage
 
-PSXPackager requires .NET 6.0 or above.
+PSXPackager requires .NET 6.0 Runtime or above.
 
 The basic usage of PSXPackager accepts the file or path to convert.
 
 ```
-psxpackager -i <path_to_file>
+psxpackager -i <input_path_or_file> [-o <output_path_or_file>]
 ```
 
 The `-i` or `input` parameter is required. It specifies a path to a file, or a directory and a wildcard expression. If a wildcard expression is used, it will process all matching files in the directory.
 
+The application will assume that you want to convert any image to a PBP, and any PBP to a .BIN + .CUE.
+
+The command:
+
+```
+psxpackager -i "Final Fantasy VII - Disc 1.cue"
+```
+
+will process `Final Fantasy VII - Disc 1.bin` and `Final Fantasy VII - Disc 1.cue` and output `Final Fantasy VII - Disc 1.pbp`.
+
+
 The `-o` or `output` parameter is optional. It specifies the folder where the the converted or extracted files will be placed. If not specified, the folder specified on the input is ued.
+
+If the input is a file and the output is also a file, the output will be renamed, instead of reusing the input filename.
 
 ## Options
 
@@ -78,7 +92,7 @@ The `-o` or `output` parameter is optional. It specifies the folder where the th
   --version                  Display version information.
 ```
 
-## Convert a .BIN, .CUE, .ISO, .IMG or .7z to a .PBP
+## Convert a .BIN, .CUE, .ISO, .IMG or archive to a .PBP
 
 PSXPackager supports several input formats. Simply pass the path to the archive, CUE sheet, or image with the `-i` parameter.
 
@@ -86,13 +100,19 @@ PSXPackager supports several input formats. Simply pass the path to the archive,
 psxpackager -i <path_to_file> [-o <output_path>] [-l <compression_level>] [-y]
 ```
 
-Since 7z is used for decompression, any format the 7z supports, such as `.rar` or `.zip` can be used as an input, so long as PSXPackager can find an image or CUE sheet within the archive.
-
 The output path is optional. If not specified, the path of the input file will be used.
 
 PSXPackager will prompt if a file exists before overwriting it. Use the `-x` argument to overwrite all files in the output directory.
 
 Set the compression level to a value from 0 to 9, with 0 being no compression and 9 being the highest compression level. If not specified, it will default to 5.
+
+PSXPackager can automatically extract files from compressed files (archives) anc convert the contents into a PBP. The following formats are supported:
+
+* .zip
+* .7z
+* .rar
+* .tar
+* .gz
 
 Archives will be decompressed to a temporary folder in `%TEMP%\PSXPackager`, and will be cleaned up on exit.
 
@@ -108,19 +128,27 @@ psxpackager -i <path_to_pbp> [-o <output_path>] [-d <list_of_discs>]
 
 ## Filename formatting
 
-Use the `-f` or `format` option to specify the format of the output filename. By default, it will use `%FILENAME%`, the input filename as the output filename.
+Use the `-f` or `format` option to specify the format of the output filename based on the information found on the disc (Sony GameID) and the `gameInfo.db` file.
+
+This allows you to generate standardized output filenames that can include the GameID e.g SCUS-94163, the region (NTSC/PAL) and the game name.  
+
+By default, it will use `%FILENAME%`, i.e. the input filename as the output filename.
 
 See [Formatting](#formatting) for more info.
 
 ## Merging Multi-Track Games
 
-Some games such as Tomb Raider 
+Some games such as Tomb Raider use audio tracks as background music. These are usually extracted by disc rippers as separate .bin files.  They usually come with a .cue file that lists the .bins in order and specifies how long each track is.
+
+PSXPackager will automatically merge multi-bin discs before converting to PBP as long as you pass in the .cue file (not the first .bin file). Previously you would need to use CDMage or some other tool to merge multi-bins.
+
+The resulting PBP file will contain the audio tracks as disc tracks and you will be able to play your game on your PSP or emulator with music.
 
 ## Creating Multi-disc PBPs
 
-PBPs containing more than one disc are supported by PSXPackager. This allows you to compress a multi-disc game such as Final Fantasy VII (3 discs) into a single PBP. 
+The PBP format can contain more than one disc, and this is supported by PSXPackager. This allows you to merge a multi-disc game such as Final Fantasy VII (3 discs) into a single PBP. 
 
-First, create an `.m3u` file containing a list of the discs in the order you wish them to appear in the PBP.
+To do this from the command line, first create an `.m3u` file containing a list of the discs in the order you wish them to appear in the PBP.
 
 For example, create a text file with the following contents and save as `Final Fantasy VIII.m3u`
 
@@ -164,11 +192,13 @@ This will convert all files matching `Legend of Dragoon - Disc ?.bin` in the fol
 psxpackager -i "C:\Roms\Legend of Dragoon - Disc ?.bin"
 ```
 
+If you want faster batch conversion, use the GUI, as it supports multi-threaded processing.
+
 # Customizing PBPs with Resources
 
 Resource files are PBP-specific embedded resources that are normally used by the PSP, PSVita or PS3 to display an image or play audio on the XMB when the game is selected. These files usually named ICON0.PNG, PIC0.PNG, PIC1.PNG and SND0.AT3.
 
-PSXPackager can extract or embed resource files for a single conversion or batch conversion. To do this, the resource files must be located in a specific location.
+PSXPackager can extract (`--extract`) or embed (`--import`) resource files for a single conversion or batch conversion. To do the latter, the resource files must be located in a specific location.
 
 There are two options that let you set how and where the resource files are found.
 
@@ -232,7 +262,11 @@ psxpackager -i "Final Fantasy VII (Disc-1).cue" --import --resource-path %GAMEID
 
 ## Generate Resource Folders
 
-You might want to generate a bunch of resource folders prior to batch conversion. This option will create empty folders using the specified format.
+This option is provided for the following scenario:
+
+You have a bunch of images you want to convert to PBP, and you want to customize all of them.  To do this, you will need to generate resource folders, where you will later place the icons and backgrounds you want.
+
+This option will create empty folders using the specified format.
 
 ```
 psxpackager -i <path_to_file> --generate [--resource-format <resource format>] [--resource-folder <resource root folder>]
