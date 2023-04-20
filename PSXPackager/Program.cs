@@ -28,9 +28,6 @@ namespace PSXPackager
 
         static void Main(string[] args)
         {
-#if SEVENZIP
-            SevenZip.SevenZipBase.SetLibraryPath(Path.Combine(ApplicationInfo.AppPath, $"{(System.Environment.Is64BitOperatingSystem ? "x64" : "x86")}/7z.dll"));
-#endif
             _cancellationTokenSource = new CancellationTokenSource();
 
             Console.CancelKeyPress += CancelEventHandler;
@@ -173,10 +170,9 @@ namespace PSXPackager
 
         private static IEnumerable<string> GetFilesFromDirectory(string path, string filterExpression, bool recursive)
         {
+            // https://github.com/adamhathcock/sharpcompress/blob/master/FORMATS.md
             var supportedFiles = new List<string>() {
-#if SEVENZIP
-            ".7z", ".gz", ".rar", ".tar", 
-#endif
+            "rar", "zip", "tar", ".gz", ".7z",
            ".bin", ".cue", ".img", ".iso", ".pbp"
             };
 

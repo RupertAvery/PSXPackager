@@ -72,3 +72,4 @@ jobs:
         with:
           name: psxpackager-osx-arm64
           path: build/psxpackager-osx-arm64.tar
+

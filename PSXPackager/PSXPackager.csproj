@@ -7,14 +7,9 @@
 		<PublishTrimmed>true</PublishTrimmed>
 	</PropertyGroup>
 
-	<PropertyGroup>
-		<DefineConstants>$(DefineConstants);SEVENZIP</DefineConstants>
-	</PropertyGroup>
-
 	<ItemGroup>
-		<PackageReference Include="7z.Libs" Version="21.7.0" />
 		<PackageReference Include="CommandLineParser" Version="2.9.1" />
-		<PackageReference Include="Squid-Box.SevenZipSharp" Version="1.6.1.23" />
+		<PackageReference Include="SharpCompress" Version="0.33.0" />
 		<PackageReference Include="System.ValueTuple" Version="4.5.0" />
 	</ItemGroup>
 

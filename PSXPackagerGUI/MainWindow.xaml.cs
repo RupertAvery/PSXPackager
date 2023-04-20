@@ -6,7 +6,6 @@ using Popstation.Database;
 using PSXPackagerGUI.Common;
 using PSXPackagerGUI.Models;
 using PSXPackagerGUI.Pages;
-using SevenZip;
 
 namespace PSXPackagerGUI
 {
@@ -25,18 +24,6 @@ namespace PSXPackagerGUI
 
         public MainWindow()
         {
-            var dllPath = Path.Combine(System.Environment.Is64BitOperatingSystem ? "x64" : "x86", "7z.dll");
-
-            var sevenZipLibPath = Path.Combine(ApplicationInfo.AppPath, dllPath);
-
-            if (!File.Exists(sevenZipLibPath))
-            {
-                MessageBox.Show($"{dllPath} not found!", "PSXPackager GUI", MessageBoxButton.OK, MessageBoxImage.Exclamation);
-                return;
-            }
-
-            SevenZipBase.SetLibraryPath(sevenZipLibPath);
-
             InitializeComponent();
 
             _settings = new SettingsPage(this);

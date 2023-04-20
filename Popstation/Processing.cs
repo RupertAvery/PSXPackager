@@ -10,9 +10,8 @@ using PSXPackager.Common;
 using PSXPackager.Common.Cue;
 using PSXPackager.Common.Notification;
 
-#if SEVENZIP
-    using SevenZip;
-#endif
+using SharpCompress.Archives;
+using SharpCompress.Common;
 
 namespace Popstation
 {
@@ -21,6 +20,7 @@ namespace Popstation
         private readonly INotifier _notifier;
         private readonly IEventHandler _eventHandler;
         private readonly GameDB _gameDb;
+        private long _currentFileDecompressedSize;
 
         private List<string> tempFiles = new List<string>();
 
@@ -49,7 +49,6 @@ namespace Popstation
             {
                 var originalFile = file;
 
-#if SEVENZIP
                 if (FileExtensionHelper.IsArchive(file))
                 {
 
@@ -92,7 +91,6 @@ namespace Popstation
                         }
                     }
                 }
-#endif
 
                 if (!string.IsNullOrEmpty(file))
                 {
@@ -314,68 +312,51 @@ namespace Popstation
             }
         }
 
-#if SEVENZIP
           void Unpack(string file, string tempPath, CancellationToken cancellationToken)
         {
             List<string> files;
 
-            using (var archiveFile = new SevenZipExtractor(file))
+            using (Stream stream = File.OpenRead(file))
+            using (var archive = ArchiveFactory.Open(stream))
             {
-                var archiveFiles = archiveFile.ArchiveFileData.Select(x => x.FileName).ToList();
+                var fileNames = archive.Entries.Select(x => x.Key).ToList();
+                files = fileNames.Select(x => Path.Combine(tempPath, x)).ToList();
 
-                archiveFile.FileExtractionStarted += (sender, args) => _notifier.Notify(PopstationEventEnum.DecompressStart, args.FileInfo.FileName);
-                archiveFile.Extracting += ArchiveFileOnExtracting;
-                archiveFile.FileExtractionFinished += (sender, args) => _notifier.Notify(PopstationEventEnum.DecompressComplete, null);
-                //archiveFile.BeginExtractFiles(ExtractFileCallback);
-                //var unpackTasks = new List<Task>();
-                archiveFile.ExtractFiles(tempPath, archiveFiles.ToArray());
+                // https://github.com/RupertAvery/PSXPackager/pull/40
+                archive.EntryExtractionBegin += (sender, args) =>
+                {
+                    _notifier.Notify(PopstationEventEnum.DecompressStart, args.Item.Key);
+                    _currentFileDecompressedSize = args.Item.Size;
+                };
 
-                files = archiveFiles.Select(x => Path.Combine(tempPath, x)).ToList();
+                archive.EntryExtractionEnd += (sender, args) =>
+                {
+                    _notifier.Notify(PopstationEventEnum.DecompressProgress, 100);
+                    _notifier.Notify(PopstationEventEnum.DecompressComplete, null);
+                };
 
-                //foreach (var entry in archiveFile.ArchiveFileData)
-                //{
-                //    if (FileExtensionHelper.IsImageFile(entry.FileName) || FileExtensionHelper.IsCue(entry.FileName))
-                //    {
-                //        //Console.WriteLine($"Extracting {entry.FileName} ({Shorten(entry.Size)})");
-                //        var path = Path.Combine(tempPath, entry.FileName);
-                //        // extract to file
-                //        files.Add(path);
-
-                //        _notifier.Notify(PopstationEventEnum.DecompressStart, entry.FileName);
-                //        _notifier.Notify(PopstationEventEnum.DecompressComplete, null);
-
-                //        using (var stream = new FileStream(path, FileMode.Create, FileAccess.Write))
-                //        {
-                //            _notifier.Notify(PopstationEventEnum.DecompressStart, entry.FileName);
-                //            archiveFile.ExtractFile(entry.FileName, stream);
-                //            _notifier.Notify(PopstationEventEnum.DecompressComplete, null);
-                //        }
-
-                //    }
-                //    if (cancellationToken.IsCancellationRequested)
-                //    {
-                //        return files;
-                //    }
-                //}
-
-                //Task.WaitAll(unpackTasks.ToArray());
-                archiveFile.Extracting -= ArchiveFileOnExtracting;
+                archive.CompressedBytesRead += ArchiveFileOnExtracting;
+                foreach (var entry in archive.Entries.Where(entry => !entry.IsDirectory))
+                {
+                    entry.WriteToDirectory(tempPath, new ExtractionOptions()
+                    {
+                        ExtractFullPath = true,
+                        Overwrite = true
+                    });
+                }
+                archive.CompressedBytesRead -= ArchiveFileOnExtracting;
 
             }
 
             tempFiles.AddRange(files);
         }
 
-        //private void ExtractFileCallback(ExtractFileCallbackArgs extractfilecallbackargs)
-        //{
-        //    extractfilecallbackargs.CancelExtraction
-        //}
 
-        private void ArchiveFileOnExtracting(object sender, SevenZip.ProgressEventArgs e)
+        private void ArchiveFileOnExtracting(object sender, CompressedBytesReadEventArgs e)
         {
-            _notifier.Notify(PopstationEventEnum.DecompressProgress, e.PercentDone);
+            var percentage = ((double)e.CompressedBytesRead / (double)_currentFileDecompressedSize) * 100;
+            _notifier.Notify(PopstationEventEnum.DecompressProgress, (int)percentage);
         }
-#endif
 
 
         static string GetPBPGameId(string srcPbp)
