@@ -44,7 +44,7 @@ namespace Popstation
             options.CheckIfFileExists = !_eventHandler.OverwriteIfExists && options.CheckIfFileExists;
 
             tempFiles.Clear();
-            
+
             try
             {
                 var originalFile = file;
@@ -312,7 +312,7 @@ namespace Popstation
             }
         }
 
-          void Unpack(string file, string tempPath, CancellationToken cancellationToken)
+        void Unpack(string file, string tempPath, CancellationToken cancellationToken)
         {
             List<string> files;
 
@@ -451,7 +451,7 @@ namespace Popstation
 
             for (var i = 0; i < srcIsos.Length; i++)
             {
-                gameId = GameDB.FindGameId(srcIso);
+                gameId = GameDB.FindGameId(srcIsos[i]);
                 game = GetGameEntry(gameId, srcIsos[i]);
 
                 options.DiscInfos.Add(new DiscInfo()
@@ -478,7 +478,7 @@ namespace Popstation
             return popstation.Convert(options, cancellationToken);
         }
 
-      
+
         private void SetResources(ProcessOptions processOptions, ConvertOptions options, GameEntry entry)
         {
             var appPath = ApplicationInfo.AppPath;
@@ -545,7 +545,7 @@ namespace Popstation
             var appPath = ApplicationInfo.AppPath;
             var gameId = GameDB.FindGameId(srcIso);
             var game = GetGameEntry(gameId, srcIso, false);
-            
+
             var options = new ConvertOptions()
             {
                 DiscInfos = new List<DiscInfo>()
@@ -598,7 +598,7 @@ namespace Popstation
         }
 
         public bool RepackPBP(
-            string originalFile, 
+            string originalFile,
             string srcPbp,
             ProcessOptions processOptions,
             CancellationToken cancellationToken)
@@ -636,7 +636,7 @@ namespace Popstation
                 SkipIfFileExists = processOptions.SkipIfFileExists,
                 FileNameFormat = processOptions.FileNameFormat,
             };
-            
+
             if (processOptions.GenerateResourceFolders)
             {
                 GenerateResourceFolders(processOptions, options, game);
