@@ -33,13 +33,13 @@ namespace Popstation
                     var region = options.MainGameRegion;
 
                     var outputFilename = GetFilename(options.FileNameFormat,
-                        options.OriginalFilename,
-                        code,
-                        code,
-                        title,
-                        title,
-                        region
-                        );
+                            options.OriginalFilename,
+                            code,
+                            code,
+                            title,
+                            title,
+                            region
+                            );
 
                     var outputPath = Path.Combine(directory, $"{outputFilename}{ext}");
 
