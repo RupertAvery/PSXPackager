@@ -68,7 +68,7 @@ namespace Popstation
                 writer.Write(outputStream, cancellationToken);
             }
 
-            return cancellationToken.IsCancellationRequested == false;
+            return !cancellationToken.IsCancellationRequested;
         }
 
     }

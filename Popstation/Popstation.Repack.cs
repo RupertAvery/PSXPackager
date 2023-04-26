@@ -59,7 +59,7 @@ namespace Popstation
                     Directory.Delete(path, true);
                 }
 
-                return cancellationToken.IsCancellationRequested == false;
+                return !cancellationToken.IsCancellationRequested;
 
             }
         }
