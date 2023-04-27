@@ -40,7 +40,7 @@ namespace Popstation
             var region = convertInfo.MainGameRegion;
 
             var originalFilename = convertInfo.OriginalFilename;
-            if (Directory.Exists(convertInfo.OriginalPath)) 
+            if (Directory.Exists(convertInfo.OriginalPath))
             {
                 originalFilename += ".dir";
             }
@@ -68,7 +68,7 @@ namespace Popstation
                 writer.Write(outputStream, cancellationToken);
             }
 
-            return cancellationToken.IsCancellationRequested;
+            return !cancellationToken.IsCancellationRequested;
         }
 
     }
