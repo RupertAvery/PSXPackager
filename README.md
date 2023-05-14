@@ -304,7 +304,7 @@ psxpackager -i "Final Fantasy VII (Disc-1).cue" --generate --resource-path %GAME
 For example, processing `Final Fantasy VIII - Disc 1.iso` with the following format:
 
 ```
-[%GAMEID%] %TITLE (%REGION)
+[%GAMEID%] %TITLE% (%REGION%)
 ```
 
 will generate the filename
