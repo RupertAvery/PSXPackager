@@ -134,6 +134,8 @@ namespace PSXPackager
                     break;
 
                 case PopstationEventEnum.ConvertComplete:
+                    break;
+
                 case PopstationEventEnum.ExtractComplete:
                 case PopstationEventEnum.DiscComplete:
                 case PopstationEventEnum.DecompressComplete:

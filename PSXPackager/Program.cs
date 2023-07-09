@@ -12,6 +12,14 @@ using PSXPackager.Common;
 
 namespace PSXPackager
 {
+    public static class Results
+    {
+        public const int OK = 0;
+        public const int INVALID_INPUT = -1;
+        public const int CANCELLED = -2;
+        public const int ERROR = -3;
+    }
+
     class Program
     {
         private static CancellationTokenSource _cancellationTokenSource;
@@ -26,8 +34,10 @@ namespace PSXPackager
             args.Cancel = true;
         }
 
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
+            var result = 0;
+
             _cancellationTokenSource = new CancellationTokenSource();
 
             Console.CancelKeyPress += CancelEventHandler;
@@ -164,8 +174,10 @@ namespace PSXPackager
                          ResourceRoot = o.ResourceRoot,
                      };
 
-                     ProcessFiles(options);
+                     result = ProcessFiles(options);
                  });
+
+            return result;
         }
 
         private static IEnumerable<string> GetFilesFromDirectory(string path, string filterExpression, bool recursive)
@@ -229,8 +241,10 @@ namespace PSXPackager
             return (File.GetAttributes(path) & FileAttributes.Directory) == FileAttributes.Directory;
         }
 
-        private static void ProcessFiles(ProcessOptions options)
+        private static int ProcessFiles(ProcessOptions options)
         {
+            var result = 0;
+
             var eventHandler = new EventHandler();
             var notifier = new AggregateNotifier();
 
@@ -252,6 +266,7 @@ namespace PSXPackager
             if (options.Files.Count == 0)
             {
                 notifier.Notify(PopstationEventEnum.Error, "No files matched!");
+                result = Results.ERROR;
             }
             else if (options.Files.Count > 1)
             {
@@ -273,16 +288,17 @@ namespace PSXPackager
                         notifier.Notify(PopstationEventEnum.Info, $"Processing {i} of {options.Files.Count}");
                         notifier.Notify(PopstationEventEnum.FileName, $"Processing {file}");
 
-                        var result = processing.ProcessFile(file,
+                        var processResult = processing.ProcessFile(file,
                             options,
                             _cancellationTokenSource.Token);
 
                         if (_cancellationTokenSource.Token.IsCancellationRequested || eventHandler.Cancelled)
                         {
+                            result = Results.CANCELLED;
                             break;
                         }
 
-                        processed += result ? 1 : 0;
+                        processed += processResult ? 1 : 0;
 
                         i++;
                     }
@@ -301,16 +317,19 @@ namespace PSXPackager
                 if (!File.Exists(file))
                 {
                     notifier.Notify(PopstationEventEnum.Error, $"Could not find file '{file}'");
-                    return;
+                    return Results.INVALID_INPUT;
                 }
 
                 notifier.Notify(PopstationEventEnum.FileName, $"Processing {file}");
 
-                processing.ProcessFile(file, options, _cancellationTokenSource.Token);
+                var processResult = processing.ProcessFile(file, options, _cancellationTokenSource.Token);
+
+                result = processResult ? 0 : (_cancellationTokenSource.Token.IsCancellationRequested ? Results.CANCELLED : Results.ERROR);
             }
 
             notifier.Notify(PopstationEventEnum.ProcessingComplete, null);
 
+            return result;
         }
 
 

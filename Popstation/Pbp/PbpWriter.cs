@@ -35,81 +35,74 @@ namespace Popstation.Pbp
 
         public void Write(Stream outputStream, CancellationToken cancellationToken)
         {
-            try
+            EnsureRequiredResourcesExist();
+
+            ProcessTOCs();
+
+            var sfo = BuildSFO();
+
+            var header = BuildHeader(sfo);
+
+            var psarOffset = header[9];
+
+            outputStream.Write(header, 0, 0x28);
+
+            Notify?.Invoke(PopstationEventEnum.WriteSfo, null);
+            outputStream.WriteSFO(sfo);
+
+            Notify?.Invoke(PopstationEventEnum.WriteIcon0Png, null);
+            convertInfo.Icon0.Write(outputStream);
+
+            if (convertInfo.Icon1.Exists)
             {
-                EnsureRequiredResourcesExist();
-
-                ProcessTOCs();
-
-                var sfo = BuildSFO();
-
-                var header = BuildHeader(sfo);
-
-                var psarOffset = header[9];
-
-                outputStream.Write(header, 0, 0x28);
-
-                Notify?.Invoke(PopstationEventEnum.WriteSfo, null);
-                outputStream.WriteSFO(sfo);
-
-                Notify?.Invoke(PopstationEventEnum.WriteIcon0Png, null);
-                convertInfo.Icon0.Write(outputStream);
-
-                if (convertInfo.Icon1.Exists)
-                {
-                    Notify?.Invoke(PopstationEventEnum.WriteIcon1Pmf, null);
-                    convertInfo.Icon1.Write(outputStream);
-                }
-
-                Notify?.Invoke(PopstationEventEnum.WritePic0Png, null);
-                convertInfo.Pic0.Write(outputStream);
-
-                Notify?.Invoke(PopstationEventEnum.WritePic1Png, null);
-                convertInfo.Pic1.Write(outputStream);
-
-                if (convertInfo.Snd0.Exists)
-                {
-                    Notify?.Invoke(PopstationEventEnum.WriteSnd0At3, null);
-                    convertInfo.Snd0.Write(outputStream);
-                }
-
-                Notify?.Invoke(PopstationEventEnum.WriteDataPsp, null);
-                convertInfo.DataPsp.Write(outputStream);
-
-                var offset = (uint)outputStream.Position;
-
-                // fill with NULL
-                for (var i = 0; i < psarOffset - offset; i++)
-                {
-                    outputStream.WriteByte(0);
-                }
-
-                uint totSize = 0;
-
-                foreach (var disc in convertInfo.DiscInfos)
-                {
-                    if (File.Exists(disc.SourceIso))
-                    {
-                        var t = new FileInfo(disc.SourceIso);
-                        var isosize = (uint)t.Length;
-                        disc.IsoSize = isosize;
-                        totSize += isosize;
-                    }
-                }
-
-                WritePSAR(outputStream, psarOffset, cancellationToken);
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    return;
-                }
-
-                WriteSTARTDAT(outputStream);
+                Notify?.Invoke(PopstationEventEnum.WriteIcon1Pmf, null);
+                convertInfo.Icon1.Write(outputStream);
             }
-            catch (Exception e)
+
+            Notify?.Invoke(PopstationEventEnum.WritePic0Png, null);
+            convertInfo.Pic0.Write(outputStream);
+
+            Notify?.Invoke(PopstationEventEnum.WritePic1Png, null);
+            convertInfo.Pic1.Write(outputStream);
+
+            if (convertInfo.Snd0.Exists)
             {
-                Notify?.Invoke(PopstationEventEnum.Error, e.Message);
+                Notify?.Invoke(PopstationEventEnum.WriteSnd0At3, null);
+                convertInfo.Snd0.Write(outputStream);
             }
+
+            Notify?.Invoke(PopstationEventEnum.WriteDataPsp, null);
+            convertInfo.DataPsp.Write(outputStream);
+
+            var offset = (uint)outputStream.Position;
+
+            // fill with NULL
+            for (var i = 0; i < psarOffset - offset; i++)
+            {
+                outputStream.WriteByte(0);
+            }
+
+            uint totSize = 0;
+
+            foreach (var disc in convertInfo.DiscInfos)
+            {
+                if (File.Exists(disc.SourceIso))
+                {
+                    var t = new FileInfo(disc.SourceIso);
+                    var isosize = (uint)t.Length;
+                    disc.IsoSize = isosize;
+                    totSize += isosize;
+                }
+            }
+
+            WritePSAR(outputStream, psarOffset, cancellationToken);
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
+            WriteSTARTDAT(outputStream);
         }
 
         public abstract void WritePSAR(Stream outputStream, uint psarOffset, CancellationToken cancellationToken);

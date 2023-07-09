@@ -170,6 +170,8 @@ namespace Popstation
                     return false;
                 }
 
+                _notifier?.Notify(PopstationEventEnum.ConvertComplete, null);
+
             }
             catch (CancellationException ex)
             {
@@ -189,7 +191,6 @@ namespace Popstation
             }
             finally
             {
-                _notifier?.Notify(PopstationEventEnum.ConvertComplete, null);
                 if (tempFiles != null)
                 {
                     foreach (var tempFile in tempFiles)
@@ -507,7 +508,7 @@ namespace Popstation
                     resourcePath = Path.Combine(defaultPath, $"{type}.{ext}");
                 }
 
-                return new Resource(type, resourcePath);
+                return new Resource(type, GetActualFileName(resourcePath));
             }
 
             options.Icon0 = GetResourceOrDefault(ResourceType.ICON0, "png");
@@ -515,6 +516,44 @@ namespace Popstation
             options.Pic0 = GetResourceOrDefault(ResourceType.PIC0, "png");
             options.Pic1 = GetResourceOrDefault(ResourceType.PIC1, "png");
             options.Snd0 = GetResourceOrDefault(ResourceType.SND0, "at3");
+        }
+
+        /// <summary>
+        /// For case-sensitve file systems, this will return the actual filename of a path
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        /// <exception cref="FileNotFoundException"></exception>
+        private static string GetActualFileName(string path)
+        {
+            var directory = Path.GetDirectoryName(path);
+            var pattern = Path.GetFileName(path);
+            string resultFileName;
+
+            // Enumerate all files in the directory, using the file name as a pattern
+            // This will list all case variants of the filename even on file systems that
+            // are case sensitive
+            var foundFiles = Directory.EnumerateFiles(directory, pattern).ToList();
+
+            if (foundFiles.Any())
+            {
+                if (foundFiles.Count() > 1)
+                {
+                    // More than two files with the same name but different case spelling found
+                    throw new Exception("Ambiguous File reference for " + path);
+                }
+                else
+                {
+                    resultFileName = foundFiles.First();
+                }
+            }
+            else
+            {
+                resultFileName = path;
+            }
+
+            return resultFileName;
         }
 
         private void GenerateResourceFolders(ProcessOptions processOptions, ConvertOptions options, GameEntry entry)

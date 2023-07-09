@@ -355,21 +355,34 @@ namespace PSXPackagerGUI.Pages
 
                 Task.Run(() =>
                 {
-                    Model.IsBusy = true;
 
-                    using (var stream = new FileStream(filename, FileMode.OpenOrCreate, FileAccess.Write))
+                    try
                     {
-                        writer.Write(stream, _cancellationTokenSource.Token);
+                        Model.IsBusy = true;
+
+                        using (var stream = new FileStream(filename, FileMode.OpenOrCreate, FileAccess.Write))
+                        {
+                            writer.Write(stream, _cancellationTokenSource.Token);
+                        }
+
+                        Dispatcher.Invoke(() =>
+                        {
+                            MessageBox.Show(Window, $"EBOOT has been saved to \"{filename}\"",
+                                "PSXPackager",
+                                MessageBoxButton.OK, MessageBoxImage.Information);
+                        });
+                        
+                        Model.IsBusy = false;
                     }
-                    
-                    Dispatcher.Invoke(() =>
+                    catch (Exception e)
                     {
-                        MessageBox.Show(Window, $"EBOOT has been saved to \"{filename}\"",
-                            "PSXPackager",
-                            MessageBoxButton.OK, MessageBoxImage.Information);
-                    });
-
-                    Model.IsBusy = false;
+                        Dispatcher.Invoke(() =>
+                        {
+                            MessageBox.Show(Window, e.Message,
+                                "PSXPackager",
+                                MessageBoxButton.OK, MessageBoxImage.Error);
+                        });
+                    }
                 });
             }
         }

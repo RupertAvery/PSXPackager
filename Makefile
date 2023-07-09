@@ -31,10 +31,12 @@ build-osx:
 
 build-gui-win-x64:
 	dotnet publish ./PSXPackagerGUI/PSXPackagerGUI.csproj -c Release -r win-x64 -o ./build/PsxPackagerGUI $(SELF_CONTAINED_PROPERTIES) $(WINDOWS_PROPERTIES)
+	cp ./Popstation.Database/Resources/gameInfo.db ./build/PsxPackagerGUI/Resources/gameInfo.db
 
 build-win-x64:
 	$(eval RID := $(subst build-,,$(@)))
 	dotnet publish ./PSXPackager/PSXPackager-windows.csproj -c Release -r ${RID} -o ./build/${RID} $(SELF_CONTAINED_PROPERTIES) $(WINDOWS_PROPERTIES)
+	cp ./Popstation.Database/Resources/gameInfo.db ./build/${RID}/Resources/gameInfo.db
 	cp README.md ./build/${RID}
 
 build-linux-x64 build-linux-arm build-linux-arm64 build-osx-x64 build-osx-arm64:
