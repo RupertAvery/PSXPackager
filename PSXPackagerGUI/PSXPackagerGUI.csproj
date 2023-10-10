@@ -10,6 +10,7 @@
 		<SelfContained>false</SelfContained>
 		<PublishSingleFile>true</PublishSingleFile>
 		<PublishReadyToRun>false</PublishReadyToRun>
+		<EnableWindowsTargeting>true</EnableWindowsTargeting>
 	</PropertyGroup>
 
 	<ItemGroup>
