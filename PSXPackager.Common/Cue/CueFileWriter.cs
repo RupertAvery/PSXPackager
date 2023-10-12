@@ -7,7 +7,7 @@ namespace PSXPackager.Common.Cue
 
         public static void Write(CueFile cueFile, string file)
         {
-            using (var stream = new FileStream(file, FileMode.Create))
+            using (var stream = new FileStream(file, FileMode.Create, FileAccess.Write))
             {
                 using (var writer = new StreamWriter(stream))
                 {

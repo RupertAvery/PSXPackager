@@ -110,6 +110,7 @@ namespace Popstation
                         if (FileExtensionHelper.IsCue(file))
                         {
                             var (outfile, srcToc) = ProcessCue(file, options.TempPath);
+
                             result = ConvertIso(originalFile, outfile, srcToc, options, cancellationToken);
                         }
                         else if (FileExtensionHelper.IsM3u(file))
@@ -255,7 +256,7 @@ namespace Popstation
 
             mergedBin.CueFile.FileEntries.Add(mcueFile);
 
-            using (var joinedFile = new FileStream(mergedBin.Path, FileMode.Create))
+            using (var joinedFile = new FileStream(mergedBin.Path, FileMode.Create, FileAccess.Write))
             {
                 foreach (var cueFileEntry in cueFilex.FileEntries)
                 {
@@ -265,7 +266,7 @@ namespace Popstation
                         binPath = Path.Combine(cueFilePath, cueFileEntry.FileName);
                     }
 
-                    using (var srcStream = new FileStream(binPath, FileMode.Open))
+                    using (var srcStream = new FileStream(binPath, FileMode.Open, FileAccess.Read))
                     {
                         srcStream.CopyTo(joinedFile);
 
@@ -448,6 +449,7 @@ namespace Popstation
                 GenerateResourceFolders(processOptions, options, game);
                 return true;
             }
+
             SetResources(processOptions, options, game);
 
             for (var i = 0; i < srcIsos.Length; i++)
@@ -534,11 +536,11 @@ namespace Popstation
             // Enumerate all files in the directory, using the file name as a pattern
             // This will list all case variants of the filename even on file systems that
             // are case sensitive
-            var foundFiles = Directory.EnumerateFiles(directory, pattern).ToList();
+            var foundFiles = Directory.EnumerateFiles(directory, pattern, new EnumerationOptions() { MatchCasing = MatchCasing.CaseInsensitive }).ToList();
 
             if (foundFiles.Any())
             {
-                if (foundFiles.Count() > 1)
+                if (foundFiles.Count > 1)
                 {
                     // More than two files with the same name but different case spelling found
                     throw new Exception("Ambiguous File reference for " + path);

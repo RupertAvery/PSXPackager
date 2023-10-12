@@ -15,9 +15,9 @@ namespace PSXPackager
     public static class Results
     {
         public const int OK = 0;
-        public const int INVALID_INPUT = -1;
-        public const int CANCELLED = -2;
-        public const int ERROR = -3;
+        public const int ERROR = 1;
+        public const int CANCELLED = 2;
+        public const int INVALID_INPUT = 3;
     }
 
     class Program

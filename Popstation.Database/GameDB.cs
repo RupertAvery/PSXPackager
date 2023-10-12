@@ -40,7 +40,7 @@ namespace Popstation.Database
             var regex = new Regex("(SCUS|SLUS|SLES|SCES|SCED|SLPS|SLPM|SCPS|SLED|SLPS|SIPS|ESPM|PBPX)[_-](\\d{3})\\.(\\d{2})", RegexOptions.IgnoreCase);
             var bootRegex = new Regex("BOOT\\s*=\\s*cdrom:\\\\?(?:.*?\\\\)?(.*?);1");
 
-            using (var stream = new FileStream(srcIso, FileMode.Open))
+            using (var stream = new FileStream(srcIso, FileMode.Open, FileAccess.Read))
             {
                 var cdReader = new CDReader(stream, false, 2352);
 
