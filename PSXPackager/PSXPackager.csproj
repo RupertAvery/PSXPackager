@@ -9,7 +9,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="CommandLineParser" Version="2.9.1" />
-		<PackageReference Include="SharpCompress" Version="0.33.0" />
+		<PackageReference Include="SharpCompress" Version="0.34.1" />
 		<PackageReference Include="System.ValueTuple" Version="4.5.0" />
 	</ItemGroup>
 
