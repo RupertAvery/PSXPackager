@@ -7,9 +7,9 @@ all:
 	$(MAKE) clean
 	$(MAKE) build
 
-.PHONY: build-win build-linux build-osx
+.PHONY: build-linux build-osx
 build:
-	$(MAKE) build-win
+	# $(MAKE) build-win
 	$(MAKE) build-linux
 	$(MAKE) build-osx
 
@@ -35,18 +35,19 @@ build-gui-win-x64:
 
 build-win-x64:
 	$(eval RID := $(subst build-,,$(@)))
-	dotnet publish ./PSXPackager/PSXPackager-windows.csproj -c Release -r ${RID} -o ./build/${RID} $(SELF_CONTAINED_PROPERTIES) $(WINDOWS_PROPERTIES)
-	cp ./Popstation.Database/Resources/gameInfo.db ./build/${RID}/Resources/gameInfo.db
-	cp README.md ./build/${RID}
+	dotnet publish ./PSXPackager/PSXPackager-windows.csproj -c Release -r ${RID} -o ./build/psxpackager-${RID} $(SELF_CONTAINED_PROPERTIES) $(WINDOWS_PROPERTIES)
+	cp ./Popstation.Database/Resources/gameInfo.db ./build/psxpackager-${RID}/Resources/gameInfo.db
+	cp README.md ./build/psxpackager-${RID}
 
 build-linux-x64 build-linux-arm build-linux-arm64 build-osx-x64 build-osx-arm64:
 	$(eval RID := $(subst build-,,$(@)))
-	dotnet publish ./PSXPackager/PSXPackager-linux.csproj   -c Release -r ${RID} -o ./build/${RID} $(SELF_CONTAINED_PROPERTIES)
-	cp README.md ./build/${RID}
+	dotnet publish ./PSXPackager/PSXPackager-linux.csproj   -c Release -r ${RID} -o ./build/psxpackager-${RID} $(SELF_CONTAINED_PROPERTIES)
+	cp ./Popstation.Database/Resources/gameInfo.db ./build/psxpackager-${RID}/Resources/gameInfo.db
+	cp README.md ./build/psxpackager-${RID}
 
 .PHONY: clean-win clean-linux clean-osx
 clean:
-	$(MAKE) clean-win
+	# $(MAKE) clean-win
 	$(MAKE) clean-linux
 	$(MAKE) clean-osx
 

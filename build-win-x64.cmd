@@ -1,3 +1,4 @@
-del /s /q .\build\linux-x64
-dotnet publish .\PSXPackager\PSXPackager-windows.csproj -c Release -r win-x64 -o .\build\win-x64 /p:DebugType=None /p:DebugSymbols=false
-copy README.md .\build\win-x64
+SET BUILD_PATH=.\build\psxpackager-win-x64
+dotnet publish .\PSXPackager\PSXPackager-windows.csproj -c Release -r win-x64 -o %BUILD_PATH% /p:DebugType=None /p:DebugSymbols=false
+cp .\Popstation.Database\Resources\gameInfo.db %BUILD_PATH%\Resources\gameInfo.db
+cp README.md %BUILD_PATH%
