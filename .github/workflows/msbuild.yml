@@ -31,5 +31,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: psxpackager-win-x64
-          path: build\win-x64\**
+          path: build\psxpackager-win-x64\**
 
