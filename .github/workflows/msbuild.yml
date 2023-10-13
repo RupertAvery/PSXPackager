@@ -16,6 +16,9 @@ jobs:
         with:
           msbuild-architecture: x64
 
+      - name: Install unzip
+        run: choco install -y unzip
+
       - name: Test
         run: make test
 
