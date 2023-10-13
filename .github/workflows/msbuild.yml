@@ -16,12 +16,14 @@ jobs:
         with:
           msbuild-architecture: x64
 
+      - name: Install unzip
+        run: choco install -y zip
+
       - name: Test
         run: make test
 
       - name: Publish
-        # run: .\build-all.cmd
-        run: make
+        run: .\build-all.cmd
 
       - name: Upload PsxPackagerGUI Artifact
         uses: actions/upload-artifact@v3
@@ -32,5 +34,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: psxpackager-win-x64
-          path: build\win-x64\**
+          path: build\psxpackager-win-x64\**
 
