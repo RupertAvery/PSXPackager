@@ -20,8 +20,7 @@ jobs:
         run: make test
 
       - name: Publish
-        # run: .\build-all.cmd
-        run: make
+        run: .\build-all.cmd
 
       - name: Upload PsxPackagerGUI Artifact
         uses: actions/upload-artifact@v3
