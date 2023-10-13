@@ -25,7 +25,6 @@ jobs:
       - name: Tar linux-x64 files
         run: |
           cd build
-          mv {,psxpackager-}linux-x64
           tar cvf psxpackager-linux-x64{.tar,}
       - name: Upload linux-x64 Tar
         uses: actions/upload-artifact@v3
@@ -35,7 +34,6 @@ jobs:
       - name: Tar linux-arm files
         run: |
           cd build
-          mv {,psxpackager-}linux-arm
           tar cvf psxpackager-linux-arm{.tar,}
       - name: Upload linux-arm Tar
         uses: actions/upload-artifact@v3
@@ -45,7 +43,6 @@ jobs:
       - name: Tar linux-arm64 files
         run: |
           cd build
-          mv {,psxpackager-}linux-arm64
           tar cvf psxpackager-linux-arm64{.tar,}
       - name: Upload linux-arm64 Tar
         uses: actions/upload-artifact@v3
@@ -55,7 +52,6 @@ jobs:
       - name: Tar osx-x64 files
         run : |
           cd build
-          mv {,psxpackager-}osx-x64
           tar cvf psxpackager-osx-x64{.tar,}
       - name: Upload osx-x64 Tar
         uses: actions/upload-artifact@v3
@@ -65,7 +61,6 @@ jobs:
       - name: Tar osx-arm64 files
         run : |
           cd build
-          mv {,psxpackager-}osx-arm64
           tar cvf psxpackager-osx-arm64{.tar,}
       - name: Upload osx-arm64 Tar
         uses: actions/upload-artifact@v3
