@@ -72,6 +72,7 @@ namespace PSXPackagerGUI.Models
         }
 
         public string SourceUrl { get; set; }
+        public string SourceTOC { get; set; }
 
         public static Disc EmptyDisc(int index)
         {

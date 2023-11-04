@@ -79,6 +79,8 @@ namespace PSXPackagerGUI.Pages
 
             DataContext = Model;
 
+            ResetModel();
+
             //Closing += OnClosing;
         }
 
@@ -199,9 +201,6 @@ namespace PSXPackagerGUI.Pages
         {
             var game = _gameDb.GetEntryByScannerID(disc.GameID);
 
-            var cueFilename = Path.GetFileNameWithoutExtension(disc.SourceUrl) + ".cue";
-            var dirPath = Path.GetDirectoryName(disc.SourceUrl);
-            var cuePath = Path.Combine(dirPath, cueFilename);
 
             return new DiscInfo()
             {
@@ -211,7 +210,7 @@ namespace PSXPackagerGUI.Pages
                 Region = game.Format,
                 MainGameID = game.SaveFolderName,
                 SourceIso = disc.SourceUrl,
-                SourceToc = cuePath,
+                SourceToc = disc.SourceTOC,
             };
         }
 
@@ -291,16 +290,20 @@ namespace PSXPackagerGUI.Pages
             {
                 var ebootPath = Path.Combine(gameId, "EBOOT.PBP");
 
-                MessageBox.Show(Window, $"Select the folder to generate {ebootPath}", "Save for PSP",
+                MessageBox.Show(Window, $"Select the folder to save {ebootPath}", "Save for PSP",
                     MessageBoxButton.OK, MessageBoxImage.Information);
 
                 var selectFolderDialog = new Ookii.Dialogs.Wpf.VistaFolderBrowserDialog();
+                
                 selectFolderDialog.ShowDialog();
+                
                 filename = Path.Combine(selectFolderDialog.SelectedPath, ebootPath);
+
                 if (File.Exists(filename))
                 {
                     var result = MessageBox.Show(Window, $"The file {filename} exists! Overwrite?", "Save for PSP", MessageBoxButton.YesNo, MessageBoxImage.Warning,
                         MessageBoxResult.No);
+
                     if (result == MessageBoxResult.No)
                     {
                         return;
@@ -348,7 +351,7 @@ namespace PSXPackagerGUI.Pages
 
                 PbpWriter writer;
                 writer = discs.Count > 1
-                    ? (PbpWriter)new MultiDiscPbpWriter(options)
+                    ? new MultiDiscPbpWriter(options)
                     : new SingleDiscPbpWriter(options);
 
                 writer.Notify += Notify;
@@ -371,7 +374,7 @@ namespace PSXPackagerGUI.Pages
                                 "PSXPackager",
                                 MessageBoxButton.OK, MessageBoxImage.Information);
                         });
-                        
+
                         Model.IsBusy = false;
                     }
                     catch (Exception e)
@@ -603,17 +606,46 @@ namespace PSXPackagerGUI.Pages
         private void LoadISO_OnClick(object sender, RoutedEventArgs e)
         {
             var disc = ((MenuItem)sender).DataContext as Disc;
+
             var saveFileDialog = new Ookii.Dialogs.Wpf.VistaOpenFileDialog();
-            saveFileDialog.Filter = "Supported files|*.bin;*.iso;*.img|All files|*.*";
-            saveFileDialog.ShowDialog();
+            saveFileDialog.Filter = "Supported files|*.bin;*.cue;*.iso;*.img|All files|*.*";
+            var dlgResult = saveFileDialog.ShowDialog();
 
-            if (!string.IsNullOrEmpty(saveFileDialog.FileName))
+            if (dlgResult.GetValueOrDefault(false))
             {
-                var gameId = GameDB.FindGameId(saveFileDialog.FileName);
-                var game = _gameDb.GetEntryByScannerID(gameId);
-                var fileInfo = new FileInfo(saveFileDialog.FileName);
+                // clear the old TOC
+                disc.SourceTOC = null;
 
-                disc.SourceUrl = saveFileDialog.FileName;
+                var imagePath = saveFileDialog.FileName;
+
+                if (Path.GetExtension(saveFileDialog.FileName).Equals(".cue", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    var sheet = CueFileReader.Read(saveFileDialog.FileName);
+                    var firstEntry = sheet.FileEntries.First();
+                    var fileDirectory = Path.GetDirectoryName(saveFileDialog.FileName);
+                    imagePath = Path.Combine(fileDirectory, firstEntry.FileName);
+                    disc.SourceTOC = saveFileDialog.FileName;
+                }
+                else
+                {
+                    var cueFilename = Path.GetFileNameWithoutExtension(imagePath) + ".cue";
+                    var dirPath = Path.GetDirectoryName(imagePath);
+                    var cuePath = Path.Combine(dirPath, cueFilename);
+                    if (File.Exists(cuePath))
+                    {
+                        var result = MessageBox.Show("A CUE file was found for the selected image, do you want to use it?", "Load ISO", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                        if (result == MessageBoxResult.Yes)
+                        {
+                            disc.SourceTOC = Path.Combine(dirPath, cueFilename);
+                        }
+                    }
+                }
+
+                var gameId = GameDB.FindGameId(imagePath);
+                var game = _gameDb.GetEntryByScannerID(gameId);
+                var fileInfo = new FileInfo(imagePath);
+
+                disc.SourceUrl = imagePath;
                 disc.Size = (uint)fileInfo.Length;
                 disc.GameID = gameId;
                 disc.Title = game.GameName;

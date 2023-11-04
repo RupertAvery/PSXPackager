@@ -19,6 +19,14 @@ namespace PSXPackagerGUI.Models
 
         public SingleModel()
         {
+            Discs = new List<Disc>()
+            {
+                new Disc()
+                {
+                    Title = "Final Fantasy VII",
+                    Size = 123456789
+                }
+            };
         }
         
         public Disc SelectedDisc { get => _selectedDisc; set => SetProperty(ref _selectedDisc, value); }
