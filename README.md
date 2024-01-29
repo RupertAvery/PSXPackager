@@ -1,12 +1,27 @@
 ﻿# PSXPackager
 
-PSXPackager is a port of the `popstation-md` C source to C#.
+PSXPackager is tool for converting PlayStation 1 Disc images to the EBOOT.PBP format and back.
+
+EBOOT.PBP is a Sony Playstation file format for PS1 Classics on the PSP and PS3 Playstation emulators. The format is also supported by PS1 emulators such as ePSXe, PCSX, Beetle PSX (Mednafen/RetroArch) and DuckStation.
 
 There is a command-line executable (Windows/Linux/OSX) and a Windows-only GUI available.
 
 The GUI allows you to select and process several images in a queue (Batch mode).
 
 Feel free to take the Popstation library and use it as you like.
+
+The Popstation library was ported from the `popstation-md` C source code to C#.
+
+Looking for the Windows-only GUI README? See [PSXPackagerGUI](PSXPackagerGUI/README.md)
+
+# Download
+
+* [Latest Release](https://github.com/RupertAvery/PSXPackager/releases)
+
+Not sure what to download?
+
+* command line tool - psxpackager-win-x64.zip
+* Windows GUI - PsxPackagerGUI.zip
 
 # Features
 
@@ -21,11 +36,13 @@ Feel free to take the Popstation library and use it as you like.
 * Windows/Linux/OSX CLI
 * GUI with PSX2PSP-like interface and batch processing
 
+# Requirements
+
+PSXPackager requires the [.NET 6.0 Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/6.0).
+
 # Usage
 
-PSXPackager requires .NET 6.0 Runtime or above.
-
-The basic usage of PSXPackager accepts the file or path to convert.
+The basic usage of PSXPackager accepts a file or path to convert.
 
 ```
 psxpackager -i <input_path_or_file> [-o <output_path_or_file>]
@@ -138,9 +155,13 @@ See [Formatting](#formatting) for more info.
 
 ## Merging Multi-Track Games
 
-Some games such as Tomb Raider use audio tracks as background music. These are usually extracted by disc rippers as separate .bin files.  They usually come with a .cue file that lists the .bins in order and specifies how long each track is.
+Some games such as Tomb Raider have additional digital audio tracks on the CD, for use as background music.
 
-PSXPackager will automatically merge multi-bin discs before converting to PBP as long as you pass in the .cue file (not the first .bin file). Previously you would need to use CDMage or some other tool to merge multi-bins.
+These audio tracks are usually extracted by disc rippers as separate `.BIN` files. They usually are named `<Game Name> - Track nn.bin` or similar, where `nn` is a 2-digit number. They usually come with a `.CUE` file which is an index for all the related `.BIN` files.
+
+Usually you would need to use CDMage or some other tool to merge multi-track discs.
+
+With PSXPackager, all you need to do is pass in the `.CUE` file as the input file and it will automatically merge multi-track discs before converting to PBP as long as  
 
 The resulting PBP file will contain the audio tracks as disc tracks and you will be able to play your game on your PSP or emulator with music.
 
@@ -316,13 +337,19 @@ will generate the filename
 Note that when extracting from a multi-disc PBP PSXPackager will append the disc number to the file format.
 
 
-# Multi-track .CUE files (Audio tracks)
+# FAQ
 
-If the input or compressed file has a `.cue` with multiple tracks, PSXPackager will merge the `.bins` into a single file in a temporary folder.
+### Does PSXPackager support audio tracks? 
 
-A new CUE sheet will also be created with all tracks under the merged `.bin`, and index positions will be updated.
+Yes, but only as the original audio (no compression).
 
-This merged `.cue` file will be used to create a TOC (Table of Contents) for the PBP ISO. This allows audio tracks to be correctly read from the PBP.
+### How can I convert a game with audio tracks into a PBP? 
+
+If you have a `.CUE` file with multiple `.BIN` files, pass the `.CUE` file as the input file and PSXPackager will automatically merge the `.BIN` files into a single file in a temporary folder.
+
+A new CUE sheet will also be created with all tracks under the merged `.BIN`, and index positions will be updated.
+
+This merged `.CUE` file will be used to create a TOC (Table of Contents) for the PBP ISO. This allows audio tracks to be correctly read from the PBP.
 
 Temporary files will be deleted when conversion is complete, if the conversion is cancelled, or if an error occurs.
 
