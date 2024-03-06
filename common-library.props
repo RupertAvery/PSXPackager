@@ -3,7 +3,7 @@
   
   <!-- Package related stuff -->
   <PropertyGroup>
-    <TargetFrameworks>net6.0</TargetFrameworks>
+    <TargetFrameworks>net8.0</TargetFrameworks>
   </PropertyGroup>
     
   <!-- Assembly stuff -->
