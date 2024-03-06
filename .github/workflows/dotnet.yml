@@ -9,12 +9,12 @@ jobs:
       DOTNET_NOLOGO: true
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 6.0.x
+          dotnet-version: 8.0.x
 
       - name: Test
         run: make test
@@ -27,7 +27,7 @@ jobs:
           cd build
           tar cvf psxpackager-linux-x64{.tar,}
       - name: Upload linux-x64 Tar
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: psxpackager-linux-x64
           path: build/psxpackager-linux-x64.tar
@@ -36,7 +36,7 @@ jobs:
           cd build
           tar cvf psxpackager-linux-arm{.tar,}
       - name: Upload linux-arm Tar
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: psxpackager-linux-arm
           path: build/psxpackager-linux-arm.tar
@@ -45,7 +45,7 @@ jobs:
           cd build
           tar cvf psxpackager-linux-arm64{.tar,}
       - name: Upload linux-arm64 Tar
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: psxpackager-linux-arm64
           path: build/psxpackager-linux-arm64.tar
@@ -54,7 +54,7 @@ jobs:
           cd build
           tar cvf psxpackager-osx-x64{.tar,}
       - name: Upload osx-x64 Tar
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: psxpackager-osx-x64
           path: build/psxpackager-osx-x64.tar
@@ -63,7 +63,7 @@ jobs:
           cd build
           tar cvf psxpackager-osx-arm64{.tar,}
       - name: Upload osx-arm64 Tar
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: psxpackager-osx-arm64
           path: build/psxpackager-osx-arm64.tar
