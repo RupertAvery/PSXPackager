@@ -31,7 +31,7 @@
 	<ItemGroup>
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 		<PackageReference Include="Ookii.Dialogs.Wpf" Version="5.0.1" />
-		<PackageReference Include="SharpCompress" Version="0.34.1" />
+		<PackageReference Include="SharpCompress" Version="0.36.0" />
 	</ItemGroup>
 
 	<ItemGroup>
