@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net6.0</TargetFrameworks>
+		<TargetFrameworks>net8.0</TargetFrameworks>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -14,7 +14,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="SharpZipLib" Version="1.4.2" />
-		<PackageReference Include="SharpCompress" Version="0.34.1" />
+		<PackageReference Include="SharpCompress" Version="0.36.0" />
 	</ItemGroup>
 
 	<ItemGroup>

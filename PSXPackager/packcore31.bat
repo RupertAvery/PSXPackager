@@ -1,1 +1,0 @@
-dotnet publish -r win-x64 -f netcoreapp3.1 -p:PublishSingleFile=true --self-contained true
