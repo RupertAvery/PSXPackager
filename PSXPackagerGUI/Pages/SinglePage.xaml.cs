@@ -14,6 +14,7 @@ using Popstation.Database;
 using Popstation.Pbp;
 using PSXPackager.Common;
 using PSXPackager.Common.Cue;
+using PSXPackager.Common.Notification;
 using PSXPackagerGUI.Common;
 using PSXPackagerGUI.Controls;
 using PSXPackagerGUI.Models;
@@ -23,7 +24,7 @@ namespace PSXPackagerGUI.Pages
     /// <summary>
     /// Interaction logic for Single.xaml
     /// </summary>
-    public partial class SinglePage : Page
+    public partial class SinglePage : Page, INotifier
     {
         private CancellationTokenSource _cancellationTokenSource;
         private SingleModel _model;
@@ -358,10 +359,27 @@ namespace PSXPackagerGUI.Pages
 
                 Task.Run(() =>
                 {
+                    var processing = new Popstation.Processing(this, null, null);
+
+                    var cueFiles = options.DiscInfos.Where(d => Path.GetExtension(d.SourceIso).ToLower() == ".cue");
+
+                    foreach (var discInfo in cueFiles)
+                    {
+                        var (binfile, cuefile) = processing.ProcessCue(discInfo.SourceIso, Path.GetTempPath());
+                        discInfo.SourceIso = binfile;
+                        discInfo.SourceToc = cuefile;
+                    }
 
                     try
                     {
-                        Model.IsBusy = true;
+                        Dispatcher.Invoke(() => { Model.IsBusy = true; });
+
+                        var parentPath = Path.GetDirectoryName(filename);
+
+                        if (!Directory.Exists(filename))
+                        {
+                            Directory.CreateDirectory(parentPath);
+                        }
 
                         using (var stream = new FileStream(filename, FileMode.OpenOrCreate, FileAccess.Write))
                         {
@@ -375,7 +393,7 @@ namespace PSXPackagerGUI.Pages
                                 MessageBoxButton.OK, MessageBoxImage.Information);
                         });
 
-                        Model.IsBusy = false;
+
                     }
                     catch (Exception e)
                     {
@@ -386,6 +404,12 @@ namespace PSXPackagerGUI.Pages
                                 MessageBoxButton.OK, MessageBoxImage.Error);
                         });
                     }
+                    finally
+                    {
+                        processing.Cleanup();
+
+                        Dispatcher.Invoke(() => { Model.IsBusy = false; });
+                    }
                 });
             }
         }
@@ -393,7 +417,7 @@ namespace PSXPackagerGUI.Pages
         private string _action;
         private double _lastvalue;
 
-        private void Notify(PopstationEventEnum @event, object value)
+        public void Notify(PopstationEventEnum @event, object value)
         {
             switch (@event)
             {
@@ -618,6 +642,8 @@ namespace PSXPackagerGUI.Pages
 
                 var imagePath = saveFileDialog.FileName;
 
+                var isCue = false;
+
                 if (Path.GetExtension(saveFileDialog.FileName).Equals(".cue", StringComparison.InvariantCultureIgnoreCase))
                 {
                     var sheet = CueFileReader.Read(saveFileDialog.FileName);
@@ -625,6 +651,7 @@ namespace PSXPackagerGUI.Pages
                     var fileDirectory = Path.GetDirectoryName(saveFileDialog.FileName);
                     imagePath = Path.Combine(fileDirectory, firstEntry.FileName);
                     disc.SourceTOC = saveFileDialog.FileName;
+                    isCue = true;
                 }
                 else
                 {
@@ -637,16 +664,40 @@ namespace PSXPackagerGUI.Pages
                         if (result == MessageBoxResult.Yes)
                         {
                             disc.SourceTOC = Path.Combine(dirPath, cueFilename);
+                            isCue = true;
                         }
                     }
                 }
 
+                uint fileSize = 0;
+
+
+                if (isCue)
+                {
+                    var sourcePath = Path.GetDirectoryName(imagePath);
+
+                    var sheet = CueFileReader.Read(disc.SourceTOC);
+                    foreach (var fileEntry in sheet.FileEntries)
+                    {
+                        var binPath = Path.Combine(sourcePath, fileEntry.FileName);
+                        var fileInfo = new FileInfo(binPath);
+                        fileSize += (uint)fileInfo.Length;
+                    }
+
+                    disc.SourceUrl = saveFileDialog.FileName;
+                }
+                else
+                {
+                    var fileInfo = new FileInfo(imagePath);
+                    fileSize = (uint)fileInfo.Length;
+                    disc.SourceUrl = imagePath;
+                }
+
+
                 var gameId = GameDB.FindGameId(imagePath);
                 var game = _gameDb.GetEntryByScannerID(gameId);
-                var fileInfo = new FileInfo(imagePath);
 
-                disc.SourceUrl = imagePath;
-                disc.Size = (uint)fileInfo.Length;
+                disc.Size = fileSize;
                 disc.GameID = gameId;
                 disc.Title = game.GameName;
                 disc.IsEmpty = false;

@@ -192,17 +192,22 @@ namespace Popstation
             }
             finally
             {
-                if (tempFiles != null)
-                {
-                    foreach (var tempFile in tempFiles)
-                    {
-                        if (File.Exists(tempFile))
-                            File.Delete(tempFile);
-                    }
-                }
+                Cleanup();
             }
 
             return result;
+        }
+
+        public void Cleanup()
+        {
+            if (tempFiles != null)
+            {
+                foreach (var tempFile in tempFiles)
+                {
+                    if (File.Exists(tempFile))
+                        File.Delete(tempFile);
+                }
+            }
         }
 
         public (string, string) ProcessCue(string file, string tempPath)
