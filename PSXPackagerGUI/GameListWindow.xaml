@@ -1,0 +1,34 @@
+﻿<Window x:Class="PSXPackagerGUI.GameListWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PSXPackagerGUI"
+        xmlns:models="clr-namespace:PSXPackagerGUI.Models"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance models:GameListWindowModel, IsDesignTimeCreatable=True}"
+        Title="GameListWindow" Height="450" Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"/>
+            <RowDefinition/>
+            <RowDefinition Height="30"/>
+        </Grid.RowDefinitions>
+        <TextBox Grid.Row="0" VerticalContentAlignment="Center" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+        <DataGrid Grid.Row="1" ItemsSource="{Binding Entries}" AutoGenerateColumns="False" SelectedItem="{Binding SelectedGame}" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="GameID" Width="150" Binding="{Binding GameID}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Name" Width="400" Binding="{Binding GameName}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Format" Width="100" Binding="{Binding Format}"></DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Click="Cancel_Click">Cancel</Button>
+            <Button Grid.Column="1" Click="Select_Click">Select</Button>
+        </Grid>
+    </Grid>
+</Window>
