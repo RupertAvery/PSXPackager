@@ -6,26 +6,26 @@
         /// <summary>
         /// GameID with a dash
         /// </summary>
-        public string GameID { get; set; }
+        public string SerialID { get; set; }
         /// <summary>
-        /// Main GameID
+        /// Main GameID (Eboot Save Folder)
         /// </summary>
-        public string SaveFolderName { get; set; }
+        public string MainGameID { get; set; }
         /// <summary>
-        /// Main Game Title
+        /// Main Game Title (Eboot Save Description/Game name without disc numbering)
         /// </summary>
-        public string SaveDescription { get; set; }
+        public string MainGameTitle { get; set; }
         /// <summary>
-        /// Disc Title
+        /// Game Name (Individual Disc Title)
         /// </summary>
-        public string GameName { get; set; }
+        public string Title { get; set; }
         /// <summary>
-        /// Region
+        /// Region (Video Format, NTSC/PAL)
         /// </summary>
-        public string Format { get; set; }
+        public string Region { get; set; }
         /// <summary>
         /// GameID with a no dash
         /// </summary>
-        public string ScannerID { get; set; }
+        public string GameID { get; set; }
     }
 }

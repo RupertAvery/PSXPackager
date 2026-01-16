@@ -380,12 +380,12 @@ namespace Popstation
         {
             return new GameEntry()
             {
+                SerialID = gameId,
                 GameID = gameId,
-                ScannerID = gameId,
-                GameName = gameTitle,
-                SaveDescription = gameTitle,
-                Format = "NTSC",
-                SaveFolderName = gameId.Replace("-", "")
+                Title = gameTitle,
+                MainGameTitle = gameTitle,
+                Region = "NTSC",
+                MainGameID = gameId.Replace("-", "")
             };
         }
 
@@ -396,7 +396,7 @@ namespace Popstation
 
             if (gameId != null)
             {
-                game = _gameDb.GetEntryByScannerID(gameId);
+                game = _gameDb.GetEntryByGameID(gameId);
                 if (game == null)
                 {
                     if (showMessages)
@@ -406,7 +406,7 @@ namespace Popstation
                 }
 
                 if (showMessages)
-                    _notifier?.Notify(PopstationEventEnum.Info, $"Found {gameId} \"{game.GameName}\"");
+                    _notifier?.Notify(PopstationEventEnum.Info, $"Found {gameId} \"{game.Title}\"");
             }
             else
             {
@@ -437,11 +437,9 @@ namespace Popstation
                 OriginalFilename = Path.GetFileNameWithoutExtension(originalFile),
                 OutputPath = processOptions.OutputPath,
                 DiscInfos = new List<DiscInfo>(),
-                MainGameTitle = game.SaveDescription,
-                MainGameID = game.SaveFolderName,
-                MainGameRegion = game.Format,
-                SaveTitle = game.SaveDescription,
-                SaveID = game.SaveFolderName,
+                MainGameTitle = game.MainGameTitle,
+                MainGameID = game.MainGameID,
+                MainGameRegion = game.Region,
                 BasePbp = Path.Combine(appPath, "Resources", "BASE.PBP"),
                 CompressionLevel = processOptions.CompressionLevel,
                 CheckIfFileExists = processOptions.CheckIfFileExists,
@@ -464,17 +462,14 @@ namespace Popstation
 
                 options.DiscInfos.Add(new DiscInfo()
                 {
-                    GameID = game.ScannerID,
-                    GameTitle = game.SaveDescription,
-                    GameName = game.GameName,
-                    Region = game.Format,
-                    MainGameID = game.SaveFolderName,
+                    GameID = game.GameID,
+                    GameTitle = game.Title,
                     SourceIso = srcIsos[i],
                     SourceToc = i < srcTocs.Length ? srcTocs[i] : "",
                 });
             }
 
-            _notifier?.Notify(PopstationEventEnum.Info, $"Using Title '{game.SaveDescription}'");
+            _notifier?.Notify(PopstationEventEnum.Info, $"Using Title '{game.MainGameTitle}'");
 
             var popstation = new Popstation
             {
@@ -506,7 +501,7 @@ namespace Popstation
 
             Resource GetResourceOrDefault(ResourceType type, string ext)
             {
-                var filename = Popstation.GetResourceFilename(processOptions.ResourceFormat, options.OriginalFilename, entry.GameID, entry.SaveFolderName, entry.GameName, entry.SaveDescription, entry.Format, type, ext);
+                var filename = Popstation.GetResourceFilename(processOptions.ResourceFormat, options.OriginalFilename, entry.SerialID, entry.MainGameID, entry.Title, entry.MainGameTitle, entry.Region, type, ext);
 
                 var resourcePath = Path.Combine(processOptions.ResourceRoot, filename);
 
@@ -565,7 +560,7 @@ namespace Popstation
 
         private void GenerateResourceFolders(ProcessOptions processOptions, ConvertOptions options, GameEntry entry)
         {
-            var path = Popstation.GetResourceFilename(processOptions.ResourceFormat, options.OriginalFilename, entry.GameID, entry.SaveFolderName, entry.GameName, entry.SaveDescription, entry.Format, ResourceType.ICON0, "png");
+            var path = Popstation.GetResourceFilename(processOptions.ResourceFormat, options.OriginalFilename, entry.SerialID, entry.MainGameID, entry.Title, entry.MainGameTitle, entry.Region, ResourceType.ICON0, "png");
 
             path = Path.GetDirectoryName(path);
 
@@ -576,7 +571,7 @@ namespace Popstation
                 Directory.CreateDirectory(path);
             }
 
-            using (File.Create(Path.Combine(path, entry.GameName)))
+            using (File.Create(Path.Combine(path, entry.Title)))
             {
             }
         }
@@ -598,11 +593,8 @@ namespace Popstation
                 {
                     new DiscInfo()
                     {
-                        GameID = game.ScannerID,
-                        GameTitle = game.SaveDescription,
-                        GameName = game.GameName,
-                        Region = game.Format,
-                        MainGameID = game.SaveFolderName,
+                        GameID = game.GameID,
+                        GameTitle = game.MainGameTitle,
                         SourceIso = srcIso,
                         SourceToc = srcToc,
                     }
@@ -610,11 +602,9 @@ namespace Popstation
                 OutputPath = processOptions.OutputPath,
                 OriginalPath = Path.GetDirectoryName(originalFile),
                 OriginalFilename = Path.GetFileNameWithoutExtension(originalFile),
-                MainGameTitle = game.GameName,
-                MainGameRegion = game.Format,
-                MainGameID = game.SaveFolderName,
-                SaveTitle = game.SaveDescription,
-                SaveID = game.SaveFolderName,
+                MainGameID = game.MainGameID,
+                MainGameTitle = game.MainGameTitle,
+                MainGameRegion = game.Region,
                 BasePbp = Path.Combine(appPath, "Resources", "BASE.PBP"),
                 CompressionLevel = processOptions.CompressionLevel,
                 CheckIfFileExists = processOptions.CheckIfFileExists,
@@ -631,7 +621,7 @@ namespace Popstation
             SetResources(processOptions, options, game);
 
 
-            _notifier.Notify(PopstationEventEnum.Info, $"Using Title '{game.GameName}'");
+            _notifier.Notify(PopstationEventEnum.Info, $"Using Title '{game.Title}'");
 
             var popstation = new Popstation
             {
@@ -643,6 +633,7 @@ namespace Popstation
             return popstation.Convert(options, cancellationToken);
         }
 
+        // TODO
         public bool RepackPBP(
             string originalFile,
             string srcPbp,
@@ -660,22 +651,17 @@ namespace Popstation
                 {
                     new DiscInfo()
                     {
-                        GameID = game.ScannerID,
-                        GameTitle = game.SaveDescription,
-                        GameName = game.GameName,
-                        Region = game.Format,
-                        MainGameID = game.SaveFolderName,
+                        GameID = game.GameID,
+                        GameTitle = game.MainGameTitle,
                         SourceIso = srcPbp,
                     }
                 },
                 OriginalFilename = Path.GetFileNameWithoutExtension(originalFile),
                 OriginalPath = Path.GetDirectoryName(originalFile),
                 OutputPath = processOptions.OutputPath,
-                MainGameTitle = game.GameName,
-                MainGameRegion = game.Format,
-                MainGameID = game.SaveFolderName,
-                SaveTitle = game.SaveDescription,
-                SaveID = game.SaveFolderName,
+                MainGameTitle = game.Title,
+                MainGameRegion = game.Region,
+                MainGameID = game.MainGameID,
                 BasePbp = Path.Combine(appPath, "Resources", "BASE.PBP"),
                 CompressionLevel = processOptions.CompressionLevel,
                 CheckIfFileExists = processOptions.CheckIfFileExists,
@@ -691,7 +677,7 @@ namespace Popstation
 
             SetResources(processOptions, options, game);
 
-            _notifier.Notify(PopstationEventEnum.Info, $"Using Title '{game.GameName}'");
+            _notifier.Notify(PopstationEventEnum.Info, $"Using Title '{game.Title}'");
 
             var popstation = new Popstation
             {

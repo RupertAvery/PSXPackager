@@ -20,19 +20,19 @@ namespace Popstation.Database
                 var parts = item.Split(new char[] { ';' });
                 GameEntries.Add(new GameEntry()
                 {
-                    GameID = parts[0],
-                    SaveFolderName = parts[1],
-                    SaveDescription = parts[2],
-                    GameName = parts[3],
-                    Format = parts[4],
-                    ScannerID = parts[5],
+                    SerialID = parts[0],
+                    MainGameID = parts[1],
+                    MainGameTitle = parts[2],
+                    Title = parts[3],
+                    Region = parts[4],
+                    GameID = parts[5],
                 });
             }
         }
 
-        public GameEntry GetEntryByScannerID(string scannerID)
+        public GameEntry GetEntryByGameID(string gameId)
         {
-            return GameEntries.FirstOrDefault(x => x.ScannerID == scannerID.ToUpper());
+            return GameEntries.FirstOrDefault(x => x.GameID == gameId.ToUpper());
         }
 
 

@@ -147,6 +147,17 @@
                 </MenuItem.Header>
             </MenuItem>
 
+
+            <MenuItem x:Name="GamesDB" Click="ShowGamesDB_OnClick" ToolTip="GamesDB">
+                <MenuItem.Header>
+                    <controls:AutoDisableImage Height="32" Width="32">
+                        <Image.Source>
+                            <BitmapImage  UriSource="./Resources/games-48x48.png"/>
+                        </Image.Source>
+                    </controls:AutoDisableImage>
+                </MenuItem.Header>
+            </MenuItem>
+
         </Menu>
         <Frame Grid.Row="1" x:Name="CurrentPage" NavigationUIVisibility="Hidden"></Frame>
     </Grid>

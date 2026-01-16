@@ -25,7 +25,7 @@ namespace PSXPackagerGUI.Models
             {
                 new Disc()
                 {
-                    Title = "Final Fantasy VII",
+                    Title = "Final Fantasy VII - Disc 1",
                     Size = 123456789
                 }
             };

@@ -113,5 +113,12 @@ namespace PSXPackagerGUI
         {
             _singlePage.SavePSP();
         }
+
+        private void ShowGamesDB_OnClick(object sender, RoutedEventArgs e)
+        {
+            var window = new GameListWindow(false);
+            window.Owner = this;
+            window.ShowDialog();
+        }
     }
 }

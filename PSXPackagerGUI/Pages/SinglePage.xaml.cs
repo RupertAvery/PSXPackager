@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -142,14 +143,14 @@ namespace PSXPackagerGUI.Pages
 
                     var discs = pbpReader.Discs.Select((d, i) =>
                     {
-                        var game = _gameDb.GetEntryByScannerID(d.DiscID);
+                        var game = _gameDb.GetEntryByGameID(d.DiscID);
 
                         var disc = new Disc()
                         {
                             Index = i,
-                            Title = game.GameName,
-                            Size = d.IsoSize,
                             GameID = d.DiscID,
+                            Title = game.Title,
+                            Size = d.IsoSize,
                             IsRemoveEnabled = true,
                             IsLoadEnabled = true,
                             IsSaveAsEnabled = true,
@@ -340,16 +341,11 @@ namespace PSXPackagerGUI.Pages
 
         private DiscInfo GetDiscInfo(Disc disc)
         {
-            var game = _gameDb.GetEntryByScannerID(disc.GameID);
-
-
+            //var game = _gameDb.GetEntryByGameID(disc.GameID);
             return new DiscInfo()
             {
-                GameID = game.ScannerID,
-                GameTitle = game.SaveDescription,
-                GameName = game.GameName,
-                Region = game.Format,
-                MainGameID = game.SaveFolderName,
+                GameID = disc.GameID,
+                GameTitle = disc.Title,
                 SourceIso = disc.SourceUrl,
                 SourceToc = disc.SourceTOC,
             };
@@ -465,7 +461,7 @@ namespace PSXPackagerGUI.Pages
 
             if (!string.IsNullOrEmpty(filename))
             {
-                var game = _gameDb.GetEntryByScannerID(Model.Discs.First().GameID);
+                var disc1 = Model.Discs[0];
                 var appPath = ApplicationInfo.AppPath;
 
                 var options = new ConvertOptions()
@@ -478,11 +474,9 @@ namespace PSXPackagerGUI.Pages
                     Pic0 = GetResourceOrDefault(ResourceType.PIC0, "png", Model.Pic0),
                     Pic1 = GetResourceOrDefault(ResourceType.PIC1, "png", Model.Pic1),
                     Snd0 = GetResource(Model.Snd0),
-                    MainGameTitle = game.SaveDescription,
-                    MainGameID = game.SaveFolderName,
-                    MainGameRegion = game.Format,
-                    SaveTitle = game.SaveDescription,
-                    SaveID = game.SaveFolderName,
+                    MainGameTitle = disc1.SaveTitle,
+                    MainGameID = disc1.SaveID,
+                    MainGameRegion = disc1.Region,
                     BasePbp = Path.Combine(appPath, "Resources", "BASE.PBP"),
                     CompressionLevel = _settings.CompressionLevel,
                     //CheckIfFileExists = processOptions.CheckIfFileExists,
@@ -861,11 +855,11 @@ namespace PSXPackagerGUI.Pages
 
                 var gameId = GameDB.FindGameId(imagePath);
 
+                GameEntry game = null;
+
                 if (gameId != null)
                 {
-                    disc.GameID = gameId;
-                    var game = _gameDb.GetEntryByScannerID(gameId);
-                    disc.Title = game.GameName;
+                    game = _gameDb.GetEntryByGameID(gameId);
                 }
                 else
                 {
@@ -877,19 +871,29 @@ namespace PSXPackagerGUI.Pages
                     window.Owner = Window;
                     var result = window.ShowDialog();
 
-                    if (result is true)
+                    if (result is true && window.SelectedGame is {})
                     {
-                        gameId = window.SelectedGame.GameID;
-                        disc.GameID = gameId;
-                        disc.Title = window.SelectedGame.GameName;
+                        game = window.SelectedGame;
                     }
                     else
                     {
-                        gameId = "SCUS-00000";
-                        disc.GameID = gameId;
-                        disc.Title = "Untitled Game";
+                        game = new GameEntry
+                        {
+                            SerialID = "SCUS-00000",
+                            MainGameID = "SCUS00000",
+                            Title = "Untitled Game",
+                            MainGameTitle = "Untitled Game",
+                            GameID = "SCUS00000",
+                            Region = "NTSC"
+                        };
                     }
                 }
+
+                disc.GameID = game.GameID;
+                disc.Title = game.Title;
+                disc.SaveID = game.MainGameID;
+                disc.SaveTitle = game.MainGameTitle;
+                disc.Region = game.Region;
 
                 disc.Size = fileSize;
                 disc.IsEmpty = false;
@@ -910,7 +914,7 @@ namespace PSXPackagerGUI.Pages
                         new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  0x01 , IsEditable = false },
                         new() { Key = SFOKeys.PSP_SYSTEM_VER, Value =  "3.01", IsEditable = true  },
                         new() { Key = SFOKeys.REGION, Value =  0x8000, IsEditable = true },
-                        new() { Key = SFOKeys.TITLE, Value = disc.Title, IsEditable = true  },
+                        new() { Key = SFOKeys.TITLE, Value = disc.SaveTitle, IsEditable = true  },
                     };
                 }
 
@@ -927,12 +931,12 @@ namespace PSXPackagerGUI.Pages
             var context = ((MenuItem)sender).DataContext as Disc;
             var pbpRegex = new Regex("//pbp/disc(\\d)/(.*\\.pbp)", RegexOptions.IgnoreCase);
 
-            var game = _gameDb.GetEntryByScannerID(context.GameID);
+            var game = _gameDb.GetEntryByGameID(context.GameID);
 
 
             var saveFileDialog = new Ookii.Dialogs.Wpf.VistaSaveFileDialog();
             saveFileDialog.OverwritePrompt = true;
-            saveFileDialog.FileName = $"{game.GameName}.bin";
+            saveFileDialog.FileName = $"{game.Title}.bin";
             saveFileDialog.Filter = "BIN files|*.bin|All files|*.*";
             saveFileDialog.DefaultExt = ".bin";
             saveFileDialog.AddExtension = true;
@@ -1183,7 +1187,7 @@ namespace PSXPackagerGUI.Pages
             if (!Model.Discs[0].IsEmpty)
             {
                 var gameId = Model.Discs[0].GameID;
-                var game = _gameDb.GetEntryByScannerID(gameId);
+                var game = _gameDb.GetEntryByGameID(gameId);
 
                 Model.SFOEntries = new ObservableCollection<SFOEntry>()
                 {
@@ -1195,7 +1199,7 @@ namespace PSXPackagerGUI.Pages
                     new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  0x01 , IsEditable = false },
                     new() { Key = SFOKeys.PSP_SYSTEM_VER, Value =  "3.01", IsEditable = true  },
                     new() { Key = SFOKeys.REGION, Value =  0x8000, IsEditable = true },
-                    new() { Key = SFOKeys.TITLE, Value = game.GameName, IsEditable = true  },
+                    new() { Key = SFOKeys.TITLE, Value = game.Title, IsEditable = true  },
                 };
             }
             else
@@ -1233,8 +1237,8 @@ namespace PSXPackagerGUI.Pages
                 var result = window.ShowDialog();
                 if (result is true)
                 {
-                    _model.SelectedDisc.GameID = window.SelectedGame.GameID;
-                    _model.SelectedDisc.Title = window.SelectedGame.GameName;
+                    _model.SelectedDisc.GameID = window.SelectedGame.SerialID;
+                    _model.SelectedDisc.Title = window.SelectedGame.Title;
                 }
             }
           

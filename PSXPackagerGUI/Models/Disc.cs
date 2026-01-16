@@ -1,4 +1,5 @@
-﻿using System.Windows.Input;
+﻿using System.Drawing;
+using System.Windows.Input;
 
 namespace PSXPackagerGUI.Models
 {
@@ -8,6 +9,7 @@ namespace PSXPackagerGUI.Models
         private string _saveTitle;
         private string _gameId;
         private string _saveId;
+        private string _region;
         private uint _size;
         private bool _isEmpty;
         private bool _isRemoveEnabled;
@@ -83,6 +85,12 @@ namespace PSXPackagerGUI.Models
         {
             get => _saveId;
             set => SetProperty(ref _saveId, value);
+        }
+
+        public string Region
+        {
+            get => _region;
+            set => SetProperty(ref _region, value);
         }
 
 

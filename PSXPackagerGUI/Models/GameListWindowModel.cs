@@ -7,9 +7,9 @@ public class GameListWindowModel : BaseNotifyModel
 {
     private ObservableCollection<GameEntry> _entries;
     private string _searchText;
-    private GameEntry _selectedGame;
+    private GameEntry? _selectedGame;
 
-    public GameEntry SelectedGame
+    public GameEntry? SelectedGame
     {
         get => _selectedGame;
         set => SetProperty(ref _selectedGame, value);

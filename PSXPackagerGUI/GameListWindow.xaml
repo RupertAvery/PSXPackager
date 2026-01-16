@@ -7,8 +7,9 @@
         xmlns:models="clr-namespace:PSXPackagerGUI.Models"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance models:GameListWindowModel, IsDesignTimeCreatable=True}"
-        Title="GameListWindow" Height="450" Width="800">
-    <Grid>
+        WindowStyle="ToolWindow"
+        Title="GamesDB" Height="450" Width="800">
+    <Grid x:Name="Grid">
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
             <RowDefinition/>
@@ -16,13 +17,24 @@
         </Grid.RowDefinitions>
         <TextBox Grid.Row="0" VerticalContentAlignment="Center" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"></TextBox>
         <DataGrid Grid.Row="1" ItemsSource="{Binding Entries}" AutoGenerateColumns="False" SelectedItem="{Binding SelectedGame}" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True">
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Copy GameID" Click="CopyGameID_Click"></MenuItem>
+                    <MenuItem Header="Copy Main GameID" Click="CopyMainGameID_Click"></MenuItem>
+                    <MenuItem Header="Copy Title" Click="CopyTitle_Click"></MenuItem>
+                    <MenuItem Header="Copy Main Title" Click="CopyMainTitle_Click"></MenuItem>
+                </ContextMenu>
+            </DataGrid.ContextMenu>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="GameID" Width="150" Binding="{Binding GameID}"></DataGridTextColumn>
-                <DataGridTextColumn Header="Name" Width="400" Binding="{Binding GameName}"></DataGridTextColumn>
-                <DataGridTextColumn Header="Format" Width="100" Binding="{Binding Format}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Region" Width="60" Binding="{Binding Region}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Serial" Width="80" Binding="{Binding SerialID}"></DataGridTextColumn>
+                <DataGridTextColumn Header="GameID" Width="80" Binding="{Binding GameID}"></DataGridTextColumn>
+                <DataGridTextColumn Header="MainGameID" Width="80" Binding="{Binding MainGameID}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Title" Width="400" Binding="{Binding Title}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Main Title" Width="400" Binding="{Binding MainGameTitle}"></DataGridTextColumn>
             </DataGrid.Columns>
         </DataGrid>
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="2" x:Name="Actions">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition/>

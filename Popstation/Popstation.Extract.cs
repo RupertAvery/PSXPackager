@@ -144,7 +144,7 @@ namespace Popstation
 
         private string GetResourcePath(ExtractOptions options, GameEntry entry, ResourceType type, string ext)
         {
-            var path = GetResourceFilename(options.ResourceFormat, Path.GetFileNameWithoutExtension(options.SourcePbp), entry.GameID, entry.SaveFolderName, entry.GameName, entry.SaveDescription, entry.Format, type, ext);
+            var path = GetResourceFilename(options.ResourceFormat, Path.GetFileNameWithoutExtension(options.SourcePbp), entry.SerialID, entry.MainGameID, entry.Title, entry.MainGameTitle, entry.Region, type, ext);
 
             if (string.IsNullOrEmpty(options.ResourceFoldersPath))
             {
@@ -156,7 +156,7 @@ namespace Popstation
 
         private void EnsureResourcePathExists(ExtractOptions options, GameEntry entry)
         {
-            var path = GetResourceFolder(options.ResourceFormat, Path.GetFileNameWithoutExtension(options.SourcePbp), entry.GameID, entry.SaveFolderName, entry.GameName, entry.SaveDescription, entry.Format);
+            var path = GetResourceFolder(options.ResourceFormat, Path.GetFileNameWithoutExtension(options.SourcePbp), entry.SerialID, entry.MainGameID, entry.Title, entry.MainGameTitle, entry.Region);
 
             if (string.IsNullOrEmpty(options.ResourceFoldersPath))
             {
@@ -224,10 +224,10 @@ namespace Popstation
                         var title = GetFilename(options.FileNameFormat,
                             options.SourcePbp,
                             disc.DiscID,
-                            gameInfo.SaveFolderName,
-                            gameInfo.GameName,
-                            gameInfo.SaveDescription,
-                            gameInfo.Format
+                            gameInfo.MainGameID,
+                            gameInfo.Title,
+                            gameInfo.MainGameTitle,
+                            gameInfo.Region
                         );
 
                         Notify?.Invoke(PopstationEventEnum.Info, $"Using Title '{title}'");
@@ -261,10 +261,10 @@ namespace Popstation
                     var title = GetFilename(options.FileNameFormat,
                         options.SourcePbp,
                         disc.DiscID,
-                        gameInfo.SaveFolderName,
-                        gameInfo.GameName,
-                        gameInfo.SaveDescription,
-                        gameInfo.Format
+                        gameInfo.MainGameID,
+                        gameInfo.Title,
+                        gameInfo.MainGameTitle,
+                        gameInfo.Region
                     );
 
                     var isoPath = Path.Combine(options.OutputPath, $"{title}{ext}");

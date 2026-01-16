@@ -244,10 +244,13 @@ namespace Popstation.Pbp
                 outputStream.WriteInt32(0, 0xFC);
             }
 
+            var data1Length = Popstation.data1.Length;
+            var data1 = ArrayPool<byte>.Shared.Rent(data1Length);
+            Array.Copy(Popstation.data1, data1, data1Length);
             // Overlay the GameID onto the data1 template
             var titleBytes = Encoding.ASCII.GetBytes(disc.GameID);
-            Array.Copy(titleBytes, 0, Popstation.data1, 1, 4);
-            Array.Copy(titleBytes, 4, Popstation.data1, 6, 5);
+            Array.Copy(titleBytes, 0, data1, 1, 4);
+            Array.Copy(titleBytes, 4, data1, 6, 5);
 
             if (disc.TocData == null || disc.TocData.Length == 0)
             {
@@ -257,9 +260,10 @@ namespace Popstation.Pbp
             Notify?.Invoke(PopstationEventEnum.WriteTOC, null);
 
             // Overlay the TOC data onto the data1 template
-            Array.Copy(disc.TocData, 0, Popstation.data1, 1024, disc.TocData.Length);
+            Array.Copy(disc.TocData, 0, data1, 1024, disc.TocData.Length);
 
-            outputStream.Write(Popstation.data1, 0, Popstation.data1.Length);
+            outputStream.Write(data1, 0, data1Length);
+            ArrayPool<byte>.Shared.Return(data1);
 
             if (isMultiDisc)
             {
@@ -271,10 +275,15 @@ namespace Popstation.Pbp
                 outputStream.WriteUInt32(isoSize + 0x100000 + 0x2d31, 1);
             }
 
+            var data2Length = Popstation.data2.Length;
+            var data2 = ArrayPool<byte>.Shared.Rent(data2Length);
+            Array.Copy(Popstation.data2, data2, data2Length);
+
             // Overlay the title onto the data2 template
             titleBytes = Encoding.ASCII.GetBytes(disc.GameTitle);
-            Array.Copy(titleBytes, 0, Popstation.data2, 8, disc.GameTitle.Length);
-            outputStream.Write(Popstation.data2, 0, Popstation.data2.Length);
+            Array.Copy(titleBytes, 0, data2, 8, disc.GameTitle.Length);
+            outputStream.Write(data2, 0, data2Length);
+            ArrayPool<byte>.Shared.Return(data2);
 
             var index_offset = (uint)outputStream.Position;
 
