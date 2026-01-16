@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using Popstation;
 using Popstation.Database;
@@ -18,6 +19,7 @@ using PSXPackager.Common.Notification;
 using PSXPackagerGUI.Common;
 using PSXPackagerGUI.Controls;
 using PSXPackagerGUI.Models;
+using SFOEntry = PSXPackagerGUI.Models.SFOEntry;
 
 namespace PSXPackagerGUI.Pages
 {
@@ -75,8 +77,8 @@ namespace PSXPackagerGUI.Pages
                 IsDirty = false,
                 MaxProgress = 100,
                 Progress = 0,
-                Discs = DummyDisc(0, 5).ToList()
             };
+
 
             DataContext = Model;
 
@@ -96,8 +98,20 @@ namespace PSXPackagerGUI.Pages
             Model.IsDirty = false;
             Model.MaxProgress = 100;
             Model.Progress = 0;
-            Model.Discs = DummyDisc(0, 5).ToList();
+            Model.Discs = new ObservableCollection<Disc>(DummyDisc(0, 5));
             Model.IsNew = true;
+            Model.SFOEntries = new ObservableCollection<SFOEntry>()
+            {
+                new() { Key = SFOKeys.BOOTABLE, Value = 0x01, EntryType = SFOEntryType.NUM, IsEditable = false },
+                new() { Key = SFOKeys.CATEGORY, Value = SFOValues.PS1Category, EntryType = SFOEntryType.STR, IsEditable = false  },
+                new() { Key = SFOKeys.DISC_ID, Value = "", EntryType = SFOEntryType.STR,IsEditable = true  },
+                new() { Key = SFOKeys.DISC_VERSION, Value =  "1.00", EntryType = SFOEntryType.STR, IsEditable = true  },
+                new() { Key = SFOKeys.LICENSE, Value =  SFOValues.License, EntryType = SFOEntryType.STR,IsEditable = true  },
+                new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  0x01 , EntryType = SFOEntryType.NUM, IsEditable = false },
+                new() { Key = SFOKeys.PSP_SYSTEM_VER, Value =  "3.01", EntryType = SFOEntryType.STR,IsEditable = true  },
+                new() { Key = SFOKeys.REGION, Value =  0x8000, EntryType = SFOEntryType.NUM, IsEditable = true },
+                new() { Key = SFOKeys.TITLE, Value = "", EntryType = SFOEntryType.STR, IsEditable = true  },
+            };
         }
 
         public void LoadPbp()
@@ -151,7 +165,7 @@ namespace PSXPackagerGUI.Pages
 
                     var dummyDiscs = DummyDisc(discs.Count, 5 - discs.Count);
 
-                    Model.Discs = discs.Concat(dummyDiscs).ToList();
+                    Model.Discs = new ObservableCollection<Disc>(discs.Concat(dummyDiscs));
 
 
                     void LoadResource(ResourceType type, ResourceModel model)
@@ -172,6 +186,20 @@ namespace PSXPackagerGUI.Pages
                     LoadResource(ResourceType.PIC0, Model.Pic0);
                     LoadResource(ResourceType.PIC1, Model.Pic1);
 
+                    Model.SFOEntries = new ObservableCollection<SFOEntry>();
+
+                    foreach (var sfoDataEntry in pbpReader.SFOData.Entries)
+                    {
+                        Model.SFOEntries.Add(new SFOEntry()
+                        {
+                            Key = sfoDataEntry.Key,
+                            Value = sfoDataEntry.Value,
+                            IsEditable = GetIsEditable(sfoDataEntry.Key),
+                            EntryType = GetEntryType(sfoDataEntry.Key),
+                        });
+                    }
+
+
                     Model.IsNew = false;
                 }
             }
@@ -182,10 +210,122 @@ namespace PSXPackagerGUI.Pages
 
         }
 
+        bool GetIsEditable(string key)
+        {
+            return key switch
+            {
+                SFOKeys.BOOTABLE => false,
+                SFOKeys.CATEGORY => false,
+                SFOKeys.DISC_ID => true,
+                SFOKeys.DISC_VERSION => true,
+                SFOKeys.LICENSE => true,
+                SFOKeys.PARENTAL_LEVEL => false,
+                SFOKeys.PSP_SYSTEM_VER => true,
+                SFOKeys.REGION => true,
+                SFOKeys.TITLE => true,
+                _ => false
+            };
+        }
+
+
+        SFOEntryType GetEntryType(string key)
+        {
+            return key switch
+            {
+                SFOKeys.BOOTABLE => SFOEntryType.NUM,
+                SFOKeys.CATEGORY => SFOEntryType.STR,
+                SFOKeys.DISC_ID => SFOEntryType.STR,
+                SFOKeys.DISC_VERSION => SFOEntryType.STR,
+                SFOKeys.LICENSE => SFOEntryType.STR,
+                SFOKeys.PARENTAL_LEVEL => SFOEntryType.NUM,
+                SFOKeys.PSP_SYSTEM_VER => SFOEntryType.STR,
+                SFOKeys.REGION => SFOEntryType.NUM,
+                SFOKeys.TITLE => SFOEntryType.STR,
+                _ => SFOEntryType.STR
+            };
+        }
+
+
+        bool ValidateSFOEntry(SFOEntry entry)
+        {
+            bool isValid = true;
+
+            var format = GetFormat(entry.Key);
+
+            if (format == "string")
+            {
+                if (((string)entry.Value).Length > GetMaxLength(entry.Key))
+                {
+                    isValid = false;
+                }
+
+                //if (!ValidateFormat(entry.Key, (string)entry.Value))
+                //{
+                //    isValid = false;
+                //}
+            }
+            if (format == "uint")
+            {
+            }
+
+            return isValid;
+        }
+
+        //private bool ValidateFormat(string key, string value)
+        //{
+        //    if (key == SFOKeys.DISC_VERSION)
+        //    {
+        //        return true;
+        //    }
+
+        //    if (key == SFOKeys.PSP_SYSTEM_VER)
+        //    {
+        //        return true;
+        //    }
+
+        //    return true;
+        //}
+
+        private string GetFormat(string key)
+        {
+            return key switch
+            {
+                SFOKeys.BOOTABLE => "uint",
+                SFOKeys.CATEGORY => "string",
+                SFOKeys.DISC_ID => "string",
+                SFOKeys.DISC_VERSION => "string",
+                SFOKeys.LICENSE => "string",
+                SFOKeys.PARENTAL_LEVEL => "uint",
+                SFOKeys.PSP_SYSTEM_VER => "string",
+                SFOKeys.REGION => "uint",
+                SFOKeys.TITLE => "string",
+                _ => throw new ArgumentOutOfRangeException()
+            };
+        }
+
+
+        private uint GetMaxLength(string key)
+        {
+            return key switch
+            {
+                SFOKeys.BOOTABLE => 4,
+                SFOKeys.CATEGORY => 4,
+                SFOKeys.DISC_ID => 16,
+                SFOKeys.DISC_VERSION => 8,
+                SFOKeys.LICENSE => 512,
+                SFOKeys.PARENTAL_LEVEL => 4,
+                SFOKeys.PSP_SYSTEM_VER => 8,
+                SFOKeys.REGION => 4,
+                SFOKeys.TITLE => 128,
+                _ => throw new ArgumentOutOfRangeException()
+            };
+        }
+
+
 
         private void Remove(Disc disc)
         {
-            Model.Discs = Model.Discs.Select(d => d == disc ? Disc.EmptyDisc(d.Index) : d).ToList();
+            Model.Discs[disc.Index] = Disc.EmptyDisc(disc.Index);
             Model.IsDirty = true;
         }
 
@@ -295,9 +435,9 @@ namespace PSXPackagerGUI.Pages
                     MessageBoxButton.OK, MessageBoxImage.Information);
 
                 var selectFolderDialog = new Ookii.Dialogs.Wpf.VistaFolderBrowserDialog();
-                
+
                 selectFolderDialog.ShowDialog();
-                
+
                 filename = Path.Combine(selectFolderDialog.SelectedPath, ebootPath);
 
                 if (File.Exists(filename))
@@ -348,6 +488,7 @@ namespace PSXPackagerGUI.Pages
                     //CheckIfFileExists = processOptions.CheckIfFileExists,
                     //SkipIfFileExists = processOptions.SkipIfFileExists,
                     FileNameFormat = _settings.FileNameFormat,
+                    SFOEntries = Model.SFOEntries.Select(ToSFOEntry).ToList()
                 };
 
                 PbpWriter writer;
@@ -356,6 +497,9 @@ namespace PSXPackagerGUI.Pages
                     : new SingleDiscPbpWriter(options);
 
                 writer.Notify += Notify;
+
+                _cancellationTokenSource?.Dispose();
+                _cancellationTokenSource = new CancellationTokenSource();
 
                 Task.Run(() =>
                 {
@@ -386,12 +530,24 @@ namespace PSXPackagerGUI.Pages
                             writer.Write(stream, _cancellationTokenSource.Token);
                         }
 
-                        Dispatcher.Invoke(() =>
+                        if (!_cancellationTokenSource.IsCancellationRequested)
                         {
-                            MessageBox.Show(Window, $"EBOOT has been saved to \"{filename}\"",
-                                "PSXPackager",
-                                MessageBoxButton.OK, MessageBoxImage.Information);
-                        });
+                            Dispatcher.Invoke(() =>
+                            {
+                                MessageBox.Show(Window, $"EBOOT has been saved to \"{filename}\"",
+                                    "PSXPackager",
+                                    MessageBoxButton.OK, MessageBoxImage.Information);
+                            });
+                        }
+                        else
+                        {
+                            Dispatcher.Invoke(() =>
+                            {
+                                MessageBox.Show(Window, $"The operation was cancelled",
+                                    "PSXPackager",
+                                    MessageBoxButton.OK, MessageBoxImage.Information);
+                            });
+                        }
 
 
                     }
@@ -416,6 +572,15 @@ namespace PSXPackagerGUI.Pages
 
         private string _action;
         private double _lastvalue;
+
+        private Popstation.Pbp.SFOEntry ToSFOEntry(SFOEntry entry)
+        {
+            return new Popstation.Pbp.SFOEntry()
+            {
+                Key = entry.Key,
+                Value = entry.Value
+            };
+        }
 
         public void Notify(PopstationEventEnum @event, object value)
         {
@@ -463,7 +628,7 @@ namespace PSXPackagerGUI.Pages
                     break;
 
                 case PopstationEventEnum.DiscStart:
-                    _action = "Writing";
+                    _action = $"Writing Disc {value}";
                     Dispatcher.Invoke(() =>
                     {
                         Model.IsBusy = true;
@@ -695,16 +860,62 @@ namespace PSXPackagerGUI.Pages
 
 
                 var gameId = GameDB.FindGameId(imagePath);
-                var game = _gameDb.GetEntryByScannerID(gameId);
+
+                if (gameId != null)
+                {
+                    disc.GameID = gameId;
+                    var game = _gameDb.GetEntryByScannerID(gameId);
+                    disc.Title = game.GameName;
+                }
+                else
+                {
+                    MessageBox.Show(Window, $"The GameID could not be detected. Please select the GameID manually",
+                        "PSXPackager",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+
+                    var window = new GameListWindow();
+                    window.Owner = Window;
+                    var result = window.ShowDialog();
+
+                    if (result is true)
+                    {
+                        gameId = window.SelectedGame.GameID;
+                        disc.GameID = gameId;
+                        disc.Title = window.SelectedGame.GameName;
+                    }
+                    else
+                    {
+                        gameId = "SCUS-00000";
+                        disc.GameID = gameId;
+                        disc.Title = "Untitled Game";
+                    }
+                }
 
                 disc.Size = fileSize;
-                disc.GameID = gameId;
-                disc.Title = game.GameName;
                 disc.IsEmpty = false;
                 disc.IsRemoveEnabled = true;
                 disc.IsLoadEnabled = true;
                 disc.IsSaveAsEnabled = false;
                 disc.RemoveCommand = new RelayCommand((o) => Remove(disc));
+
+                if (disc.Index == 0)
+                {
+                    Model.SFOEntries = new ObservableCollection<SFOEntry>()
+                    {
+                        new() { Key = SFOKeys.BOOTABLE, Value = 0x01, IsEditable = false },
+                        new() { Key = SFOKeys.CATEGORY, Value = SFOValues.PS1Category, IsEditable = false  },
+                        new() { Key = SFOKeys.DISC_ID, Value = gameId, IsEditable = true  },
+                        new() { Key = SFOKeys.DISC_VERSION, Value =  "1.00", IsEditable = true  },
+                        new() { Key = SFOKeys.LICENSE, Value =  SFOValues.License, IsEditable = true  },
+                        new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  0x01 , IsEditable = false },
+                        new() { Key = SFOKeys.PSP_SYSTEM_VER, Value =  "3.01", IsEditable = true  },
+                        new() { Key = SFOKeys.REGION, Value =  0x8000, IsEditable = true },
+                        new() { Key = SFOKeys.TITLE, Value = disc.Title, IsEditable = true  },
+                    };
+                }
+
+
+                _model.SelectedDisc = disc;
 
                 Model.IsDirty = true;
             }
@@ -750,25 +961,36 @@ namespace PSXPackagerGUI.Pages
                                 disc.ProgressEvent = ProgressEvent;
                                 disc.CopyTo(output, _cancellationTokenSource.Token);
 
-                                var cueFile = TOCHelper.TOCtoCUE(disc.TOC, Path.GetFileName(saveFileDialog.FileName));
-
-
-                                var cueFilename = Path.GetFileNameWithoutExtension(saveFileDialog.FileName) + ".cue";
-                                var dirPath = Path.GetDirectoryName(saveFileDialog.FileName);
-                                var cuePath = Path.Combine(dirPath, cueFilename);
-
-                                CueFileWriter.Write(cueFile, cuePath);
-
-                                Model.Status = "";
-                                Model.MaxProgress = 100;
-                                Model.Progress = 0;
-                                Model.IsBusy = false;
-                                Dispatcher.Invoke(() =>
+                                if (!_cancellationTokenSource.IsCancellationRequested)
                                 {
-                                    MessageBox.Show(Window, $"Disc image has been extracted to \"{saveFileDialog.FileName}\"",
-                                        "PSXPackager",
-                                        MessageBoxButton.OK, MessageBoxImage.Information);
-                                });
+                                    var cueFile = TOCHelper.TOCtoCUE(disc.TOC, Path.GetFileName(saveFileDialog.FileName));
+                                    
+                                    var cueFilename = Path.GetFileNameWithoutExtension(saveFileDialog.FileName) + ".cue";
+                                    var dirPath = Path.GetDirectoryName(saveFileDialog.FileName);
+                                    var cuePath = Path.Combine(dirPath, cueFilename);
+
+                                    CueFileWriter.Write(cueFile, cuePath);
+
+                                    Model.Status = "";
+                                    Model.MaxProgress = 100;
+                                    Model.Progress = 0;
+                                    Model.IsBusy = false;
+                                    Dispatcher.Invoke(() =>
+                                    {
+                                        MessageBox.Show(Window, $"Disc image has been extracted to \"{saveFileDialog.FileName}\"",
+                                            "PSXPackager",
+                                            MessageBoxButton.OK, MessageBoxImage.Information);
+                                    });
+                                }
+                                else
+                                {
+                                    Dispatcher.Invoke(() =>
+                                    {
+                                        MessageBox.Show(Window, $"The operation was cancelled",
+                                            "PSXPackager",
+                                            MessageBoxButton.OK, MessageBoxImage.Information);
+                                    });
+                                }
                             }
                         }
                     });
@@ -954,6 +1176,68 @@ namespace PSXPackagerGUI.Pages
         public void SavePSP()
         {
             Save(true);
+        }
+
+        private void ResetSFO_Click(object sender, RoutedEventArgs e)
+        {
+            if (!Model.Discs[0].IsEmpty)
+            {
+                var gameId = Model.Discs[0].GameID;
+                var game = _gameDb.GetEntryByScannerID(gameId);
+
+                Model.SFOEntries = new ObservableCollection<SFOEntry>()
+                {
+                    new() { Key = SFOKeys.BOOTABLE, Value = 0x01, IsEditable = false },
+                    new() { Key = SFOKeys.CATEGORY, Value = SFOValues.PS1Category, IsEditable = false  },
+                    new() { Key = SFOKeys.DISC_ID, Value = gameId, IsEditable = true  },
+                    new() { Key = SFOKeys.DISC_VERSION, Value =  "1.00", IsEditable = true  },
+                    new() { Key = SFOKeys.LICENSE, Value =  SFOValues.License, IsEditable = true  },
+                    new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  0x01 , IsEditable = false },
+                    new() { Key = SFOKeys.PSP_SYSTEM_VER, Value =  "3.01", IsEditable = true  },
+                    new() { Key = SFOKeys.REGION, Value =  0x8000, IsEditable = true },
+                    new() { Key = SFOKeys.TITLE, Value = game.GameName, IsEditable = true  },
+                };
+            }
+            else
+            {
+                Model.SFOEntries = new ObservableCollection<SFOEntry>()
+                {
+                    new() { Key = SFOKeys.BOOTABLE, Value = 0x01, IsEditable = false },
+                    new() { Key = SFOKeys.CATEGORY, Value = SFOValues.PS1Category, IsEditable = false  },
+                    new() { Key = SFOKeys.DISC_ID, Value = "", IsEditable = true  },
+                    new() { Key = SFOKeys.DISC_VERSION, Value =  "1.00", IsEditable = true  },
+                    new() { Key = SFOKeys.LICENSE, Value =  SFOValues.License, IsEditable = true  },
+                    new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  0x01 , IsEditable = false },
+                    new() { Key = SFOKeys.PSP_SYSTEM_VER, Value =  "3.01", IsEditable = true  },
+                    new() { Key = SFOKeys.REGION, Value =  0x8000, IsEditable = true },
+                    new() { Key = SFOKeys.TITLE, Value = "", IsEditable = true  },
+                };
+            }
+        }
+
+
+        private void Cancel_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_cancellationTokenSource.IsCancellationRequested)
+            {
+                _cancellationTokenSource.Cancel();
+            }
+        }
+
+        private void SelectGameID_Click(object sender, RoutedEventArgs e)
+        {
+            if (_model.SelectedDisc is { IsEmpty: false })
+            {
+                var window = new GameListWindow();
+                window.Owner = Window;
+                var result = window.ShowDialog();
+                if (result is true)
+                {
+                    _model.SelectedDisc.GameID = window.SelectedGame.GameID;
+                    _model.SelectedDisc.Title = window.SelectedGame.GameName;
+                }
+            }
+          
         }
     }
 }

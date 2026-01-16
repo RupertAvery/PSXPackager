@@ -66,6 +66,7 @@
                     </Grid>
                 </MenuItem.Header>
             </MenuItem>
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}"></Separator>
             <MenuItem x:Name="OpenFile" Click="OpenFile_OnClick" ToolTip="Open PBP">
                 <MenuItem.Visibility >
                     <MultiBinding Converter="{StaticResource ModeVisibilityConverter}">
@@ -127,7 +128,15 @@
                 </MenuItem.Header>
             </MenuItem>
 
-            <Separator Width="2"/>
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}">
+                <Separator.Visibility >
+                    <MultiBinding Converter="{StaticResource ModeVisibilityConverter}">
+                        <Binding Path="Mode"></Binding>
+                        <Binding Source="{StaticResource Single}"></Binding>
+                    </MultiBinding>
+                </Separator.Visibility>
+            </Separator>
+
             <MenuItem x:Name="Settings" Click="Settings_OnClick" ToolTip="Settings">
                 <MenuItem.Header>
                     <controls:AutoDisableImage Height="32" Width="32">

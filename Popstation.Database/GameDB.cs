@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -8,16 +9,16 @@ namespace Popstation.Database
 {
     public class GameDB
     {
-        private readonly List<GameEntry> _gameEntries;
+        public List<GameEntry> GameEntries { get; }
 
         public GameDB(string path)
         {
-            _gameEntries = new List<GameEntry>();
+            GameEntries = new List<GameEntry>();
 
             foreach (var item in File.ReadAllLines(path))
             {
                 var parts = item.Split(new char[] { ';' });
-                _gameEntries.Add(new GameEntry()
+                GameEntries.Add(new GameEntry()
                 {
                     GameID = parts[0],
                     SaveFolderName = parts[1],
@@ -31,7 +32,7 @@ namespace Popstation.Database
 
         public GameEntry GetEntryByScannerID(string scannerID)
         {
-            return _gameEntries.FirstOrDefault(x => x.ScannerID == scannerID.ToUpper());
+            return GameEntries.FirstOrDefault(x => x.ScannerID == scannerID.ToUpper());
         }
 
 
@@ -59,6 +60,7 @@ namespace Popstation.Database
                 foreach (var file in cdReader.GetFiles("\\"))
                 {
                     var filename = file.Substring(1, file.LastIndexOf(";") - 1);
+  
                     if (filename != "SYSTEM.CNF") continue;
 
                     using (var datastream = cdReader.OpenFile(file, FileMode.Open))

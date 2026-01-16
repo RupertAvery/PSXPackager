@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Popstation.Pbp;
 
 namespace Popstation
 {
@@ -28,5 +29,6 @@ namespace Popstation
         public string FileNameFormat { get; set; }
         public string MainGameRegion { get; set; }
         public string OriginalPath { get; set; }
+        public IReadOnlyCollection<SFOEntry> SFOEntries { get; set; }
     };
 }

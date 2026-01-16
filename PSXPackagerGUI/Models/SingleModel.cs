@@ -1,11 +1,12 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Windows.Media.Imaging;
 
 namespace PSXPackagerGUI.Models
 {
     public class SingleModel : BaseNotifyModel
     {
-        private IEnumerable<Disc> _discs;
+        private ObservableCollection<Disc> _discs;
         private bool _isDirty;
         private double _progress;
         private double _maxProgress;
@@ -16,10 +17,11 @@ namespace PSXPackagerGUI.Models
         private ResourceModel _pic1;
         private ResourceModel _snd0;
         private string _status;
+        private ObservableCollection<SFOEntry> _sfoEntries;
 
         public SingleModel()
         {
-            Discs = new List<Disc>()
+            Discs = new ObservableCollection<Disc>()
             {
                 new Disc()
                 {
@@ -30,7 +32,13 @@ namespace PSXPackagerGUI.Models
         }
         
         public Disc SelectedDisc { get => _selectedDisc; set => SetProperty(ref _selectedDisc, value); }
-        public IEnumerable<Disc> Discs { get => _discs; set => SetProperty(ref _discs, value); }
+        public ObservableCollection<Disc> Discs { get => _discs; set => SetProperty(ref _discs, value); }
+
+        public ObservableCollection<SFOEntry> SFOEntries
+        {
+            get => _sfoEntries;
+            set => SetProperty(ref _sfoEntries, value);
+        }
 
         public ResourceModel Icon0 { get => _icon0; set => SetProperty(ref _icon0, value); }
         public ResourceModel Icon1 { get => _icon1; set => SetProperty(ref _icon1, value); }

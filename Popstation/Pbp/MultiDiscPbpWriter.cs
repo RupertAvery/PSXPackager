@@ -77,7 +77,7 @@ namespace Popstation.Pbp
 
                 Notify?.Invoke(PopstationEventEnum.DiscStart, discNo + 1);
 
-                WriteDisc(outputStream, disc, psarOffset, true,  cancellationToken);
+                WriteDisc(outputStream, disc, psarOffset, true, cancellationToken);
 
                 if (!cancellationToken.IsCancellationRequested)
                 {

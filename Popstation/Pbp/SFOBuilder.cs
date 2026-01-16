@@ -6,11 +6,19 @@ namespace Popstation.Pbp
 {
     public class SFOBuilder
     {
-        private List<SFOEntry> entries = new List<SFOEntry>();
+        private readonly List<SFOEntry> _entries = new List<SFOEntry>();
+
+        public SFOBuilder() { }
+
+        public SFOBuilder(IEnumerable<SFOEntry> entries)
+        {
+            _entries.AddRange(entries);
+        }
+
 
         public void AddEntry(string key, object value)
         {
-            entries.Add(new SFOEntry() { Key = key, Value = value });
+            _entries.Add(new SFOEntry() { Key = key, Value = value });
         }
 
         public SFOData Build()
@@ -22,9 +30,9 @@ namespace Popstation.Pbp
             sfo.Entries = new List<SFODir>();
 
             var headerSize = 20;
-            var indexTableSize = entries.Count * 16;
+            var indexTableSize = _entries.Count * 16;
 
-            var keyTableSize = entries.Sum(x => x.Key.Length + 1);
+            var keyTableSize = _entries.Sum(x => x.Key.Length + 1);
 
             if (keyTableSize % 4 != 0)
             {
@@ -38,9 +46,8 @@ namespace Popstation.Pbp
             ushort keyOffset = 0;
             uint dataOffset = 0;
 
-            for (var i = 0; i < entries.Count; i++)
+            foreach (var entry in _entries)
             {
-                var entry = entries[i];
                 var entryLength = GetEntryLength(entry.Key, entry.Value);
                 var maxLength = GetMaxLength(entry.Key);
 
@@ -61,7 +68,7 @@ namespace Popstation.Pbp
                 });
 
                 dataOffset += maxLength;
-                keyOffset += (ushort)(entries[i].Key.Length + 1);
+                keyOffset += (ushort)(entry.Key.Length + 1);
             }
 
             sfo.Size = sfo.DataTableOffset + dataOffset;
@@ -71,28 +78,19 @@ namespace Popstation.Pbp
 
         private uint GetMaxLength(string key)
         {
-            switch (key)
+            return key switch
             {
-                case SFOKeys.BOOTABLE:
-                    return 4;
-                case SFOKeys.CATEGORY:
-                    return 4;
-                case SFOKeys.DISC_ID:
-                    return 16;
-                case SFOKeys.DISC_VERSION:
-                    return 8;
-                case SFOKeys.LICENSE:
-                    return 512;
-                case SFOKeys.PARENTAL_LEVEL:
-                    return 4;
-                case SFOKeys.PSP_SYSTEM_VER:
-                    return 8;
-                case SFOKeys.REGION:
-                    return 4;
-                case SFOKeys.TITLE:
-                    return 128;
-            }
-            throw new ArgumentOutOfRangeException();
+                SFOKeys.BOOTABLE => 4,
+                SFOKeys.CATEGORY => 4,
+                SFOKeys.DISC_ID => 16,
+                SFOKeys.DISC_VERSION => 8,
+                SFOKeys.LICENSE => 512,
+                SFOKeys.PARENTAL_LEVEL => 4,
+                SFOKeys.PSP_SYSTEM_VER => 8,
+                SFOKeys.REGION => 4,
+                SFOKeys.TITLE => 128,
+                _ => throw new ArgumentOutOfRangeException()
+            };
         }
 
         private ushort GetEntryType(string key)
@@ -100,28 +98,19 @@ namespace Popstation.Pbp
             const ushort stringType = 0x0204;
             const ushort intType = 0x0404;
 
-            switch (key)
+            return key switch
             {
-                case SFOKeys.BOOTABLE:
-                    return intType;
-                case SFOKeys.CATEGORY:
-                    return stringType;
-                case SFOKeys.DISC_ID:
-                    return stringType;
-                case SFOKeys.DISC_VERSION:
-                    return stringType;
-                case SFOKeys.LICENSE:
-                    return stringType;
-                case SFOKeys.PARENTAL_LEVEL:
-                    return intType;
-                case SFOKeys.PSP_SYSTEM_VER:
-                    return stringType;
-                case SFOKeys.REGION:
-                    return intType;
-                case SFOKeys.TITLE:
-                    return stringType;
-            }
-            throw new ArgumentOutOfRangeException();
+                SFOKeys.BOOTABLE => intType,
+                SFOKeys.CATEGORY => stringType,
+                SFOKeys.DISC_ID => stringType,
+                SFOKeys.DISC_VERSION => stringType,
+                SFOKeys.LICENSE => stringType,
+                SFOKeys.PARENTAL_LEVEL => intType,
+                SFOKeys.PSP_SYSTEM_VER => stringType,
+                SFOKeys.REGION => intType,
+                SFOKeys.TITLE => stringType,
+                _ => throw new ArgumentOutOfRangeException()
+            };
         }
 
         private ushort GetEntryLength(string key, object value)
@@ -129,33 +118,24 @@ namespace Popstation.Pbp
             // string length + null terminator
             ushort strlen = 0;
 
-            if (value.GetType() == typeof(string))
+            if (value is string s)
             {
-                strlen = (ushort)(((string)value).Length + 1);
+                strlen = (ushort)(s.Length + 1);
             }
 
-            switch (key)
+            return key switch
             {
-                case SFOKeys.BOOTABLE:
-                    return 4;
-                case SFOKeys.CATEGORY:
-                    return strlen;
-                case SFOKeys.DISC_ID:
-                    return strlen;
-                case SFOKeys.DISC_VERSION:
-                    return strlen;
-                case SFOKeys.LICENSE:
-                    return strlen;
-                case SFOKeys.PARENTAL_LEVEL:
-                    return 4;
-                case SFOKeys.PSP_SYSTEM_VER:
-                    return strlen;
-                case SFOKeys.REGION:
-                    return 4;
-                case SFOKeys.TITLE:
-                    return strlen;
-            }
-            throw new ArgumentOutOfRangeException();
+                SFOKeys.BOOTABLE => 4,
+                SFOKeys.CATEGORY => strlen,
+                SFOKeys.DISC_ID => strlen,
+                SFOKeys.DISC_VERSION => strlen,
+                SFOKeys.LICENSE => strlen,
+                SFOKeys.PARENTAL_LEVEL => 4,
+                SFOKeys.PSP_SYSTEM_VER => strlen,
+                SFOKeys.REGION => 4,
+                SFOKeys.TITLE => strlen,
+                _ => throw new ArgumentOutOfRangeException()
+            };
         }
 
     }

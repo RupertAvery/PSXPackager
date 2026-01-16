@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using Popstation.Iso;
@@ -39,7 +41,9 @@ namespace Popstation.Pbp
 
             ProcessTOCs();
 
-            var sfo = BuildSFO();
+            var sfo = convertInfo.SFOEntries is { Count: > 0 }
+                ? BuildSFO(convertInfo.SFOEntries)
+                : BuildDefaultSFO();
 
             var header = BuildHeader(sfo);
 
@@ -449,7 +453,7 @@ namespace Popstation.Pbp
             }
         }
 
-        private SFOData BuildSFO()
+        private SFOData BuildDefaultSFO()
         {
             var sfoBuilder = new SFOBuilder();
 
@@ -463,6 +467,12 @@ namespace Popstation.Pbp
             sfoBuilder.AddEntry(SFOKeys.REGION, 0x8000);
             sfoBuilder.AddEntry(SFOKeys.TITLE, convertInfo.MainGameTitle);
 
+            return sfoBuilder.Build();
+        }
+
+        private SFOData BuildSFO(IEnumerable<SFOEntry> entries)
+        {
+            var sfoBuilder = new SFOBuilder(entries);
             return sfoBuilder.Build();
         }
 
@@ -504,7 +514,7 @@ namespace Popstation.Pbp
 
             if ((psarOffset % 0x10000) != 0)
             {
-                psarOffset = psarOffset + (0x10000 - (psarOffset % 0x10000));
+                psarOffset += (0x10000 - (psarOffset % 0x10000));
             }
 
             header[9] = psarOffset;  // Start of DATA.PSAR
