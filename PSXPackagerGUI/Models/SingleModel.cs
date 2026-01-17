@@ -13,9 +13,11 @@ namespace PSXPackagerGUI.Models
         private Disc _selectedDisc;
         private ResourceModel _icon0;
         private ResourceModel _icon1;
+        private ResourceModel _icon1Pmf;
         private ResourceModel _pic0;
         private ResourceModel _pic1;
         private ResourceModel _snd0;
+        private ResourceModel _boot;
         private string _status;
         private ObservableCollection<SFOEntry> _sfoEntries;
 
@@ -45,6 +47,7 @@ namespace PSXPackagerGUI.Models
         public ResourceModel Pic0 { get => _pic0; set => SetProperty(ref _pic0, value); }
         public ResourceModel Pic1 { get => _pic1; set => SetProperty(ref _pic1, value); }
         public ResourceModel Snd0 { get => _snd0; set => SetProperty(ref _snd0, value); }
+        public ResourceModel Boot { get => _boot; set => SetProperty(ref _boot, value); }
 
 
         public string Status { get => _status; set => SetProperty(ref _status, value); }

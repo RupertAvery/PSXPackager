@@ -34,9 +34,13 @@ namespace Popstation.Pbp
             outputStream.WriteInt32(0x33B5A90F, 1);
             outputStream.WriteInt32(0x06F6B4B3, 1);
             outputStream.WriteUInt32(0xB25945BA, 1);
+
+            // Pad 0's up to psarOffset + 0x200
             outputStream.WriteInt32(0, 0x76);
 
             m_offset = (uint)outputStream.Position;
+
+            // Reserve space for disc offsets
 
             //memset(iso_positions, 0, sizeof(iso_positions));
             outputStream.Write(iso_positions, 1, sizeof(uint) * 5);
@@ -51,13 +55,17 @@ namespace Popstation.Pbp
 
             outputStream.WriteChar(0, 0x15);
 
+            // Reserve 2 ints for ? offset 
             p2_offset = (uint)outputStream.Position;
             outputStream.WriteInt32(0, 2);
 
             outputStream.Write(Popstation.data3, 0, Popstation.data3.Length);
+            
+            // Write title and pad to 128 
             outputStream.Write(title, 0, title.Length);
-
             outputStream.WriteChar(0, 0x80 - title.Length);
+
+            // Write a 7
             outputStream.WriteInt32(7, 1);
             outputStream.WriteInt32(0, 0x1C);
 
@@ -67,7 +75,7 @@ namespace Popstation.Pbp
 
                 offset = (uint)outputStream.Position;
 
-                if (offset % 0x8000 == 0)
+                if (offset % 0x8000 > 0)
                 {
                     x = 0x8000 - (offset % 0x8000);
                     outputStream.WriteChar(0, (int)x);

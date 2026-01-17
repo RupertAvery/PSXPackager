@@ -28,7 +28,9 @@ namespace Popstation.Pbp
         PIC1,
         SND0,
         PSP,
-        PSAR
+        PSAR,
+        BOOT,
+        DATA
     }
 
     public class PbpReader

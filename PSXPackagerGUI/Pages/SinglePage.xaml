@@ -109,11 +109,11 @@
                             <Label Grid.Column="0" Grid.Row="1" >Game Title</Label>
                             <Label Grid.Column="0" Grid.Row="2" >Save ID</Label>
                             <Label Grid.Column="0" Grid.Row="3" >Save Title</Label>
-                            <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="0" Text="{Binding SelectedDisc.GameID}"></TextBox>
+                            <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="0" Text="{Binding SelectedDisc.GameID}" MaxLength="9"></TextBox>
                             <Button Grid.Column="2" Click="SelectGameID_Click">...</Button>
-                            <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="1" Text="{Binding SelectedDisc.Title}"></TextBox>
-                            <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="2" Text="{Binding SelectedDisc.SaveID}"></TextBox>
-                            <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="3" Text="{Binding SelectedDisc.SaveTitle}"></TextBox>
+                            <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="1" Text="{Binding SelectedDisc.Title}" MaxLength="128"></TextBox>
+                            <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="2" Text="{Binding SelectedDisc.SaveID}" MaxLength="9"></TextBox>
+                            <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="3" Text="{Binding SelectedDisc.SaveTitle}" MaxLength="128"></TextBox>
 
                         </Grid>
                     </GroupBox>
@@ -127,18 +127,20 @@
                         <Grid Margin="0,0,10,0">
 
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="100"/>
-                                <RowDefinition Height="100"/>
-                                <RowDefinition Height="100"/>
-                                <RowDefinition Height="100"/>
-                                <RowDefinition Height="100"/>
+                                <RowDefinition Height="200"/>
+                                <RowDefinition Height="200"/>
+                                <RowDefinition Height="200"/>
+                                <RowDefinition Height="200"/>
+                                <RowDefinition Height="200"/>
+                                <RowDefinition Height="200"/>
                             </Grid.RowDefinitions>
 
-                            <controls:ResourceControl Resource="{Binding Icon0}" Grid.Row="0" Text="ICON0" Drop="Icon0_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
-                            <controls:ResourceControl Resource="{Binding Icon1}" Grid.Row="1" Text="ICON1" Drop="Icon1_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
-                            <controls:ResourceControl Resource="{Binding Pic0}" Grid.Row="2" Text="PIC0" Drop="Pic0_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
-                            <controls:ResourceControl Resource="{Binding Pic1}" Grid.Row="3" Text="PIC1" Drop="Pic1_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
-                            <controls:ResourceControl Resource="{Binding Snd0}" Grid.Row="4" Text="SND0" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                            <controls:ResourceControl Resource="{Binding Icon0}" Grid.Row="0" Text="Icon Image (ICON0.PNG) 80x80" Drop="Icon0_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                            <controls:ResourceControl Resource="{Binding Pic1}" Grid.Row="1" Text="Background Image (PIC1.PNG) 480x272"  Drop="Pic1_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                            <controls:ResourceControl Resource="{Binding Snd0}" Grid.Row="2" Text="Background Music (SND0.AT3)" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                            <controls:ResourceControl Resource="{Binding Pic0}" Grid.Row="3" Text="Information (PIC0.PNG) 480x272" Drop="Pic0_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                            <controls:ResourceControl Resource="{Binding Icon1}" Grid.Row="4" Text="Animated Icon (ICON1.PMF)"  Drop="Icon1_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                            <controls:ResourceControl Resource="{Binding Boot}" Grid.Row="5" Text="Boot Image" Drop="Boot_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
 
                         </Grid>
                     </ScrollViewer>

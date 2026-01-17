@@ -75,6 +75,7 @@ namespace PSXPackagerGUI.Pages
                 Pic0 = new ResourceModel() { Type = ResourceType.PIC0 },
                 Pic1 = new ResourceModel() { Type = ResourceType.PIC1 },
                 Snd0 = new ResourceModel() { Type = ResourceType.SND0 },
+                Boot = new ResourceModel() { Type = ResourceType.SND0 },
                 IsDirty = false,
                 MaxProgress = 100,
                 Progress = 0,
@@ -96,6 +97,7 @@ namespace PSXPackagerGUI.Pages
             Model.Pic0.Reset();
             Model.Pic1.Reset();
             Model.Snd0.Reset();
+            Model.Boot.Reset();
             Model.IsDirty = false;
             Model.MaxProgress = 100;
             Model.Progress = 0;
@@ -220,7 +222,7 @@ namespace PSXPackagerGUI.Pages
                 SFOKeys.DISC_ID => true,
                 SFOKeys.DISC_VERSION => true,
                 SFOKeys.LICENSE => true,
-                SFOKeys.PARENTAL_LEVEL => false,
+                SFOKeys.PARENTAL_LEVEL => true,
                 SFOKeys.PSP_SYSTEM_VER => true,
                 SFOKeys.REGION => true,
                 SFOKeys.TITLE => true,
@@ -376,6 +378,21 @@ namespace PSXPackagerGUI.Pages
             set => _model = value;
         }
 
+        Regex gameIDregex = new Regex("(SCUS|SLUS|SLES|SCES|SCED|SLPS|SLPM|SCPS|SLED|SLPS|SIPS|ESPM|PBPX)(\\d{5})");
+
+        private void ValidateDisc(Disc disc)
+        {
+            if (!gameIDregex.IsMatch(disc.GameID))
+            {
+                MessageBox.Show(Window, "", "Validation Error");
+            }
+        }
+
+        private void Validate()
+        {
+
+        }
+
         public void Save(bool pspMode = false)
         {
             if (!Model.IsNew)
@@ -469,11 +486,13 @@ namespace PSXPackagerGUI.Pages
                     OutputPath = Path.GetDirectoryName(filename),
                     OriginalFilename = Path.GetFileName(filename),
                     DiscInfos = discs.Select(GetDiscInfo).ToList(),
+                    DataPsp = GetResourceOrDefault(ResourceType.DATA, "PSP", new ResourceModel()),
                     Icon0 = GetResourceOrDefault(ResourceType.ICON0, "png", Model.Icon0),
                     Icon1 = GetResource(Model.Icon1),
                     Pic0 = GetResourceOrDefault(ResourceType.PIC0, "png", Model.Pic0),
                     Pic1 = GetResourceOrDefault(ResourceType.PIC1, "png", Model.Pic1),
                     Snd0 = GetResource(Model.Snd0),
+                    Boot = GetResourceOrDefault(ResourceType.BOOT, "png", Model.Boot),
                     MainGameTitle = disc1.SaveTitle,
                     MainGameID = disc1.SaveID,
                     MainGameRegion = disc1.Region,
@@ -911,7 +930,7 @@ namespace PSXPackagerGUI.Pages
                         new() { Key = SFOKeys.DISC_ID, Value = gameId, IsEditable = true  },
                         new() { Key = SFOKeys.DISC_VERSION, Value =  "1.00", IsEditable = true  },
                         new() { Key = SFOKeys.LICENSE, Value =  SFOValues.License, IsEditable = true  },
-                        new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  0x01 , IsEditable = false },
+                        new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  0x01 , IsEditable = true },
                         new() { Key = SFOKeys.PSP_SYSTEM_VER, Value =  "3.01", IsEditable = true  },
                         new() { Key = SFOKeys.REGION, Value =  0x8000, IsEditable = true },
                         new() { Key = SFOKeys.TITLE, Value = disc.SaveTitle, IsEditable = true  },
@@ -1018,20 +1037,19 @@ namespace PSXPackagerGUI.Pages
         private void Resource_OnMore(object sender, RoutedEventArgs e)
         {
             var control = sender as ResourceControl;
-            var context = control.DataContext as ResourceModel;
 
             var cm = this.FindResource("ResourceButtonContextMenu") as ContextMenu;
             var menuItems = cm.Items.OfType<MenuItem>();
             foreach (var menuItem in menuItems)
             {
-                menuItem.DataContext = control.DataContext;
+                menuItem.DataContext = control.Resource;
                 switch (menuItem.Name)
                 {
                     case "LoadResource":
-                        menuItem.IsEnabled = context.IsLoadEnabled;
+                        menuItem.IsEnabled = control.Resource.IsLoadEnabled;
                         break;
                     case "SaveResource":
-                        menuItem.IsEnabled = context.IsSaveAsEnabled;
+                        menuItem.IsEnabled = control.Resource.IsSaveAsEnabled;
                         break;
                 }
             }
@@ -1042,10 +1060,11 @@ namespace PSXPackagerGUI.Pages
 
         private void LoadResource_OnClick(object sender, RoutedEventArgs e)
         {
-            var context = ((MenuItem)sender).DataContext as ResourceModel;
+            var resource = (sender as MenuItem).DataContext as ResourceModel;
+
             var openFileDialog = new Ookii.Dialogs.Wpf.VistaOpenFileDialog();
 
-            switch (context.Type)
+            switch (resource.Type)
             {
                 case ResourceType.ICON0:
                 case ResourceType.PIC0:
@@ -1065,11 +1084,11 @@ namespace PSXPackagerGUI.Pages
             if (!string.IsNullOrEmpty(openFileDialog.FileName))
             {
                 var fileStream = new FileStream(openFileDialog.FileName, FileMode.Open, FileAccess.Read);
-                context.Icon = GetBitmapImage(fileStream);
-                context.IsLoadEnabled = true;
-                context.IsSaveAsEnabled = false;
-                context.IsRemoveEnabled = true;
-                context.SourceUrl = openFileDialog.FileName;
+                resource.Icon = GetBitmapImage(fileStream);
+                resource.IsLoadEnabled = true;
+                resource.IsSaveAsEnabled = false;
+                resource.IsRemoveEnabled = true;
+                resource.SourceUrl = openFileDialog.FileName;
                 Model.IsDirty = true;
             }
 
@@ -1078,7 +1097,7 @@ namespace PSXPackagerGUI.Pages
 
         private void SaveResource_OnClick(object sender, RoutedEventArgs e)
         {
-            var context = ((MenuItem)sender).DataContext as ResourceModel;
+            var context = (sender as MenuItem).DataContext as ResourceModel;
             var saveFileDialog = new Ookii.Dialogs.Wpf.VistaSaveFileDialog();
             saveFileDialog.AddExtension = true;
 
@@ -1149,7 +1168,8 @@ namespace PSXPackagerGUI.Pages
 
         private void Resource_OnRemove(object sender, RoutedEventArgs e)
         {
-            var context = ((ResourceControl)sender).DataContext as ResourceModel;
+            var context = (sender as MenuItem).DataContext as ResourceModel;
+
             context.Icon = null;
             context.IsSaveAsEnabled = false;
             context.SourceUrl = null;
@@ -1196,10 +1216,10 @@ namespace PSXPackagerGUI.Pages
                     new() { Key = SFOKeys.DISC_ID, Value = gameId, IsEditable = true  },
                     new() { Key = SFOKeys.DISC_VERSION, Value =  "1.00", IsEditable = true  },
                     new() { Key = SFOKeys.LICENSE, Value =  SFOValues.License, IsEditable = true  },
-                    new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  0x01 , IsEditable = false },
+                    new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  0x01 , IsEditable = true },
                     new() { Key = SFOKeys.PSP_SYSTEM_VER, Value =  "3.01", IsEditable = true  },
                     new() { Key = SFOKeys.REGION, Value =  0x8000, IsEditable = true },
-                    new() { Key = SFOKeys.TITLE, Value = game.Title, IsEditable = true  },
+                    new() { Key = SFOKeys.TITLE, Value = game.MainGameTitle, IsEditable = true  },
                 };
             }
             else
@@ -1211,7 +1231,7 @@ namespace PSXPackagerGUI.Pages
                     new() { Key = SFOKeys.DISC_ID, Value = "", IsEditable = true  },
                     new() { Key = SFOKeys.DISC_VERSION, Value =  "1.00", IsEditable = true  },
                     new() { Key = SFOKeys.LICENSE, Value =  SFOValues.License, IsEditable = true  },
-                    new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  0x01 , IsEditable = false },
+                    new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  0x01 , IsEditable = true },
                     new() { Key = SFOKeys.PSP_SYSTEM_VER, Value =  "3.01", IsEditable = true  },
                     new() { Key = SFOKeys.REGION, Value =  0x8000, IsEditable = true },
                     new() { Key = SFOKeys.TITLE, Value = "", IsEditable = true  },
@@ -1242,6 +1262,17 @@ namespace PSXPackagerGUI.Pages
                 }
             }
           
+        }
+
+        private void Boot_OnDrop(object sender, DragEventArgs e)
+        {
+            if (TryGetFilename(e.Data, imageExtensions, out var filename))
+            {
+                Model.Pic1.Icon = GetBitmapImage(GetImageStream(filename));
+                Model.Pic1.SourceUrl = filename;
+                return;
+            }
+            MessageBox.Show(Window, "Invalid fie type", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 }

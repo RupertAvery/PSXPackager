@@ -168,10 +168,8 @@ namespace Popstation.Pbp
                 basePbp.Seek(x, SeekOrigin.Begin);
                 basePbp.Read(buffer, 0, (int)header[0]);
 
-                var boot = false;
 
-
-                if (!boot)
+                if (!convertInfo.Boot.Exists)
                 {
                     outputStream.Write(buffer, 0, (int)header[0]);
                     basePbp.Read(buffer, 0, (int)header[1]);
@@ -181,6 +179,8 @@ namespace Popstation.Pbp
                 {
                     Console.WriteLine("Writing boot.png...\n");
                     Notify?.Invoke(PopstationEventEnum.WriteBootPng, null);
+
+                    convertInfo.Boot.Write(outputStream);
 
                     //ib[5] = boot_size;
                     //var temp_buffer = BitConverter.GetBytes(boot_size);
@@ -233,16 +233,26 @@ namespace Popstation.Pbp
             // Write DATA.PSAR
             outputStream.Write("PSISOIMG0000", 0, 12);
 
-            if (isMultiDisc)
-            {
-                outputStream.WriteInt32(0, 0xFD);
-            }
-            else
-            {
-                p1_offset = (uint)outputStream.Position;
-                outputStream.WriteUInt32(isoSize + 0x100000, 1);
-                outputStream.WriteInt32(0, 0xFC);
-            }
+            //if (!isMultiDisc)
+            //{
+            //    // Pad to psarOffset + 0x400
+            //    outputStream.WriteInt32(0, 0xFD);
+            //}
+            //else
+            //{
+            //    // Write padded disc size?
+            //    p1_offset = (uint)outputStream.Position;
+            //    outputStream.WriteUInt32(isoSize + 0x100000, 1);
+            //    // Pad to psarOffset + 0x400
+            //    outputStream.WriteInt32(0, 0xFC);
+            //}
+
+            // Write padded disc size?
+            p1_offset = (uint)outputStream.Position;
+            outputStream.WriteUInt32(isoSize + 0x100000, 1);
+            // Pad to psarOffset + 0x400
+            outputStream.WriteInt32(0, 0xFC);
+
 
             var data1Length = Popstation.data1.Length;
             var data1 = ArrayPool<byte>.Shared.Rent(data1Length);
@@ -261,7 +271,6 @@ namespace Popstation.Pbp
 
             // Overlay the TOC data onto the data1 template
             Array.Copy(disc.TocData, 0, data1, 1024, disc.TocData.Length);
-
             outputStream.Write(data1, 0, data1Length);
             ArrayPool<byte>.Shared.Return(data1);
 

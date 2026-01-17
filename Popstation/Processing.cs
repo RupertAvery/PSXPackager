@@ -518,6 +518,7 @@ namespace Popstation
             options.Pic0 = GetResourceOrDefault(ResourceType.PIC0, "png");
             options.Pic1 = GetResourceOrDefault(ResourceType.PIC1, "png");
             options.Snd0 = GetResourceOrDefault(ResourceType.SND0, "at3");
+            options.Boot = GetResourceOrDefault(ResourceType.BOOT, "png");
         }
 
         /// <summary>

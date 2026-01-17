@@ -94,10 +94,13 @@ namespace Popstation
 
         public static void WriteRandom(this Stream stream, int count)
         {
-            var buffer = new byte[count];
+            var buffer = new uint[count];
             var r = new Random();
-            r.NextBytes(buffer);
-            stream.Write(buffer, 0, count);
+            for (var i = 0; i < count; i++)
+            {
+                buffer[i] = (uint)r.Next(0, 0xFFFF);
+            }
+            stream.Write(buffer, 0, count * sizeof(uint));
         }
 
         public static void WriteChar(this Stream stream, byte value, int count)

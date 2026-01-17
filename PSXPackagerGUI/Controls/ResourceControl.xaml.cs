@@ -13,10 +13,10 @@ namespace PSXPackagerGUI.Controls
     /// </summary>
     public partial class ResourceControl : UserControl, INotifyPropertyChanged
     {
-        public static readonly DependencyProperty IconProperty =
-            DependencyProperty.Register(nameof(Icon), typeof(ImageSource),
-                typeof(ResourceControl),
-                new FrameworkPropertyMetadata(OnIconChanged));
+        //public static readonly DependencyProperty IconProperty =
+        //    DependencyProperty.Register(nameof(Icon), typeof(ImageSource),
+        //        typeof(ResourceControl),
+        //        new FrameworkPropertyMetadata(OnIconChanged));
 
         public static readonly DependencyProperty TextProperty =
             DependencyProperty.Register(nameof(Text), typeof(string),
@@ -30,13 +30,13 @@ namespace PSXPackagerGUI.Controls
             EventManager.RegisterRoutedEvent(nameof(Remove), RoutingStrategy.Bubble, typeof(RoutedEventHandler),
                 typeof(ResourceControl));
 
-        public static readonly DependencyProperty IsMoreEnabledProperty =
-            DependencyProperty.Register(nameof(IsMoreEnabled), typeof(bool),
-                typeof(ResourceControl));
+        //public static readonly DependencyProperty IsMoreEnabledProperty =
+        //    DependencyProperty.Register(nameof(IsMoreEnabled), typeof(bool),
+        //        typeof(ResourceControl));
 
-        public static readonly DependencyProperty IsRemoveEnabledProperty =
-            DependencyProperty.Register(nameof(IsRemoveEnabled), typeof(bool),
-                typeof(ResourceControl));
+        //public static readonly DependencyProperty IsRemoveEnabledProperty =
+        //    DependencyProperty.Register(nameof(IsRemoveEnabled), typeof(bool),
+        //        typeof(ResourceControl));
 
         public static readonly DependencyProperty ResourceProperty =
             DependencyProperty.Register(nameof(Resource), typeof(ResourceModel),
@@ -44,27 +44,28 @@ namespace PSXPackagerGUI.Controls
         //new FrameworkPropertyMetadata(OnResourceChanged));
 
 
-        private static void OnIconChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            ((ResourceControl)d).Icon = (BitmapImage)e.NewValue;
-            ((ResourceControl)d).InvalidateVisual();
-        }
+        //private static void OnIconChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        //{
+        //    ((ResourceControl)d).Icon = (BitmapImage)e.NewValue;
+        //    ((ResourceControl)d).InvalidateVisual();
+        //}
 
         private static void OnResourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            ((ResourceControl)d).Resource = (ResourceModel)e.NewValue;
-            ((ResourceControl)d).InvalidateVisual();
-        }
+            var control = ((ResourceControl)d);
+            control.Resource = (ResourceModel)e.NewValue;
+            control.InvalidateVisual();
+            control.Resource.PropertyChanged += ResourceOnPropertyChanged;
 
-        protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
-        {
-            base.OnPropertyChanged(e);
-            if (e.Property.Name == nameof(Text))
+            void ResourceOnPropertyChanged(object? sender, PropertyChangedEventArgs propertyChangedEventArgs)
             {
-                LabelText.Content = e.NewValue;
+                if (propertyChangedEventArgs.PropertyName == nameof(ResourceModel.Icon))
+                {
+                    control.InvalidateVisual();
+                }
             }
         }
-
+        
         public event RoutedEventHandler More
         {
             add => AddHandler(MoreEvent, value);
@@ -80,32 +81,48 @@ namespace PSXPackagerGUI.Controls
         public ResourceModel Resource
         {
             get => (ResourceModel)GetValue(ResourceProperty);
-            set { SetValue(ResourceProperty, value); DataContext = value; InvalidateVisual(); }
+            set { SetValue(ResourceProperty, value); InvalidateVisual(); }
         }
 
-        public bool IsMoreEnabled
-        {
-            get => (bool)GetValue(IsMoreEnabledProperty);
-            set { SetValue(IsMoreEnabledProperty, value); MoreButton.IsEnabled = value; }
-        }
+        //public bool IsMoreEnabled
+        //{
+        //    get => (bool)GetValue(IsMoreEnabledProperty);
+        //    set
+        //    {
+        //        SetValue(IsMoreEnabledProperty, value);
+        //        OnPropertyChanged();
+        //    }
+        //}
 
-        public bool IsRemoveEnabled
-        {
-            get => (bool)GetValue(IsRemoveEnabledProperty);
-            set { SetValue(IsRemoveEnabledProperty, value); RemoveButton.IsEnabled = value; }
-        }
+        //public bool IsRemoveEnabled
+        //{
+        //    get => (bool)GetValue(IsRemoveEnabledProperty);
+        //    set
+        //    {
+        //        SetValue(IsRemoveEnabledProperty, value); 
+        //        OnPropertyChanged();
+        //    }
+        //}
 
         public string Text
         {
             get => (string)GetValue(TextProperty);
-            set { SetValue(TextProperty, value); LabelText.Content = value; }
+            set
+            {
+                SetValue(TextProperty, value);
+                OnPropertyChanged();
+            }
         }
 
-        public ImageSource Icon
-        {
-            get => (ImageSource)GetValue(IconProperty);
-            set { SetValue(IconProperty, value); }
-        }
+        //public ImageSource Icon
+        //{
+        //    get => (ImageSource)GetValue(IconProperty);
+        //    set
+        //    {
+        //        SetValue(IconProperty, value);
+        //        OnPropertyChanged();
+        //    }
+        //}
 
         public ResourceControl()
         {
@@ -130,6 +147,7 @@ namespace PSXPackagerGUI.Controls
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
+
         protected void OnPropertyChanged([CallerMemberName] string name = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

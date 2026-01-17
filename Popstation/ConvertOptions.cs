@@ -15,7 +15,7 @@ namespace Popstation
         public Resource Pic0 { get; set; }
         public Resource Pic1 { get; set; }
         public Resource Snd0 { get; set; }
-        public string Boot { get; set; }
+        public Resource Boot { get; set; }
         /// <summary>
         /// Used for default PARAM.SFO DISC_ID and DATA.PSAR
         /// </summary>

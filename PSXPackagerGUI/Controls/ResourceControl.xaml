@@ -7,29 +7,32 @@
              xmlns:models="clr-namespace:PSXPackagerGUI.Models"
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance models:ResourceModel, IsDesignTimeCreatable=True}"
-             d:DesignHeight="100" d:DesignWidth="400">
-    <Grid Margin="0,0,0,0">
+             d:DesignHeight="200" d:DesignWidth="400">
+    <Grid Margin="0,0,0,0" DataContext="{Binding Resource, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="60"/>
             <ColumnDefinition/>
             <ColumnDefinition Width="30"/>
         </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
 
-        <Label Grid.Column="0" Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Center" x:Name="LabelText"></Label>
+        <Label Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Content="{Binding Text, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}"></Label>
 
-        <Rectangle Margin="5,0,0,0" Grid.Row="0" Grid.Column="1" Fill="#15000060" AllowDrop="True" Drop="UIElement_OnDrop"></Rectangle>
+        <Rectangle Grid.Row="1" Grid.Column="1" Fill="#15000060" AllowDrop="True" Drop="UIElement_OnDrop"></Rectangle>
 
-        <Image Grid.Column="1" Grid.Row="0" VerticalAlignment="Center" Source="{Binding Icon}" Height="80" AllowDrop="True" Drop="UIElement_OnDrop"></Image>
+        <Border Grid.Row="1" Grid.Column="0"  BorderBrush="#60000000" BorderThickness="0.2">
+            <Image VerticalAlignment="Center" Source="{Binding Icon}" AllowDrop="True" Drop="UIElement_OnDrop"></Image>
+        </Border>
 
-        <Border Margin="5,0,0,0" Grid.Row="0" Grid.Column="1"  BorderBrush="#60000000" BorderThickness="0.2"/>
-
-        <Grid Grid.Row="0" Grid.Column="2">
+        <Grid Grid.Row="1" Grid.Column="1">
             <Grid.RowDefinitions>
                 <RowDefinition/>
                 <RowDefinition/>
             </Grid.RowDefinitions>
-            <Button Grid.Row="0" x:Name="MoreButton" Click="More_OnClick">...</Button>
-            <Button Grid.Row="1" x:Name="RemoveButton" Click="Remove_OnClick">x</Button>
+            <Button Grid.Row="0" x:Name="MoreButton" IsEnabled="{Binding IsEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}" Click="More_OnClick">...</Button>
+            <Button Grid.Row="1" x:Name="RemoveButton" IsEnabled="{Binding IsRemoveEnabled}" Click="Remove_OnClick">x</Button>
         </Grid>
 
     </Grid>
