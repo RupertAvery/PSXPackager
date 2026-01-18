@@ -223,6 +223,11 @@ namespace Popstation.Pbp
             return (uint)((out_buffer[104] + (out_buffer[105] << 8) + (out_buffer[106] << 16) + (out_buffer[107] << 24)) * ISO_BLOCK_SIZE);
         }
 
+        public PbpDiscStream GetDiscStream()
+        {
+            return new PbpDiscStream(this);
+        }
+
         public void CopyTo(Stream destination, CancellationToken cancellationToken)
         {
             uint totSize = 0;

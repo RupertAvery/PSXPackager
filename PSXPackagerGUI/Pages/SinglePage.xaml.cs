@@ -1127,6 +1127,23 @@ namespace PSXPackagerGUI.Pages
                                 Model.IsBusy = true;
                                 _lastvalue = 0;
                                 disc.ProgressEvent = ProgressEvent;
+
+                                //var sourceStream = disc.GetDiscStream();
+                                //var buffer = new byte[4096];
+                                //int bytesRead = 0;
+                                //int totalRead = 0;
+
+                                //while ((bytesRead = sourceStream.Read(buffer, 0, 4096)) > 0)
+                                //{
+                                //    totalRead += bytesRead;
+                                //    output.Write(buffer, 0, bytesRead);
+                                //    Dispatcher.Invoke(() =>
+                                //    {
+                                //        Model.Status = $"{totalRead}";
+                                //    });
+                                //}
+                                //output.Flush();
+
                                 disc.CopyTo(output, _cancellationTokenSource.Token);
 
                                 if (!_cancellationTokenSource.IsCancellationRequested)
