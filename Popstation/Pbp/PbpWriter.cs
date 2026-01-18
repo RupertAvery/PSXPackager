@@ -63,11 +63,17 @@ namespace Popstation.Pbp
                 convertInfo.Icon1.Write(outputStream);
             }
 
-            Notify?.Invoke(PopstationEventEnum.WritePic0Png, null);
-            convertInfo.Pic0.Write(outputStream);
+            if (convertInfo.Pic0.Exists)
+            {
+                Notify?.Invoke(PopstationEventEnum.WritePic0Png, null);
+                convertInfo.Pic0.Write(outputStream);
+            }
 
-            Notify?.Invoke(PopstationEventEnum.WritePic1Png, null);
-            convertInfo.Pic1.Write(outputStream);
+            if (convertInfo.Pic1.Exists)
+            {
+                Notify?.Invoke(PopstationEventEnum.WritePic1Png, null);
+                convertInfo.Pic1.Write(outputStream);
+            }
 
             if (convertInfo.Snd0.Exists)
             {
@@ -209,6 +215,7 @@ namespace Popstation.Pbp
             }
         }
 
+
         protected void WriteDisc(Stream outputStream, DiscInfo disc, uint psarOffset, bool isMultiDisc, CancellationToken cancellationToken)
         {
             var isoPosition = outputStream.Position - psarOffset;
@@ -338,6 +345,7 @@ namespace Popstation.Pbp
             Notify?.Invoke(PopstationEventEnum.WriteIso, null);
             Notify?.Invoke(PopstationEventEnum.WriteSize, disc.IsoSize);
 
+
             using (var inputStream = new FileStream(disc.SourceIso, FileMode.Open, FileAccess.Read))
             {
                 if (convertInfo.CompressionLevel == 0)
@@ -372,10 +380,10 @@ namespace Popstation.Pbp
                     var i = 0;
                     offset = 0;
                     uint bytesRead;
-                    byte[] buffer2 = new byte[BLOCK_SIZE];
-                    byte[] buffer = new byte[BUFFER_SIZE];
+                    byte[] readBuffer = new byte[BLOCK_SIZE];
+                    byte[] compressedBuffer = new byte[BUFFER_SIZE];
 
-                    while ((bytesRead = (uint)inputStream.Read(buffer2, 0, BLOCK_SIZE)) > 0)
+                    while ((bytesRead = (uint)inputStream.Read(readBuffer, 0, BLOCK_SIZE)) > 0)
                     {
                         totSize += bytesRead;
                         curSize += bytesRead;
@@ -385,11 +393,11 @@ namespace Popstation.Pbp
                             // Clear out the rest of the buffer if we didn't read enough
                             for (var j = 0; j < BLOCK_SIZE - bytesRead; j++)
                             {
-                                buffer2[j + bytesRead] = 0;
+                                readBuffer[j + bytesRead] = 0;
                             }
                         }
 
-                        var bufferSize = (uint)Compression.Compress(buffer2, buffer, convertInfo.CompressionLevel);
+                        var bufferSize = (uint)Compression.Compress(readBuffer, compressedBuffer, convertInfo.CompressionLevel);
 
                         bytesRead = bufferSize;
 
@@ -399,13 +407,13 @@ namespace Popstation.Pbp
                         if (bytesRead >= BLOCK_SIZE) /* Block didn't compress */
                         {
                             indexes[i].Length = BLOCK_SIZE;
-                            outputStream.Write(buffer2, 0, BLOCK_SIZE);
+                            outputStream.Write(readBuffer, 0, BLOCK_SIZE);
                             offset += BLOCK_SIZE;
                         }
                         else
                         {
                             indexes[i].Length = bytesRead;
-                            outputStream.Write(buffer, 0, (int)bytesRead);
+                            outputStream.Write(compressedBuffer, 0, (int)bytesRead);
                             offset += bytesRead;
                         }
 

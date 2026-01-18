@@ -1,8 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
-using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Popstation.Database;
@@ -95,52 +93,33 @@ namespace Popstation
             return output;
         }
 
-        private void ExtractResource(Stream stream, string path)
-        {
-            if (stream.Length > 0)
-            {
-                using (var file = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write))
-                {
-                    stream.CopyTo(file);
-                    stream.Flush();
-                }
-            }
-            stream.Dispose();
-        }
-
-
         private void ExtractResources(Stream stream, Func<ResourceType, string, string> getResourcePath)
         {
-            Stream resourceStream;
-
             var pbpStreamReader = new PbpReader(stream);
 
-            if (pbpStreamReader.TryGetResourceStream(ResourceType.ICON0, stream, out resourceStream))
+            void TryExtract(ResourceType resourceType, string extension)
             {
-                ExtractResource(resourceStream, getResourcePath(ResourceType.ICON0, ".png"));
+
+                if (pbpStreamReader.TryGetResourceStream(resourceType, stream, out Stream resourceStream))
+                {
+                    if (resourceStream.Length > 0)
+                    {
+                        using (var file = new FileStream(getResourcePath(resourceType, extension), FileMode.OpenOrCreate, FileAccess.Write))
+                        {
+                            resourceStream.CopyTo(file);
+                            resourceStream.Flush();
+                        }
+                    }
+                    resourceStream.Dispose();
+                }
             }
 
-            if (pbpStreamReader.TryGetResourceStream(ResourceType.ICON1, stream, out resourceStream))
-            {
-                ExtractResource(resourceStream, getResourcePath(ResourceType.ICON1, ".pmf"));
-            }
-
-            if (pbpStreamReader.TryGetResourceStream(ResourceType.PIC0, stream, out resourceStream))
-            {
-                ExtractResource(resourceStream, getResourcePath(ResourceType.PIC0, ".png"));
-            }
-
-            if (pbpStreamReader.TryGetResourceStream(ResourceType.PIC1, stream, out resourceStream))
-            {
-                ExtractResource(resourceStream, getResourcePath(ResourceType.PIC1, ".png"));
-            }
-
-            if (pbpStreamReader.TryGetResourceStream(ResourceType.SND0, stream, out resourceStream))
-            {
-                ExtractResource(resourceStream, getResourcePath(ResourceType.SND0, ".at3"));
-            }
-
-        }
+            TryExtract(ResourceType.ICON0, ".png");
+            TryExtract(ResourceType.ICON1, ".pmf");
+            TryExtract(ResourceType.PIC0, ".png");
+            TryExtract(ResourceType.PIC1, ".png");
+            TryExtract(ResourceType.SND0, ".at3");
+       }
 
         private string GetResourcePath(ExtractOptions options, GameEntry entry, ResourceType type, string ext)
         {

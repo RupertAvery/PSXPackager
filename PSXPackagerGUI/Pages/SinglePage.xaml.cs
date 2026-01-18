@@ -1118,7 +1118,7 @@ namespace PSXPackagerGUI.Pages
                         using (var stream = new FileStream(match.Groups[2].Value, FileMode.Open, FileAccess.Read))
                         {
                             var pbpReader = new PbpReader(stream);
-                            using (var output = new FileStream(saveFileDialog.FileName, FileMode.OpenOrCreate,
+                            using (var output = new FileStream(saveFileDialog.FileName, FileMode.Create,
                                 FileAccess.Write))
                             {
                                 var disc = pbpReader.Discs[int.Parse(match.Groups[1].Value)];

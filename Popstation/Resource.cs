@@ -1,6 +1,5 @@
 ﻿using System.IO;
 using Popstation.Pbp;
-using SharpCompress.Compressors.Xz;
 
 namespace Popstation
 {
@@ -44,31 +43,6 @@ namespace Popstation
             Exists = true;
         }
 
-        //public Resource(ResourceType resourceType, byte[] buffer, uint size)
-        //{
-        //    ResourceType = resourceType;
-        //    _buffer = buffer;
-        //    Size = size;
-        //    Exists = true;
-        //}
-
-        //public Resource(ResourceType resourceType, string file)
-        //{
-        //    ResourceType = resourceType;
-        //    _file = file;
-
-        //    if (File.Exists(file))
-        //    {
-        //        var t = new FileInfo(file);
-        //        Size = (uint)t.Length;
-        //        Exists = true;
-        //    }
-        //    else
-        //    {
-        //        Size = 0;
-        //    }
-        //}
-
         private Resource(ResourceType resourceType)
         {
             ResourceType = resourceType;
@@ -99,8 +73,6 @@ namespace Popstation
             var buffer = new byte[Size];
             _stream.Read(buffer, 0, (int)Size);
             stream.Write(buffer, 0, (int)Size);
-
-
         }
 
     }
