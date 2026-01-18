@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using Popstation.Pbp;
+using SharpCompress.Compressors.Xz;
 
 namespace Popstation
 {
@@ -8,8 +9,9 @@ namespace Popstation
     /// </summary>
     public class Resource
     {
-        private readonly string _file;
+        //private readonly string _file;
         private byte[] _buffer;
+        private Stream _stream;
 
         /// <summary>
         /// The type of data that this <see cref="Resource"/> contains
@@ -26,6 +28,14 @@ namespace Popstation
         /// </summary>
         public bool Exists { get; }
 
+        public Resource(ResourceType resourceType, Stream stream, uint size)
+        {
+            ResourceType = resourceType;
+            _stream = stream;
+            Size = size;
+            Exists = true;
+        }
+
         public Resource(ResourceType resourceType, byte[] buffer, uint size)
         {
             ResourceType = resourceType;
@@ -34,22 +44,30 @@ namespace Popstation
             Exists = true;
         }
 
-        public Resource(ResourceType resourceType, string file)
-        {
-            ResourceType = resourceType;
-            _file = file;
+        //public Resource(ResourceType resourceType, byte[] buffer, uint size)
+        //{
+        //    ResourceType = resourceType;
+        //    _buffer = buffer;
+        //    Size = size;
+        //    Exists = true;
+        //}
 
-            if (File.Exists(file))
-            {
-                var t = new FileInfo(file);
-                Size = (uint)t.Length;
-                Exists = true;
-            }
-            else
-            {
-                Size = 0;
-            }
-        }
+        //public Resource(ResourceType resourceType, string file)
+        //{
+        //    ResourceType = resourceType;
+        //    _file = file;
+
+        //    if (File.Exists(file))
+        //    {
+        //        var t = new FileInfo(file);
+        //        Size = (uint)t.Length;
+        //        Exists = true;
+        //    }
+        //    else
+        //    {
+        //        Size = 0;
+        //    }
+        //}
 
         private Resource(ResourceType resourceType)
         {
@@ -72,19 +90,17 @@ namespace Popstation
         /// <param name="stream"></param>
         public void Write(Stream stream)
         {
-            if (_file != null)
-            {
-                var buffer = new byte[Size];
-                using (var t = new FileStream(_file, FileMode.Open, FileAccess.Read))
-                {
-                    t.Read(buffer, 0, (int)Size);
-                    stream.Write(buffer, 0, (int)Size);
-                }
-            }
-            else
+            if (_buffer != null)
             {
                 stream.Write(_buffer, 0, (int)Size);
+                return;
             }
+
+            var buffer = new byte[Size];
+            _stream.Read(buffer, 0, (int)Size);
+            stream.Write(buffer, 0, (int)Size);
+
+
         }
 
     }

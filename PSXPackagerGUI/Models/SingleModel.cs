@@ -20,6 +20,13 @@ namespace PSXPackagerGUI.Models
         private ResourceModel _boot;
         private string _status;
         private ObservableCollection<SFOEntry> _sfoEntries;
+        private SettingsModel _settings;
+
+        public SettingsModel Settings
+        {
+            get => _settings;
+            set => SetProperty(ref _settings, value);
+        }
 
         public SingleModel()
         {

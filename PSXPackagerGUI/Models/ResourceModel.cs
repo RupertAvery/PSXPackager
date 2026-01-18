@@ -1,4 +1,7 @@
-﻿using System.Windows.Media;
+﻿using System.IO;
+using System.IO.Pipes;
+using System.Windows.Media;
+using Popstation;
 using Popstation.Pbp;
 
 namespace PSXPackagerGUI.Models
@@ -24,6 +27,7 @@ namespace PSXPackagerGUI.Models
             IsSaveAsEnabled = false;
             IsRemoveEnabled = false;
             SourceUrl = null;
+            Stream?.Dispose();
         }
 
         public ResourceType Type { get; set; }
@@ -64,6 +68,27 @@ namespace PSXPackagerGUI.Models
             set => SetProperty(ref _text, value);
         }
 
-        public string SourceUrl { get; set; }
+        public string? SourceUrl { get; set; }
+
+        public Stream? Stream { get; private set; }
+
+        public uint Size { get; private set; }
+
+        public void FromStream(Stream stream)
+        {
+            Stream?.Dispose();
+            Stream = stream;
+            Stream.Seek(0, SeekOrigin.Begin);
+            Size = (uint)Stream.Length;
+        }
+
+        public void CopyFromStream(Stream stream)
+        {
+            Stream?.Dispose();
+            Stream = new MemoryStream();
+            stream.CopyTo(Stream);
+            Stream.Seek(0, SeekOrigin.Begin);
+            Size = (uint)Stream.Length;
+        }
     }
 }

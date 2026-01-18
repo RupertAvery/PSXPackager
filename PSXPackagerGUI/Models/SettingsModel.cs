@@ -13,6 +13,7 @@ namespace PSXPackagerGUI.Models
         private string _customResourcesFormat;
         private string _customResourcesPath;
         private ICommand _browseCustomResourcePath;
+        private bool _generateIconFrame;
 
         public string FileNameFormat
         {
@@ -73,5 +74,11 @@ namespace PSXPackagerGUI.Models
 
         [JsonIgnore]
         public string Version { get; set; }
+
+        public bool GenerateIconFrame
+        {
+            get => _generateIconFrame;
+            set => SetProperty(ref _generateIconFrame, value);
+        }
     }
 }

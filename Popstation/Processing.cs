@@ -510,7 +510,17 @@ namespace Popstation
                     resourcePath = Path.Combine(defaultPath, $"{type}.{ext}");
                 }
 
-                return new Resource(type, GetActualFileName(resourcePath));
+                var fileName = GetActualFileName(resourcePath);
+
+                var info = new FileInfo(fileName);
+
+                using (var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
+                {
+                    var buffer = new byte[info.Length];
+                    stream.Read(buffer, 0, (int)info.Length);
+                    return new Resource(type, buffer, (uint)info.Length);
+                }
+
             }
 
             options.Icon0 = GetResourceOrDefault(ResourceType.ICON0, "png");

@@ -23,7 +23,7 @@
         <Rectangle Grid.Row="1" Grid.Column="1" Fill="#15000060" AllowDrop="True" Drop="UIElement_OnDrop"></Rectangle>
 
         <Border Grid.Row="1" Grid.Column="0"  BorderBrush="#60000000" BorderThickness="0.2">
-            <Image VerticalAlignment="Center" Source="{Binding Icon}" AllowDrop="True" Drop="UIElement_OnDrop"></Image>
+            <Image Stretch="None" VerticalAlignment="Center" Source="{Binding Icon}" AllowDrop="True" Drop="UIElement_OnDrop"></Image>
         </Border>
 
         <Grid Grid.Row="1" Grid.Column="1">

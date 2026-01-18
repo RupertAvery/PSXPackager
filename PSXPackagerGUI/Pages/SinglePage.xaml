@@ -127,20 +127,22 @@
                         <Grid Margin="0,0,10,0">
 
                             <Grid.RowDefinitions>
+                                <RowDefinition Height="30"/>
                                 <RowDefinition Height="200"/>
+                                <RowDefinition Height="272"/>
                                 <RowDefinition Height="200"/>
+                                <RowDefinition Height="272"/>
                                 <RowDefinition Height="200"/>
-                                <RowDefinition Height="200"/>
-                                <RowDefinition Height="200"/>
-                                <RowDefinition Height="200"/>
+                                <RowDefinition Height="272"/>
                             </Grid.RowDefinitions>
 
-                            <controls:ResourceControl Resource="{Binding Icon0}" Grid.Row="0" Text="Icon Image (ICON0.PNG) 80x80" Drop="Icon0_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
-                            <controls:ResourceControl Resource="{Binding Pic1}" Grid.Row="1" Text="Background Image (PIC1.PNG) 480x272"  Drop="Pic1_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
-                            <controls:ResourceControl Resource="{Binding Snd0}" Grid.Row="2" Text="Background Music (SND0.AT3)" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
-                            <controls:ResourceControl Resource="{Binding Pic0}" Grid.Row="3" Text="Information (PIC0.PNG) 480x272" Drop="Pic0_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
-                            <controls:ResourceControl Resource="{Binding Icon1}" Grid.Row="4" Text="Animated Icon (ICON1.PMF)"  Drop="Icon1_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
-                            <controls:ResourceControl Resource="{Binding Boot}" Grid.Row="5" Text="Boot Image" Drop="Boot_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                            <CheckBox Grid.Row="0" VerticalAlignment="Center" IsChecked="{Binding Settings.GenerateIconFrame}">Generate Icon Frame</CheckBox>
+                            <controls:ResourceControl Resource="{Binding Icon0}" Grid.Row="1" Text="Icon Image (ICON0.PNG) 80x80" Drop="Icon0_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                            <controls:ResourceControl Resource="{Binding Pic1}" Grid.Row="2" Text="Background Image (PIC1.PNG) 480x272"  Drop="Pic1_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                            <controls:ResourceControl Resource="{Binding Snd0}" Grid.Row="3" Text="Background Music (SND0.AT3)" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                            <controls:ResourceControl Resource="{Binding Pic0}" Grid.Row="4" Text="Information (PIC0.PNG) 480x272" Drop="Pic0_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                            <controls:ResourceControl Resource="{Binding Icon1}" Grid.Row="5" Text="Animated Icon (ICON1.PMF)"  Drop="Icon1_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                            <controls:ResourceControl Resource="{Binding Boot}" Grid.Row="6" Text="Boot Image" Drop="Boot_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
 
                         </Grid>
                     </ScrollViewer>
