@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Text;
 
 namespace Popstation.Pbp
@@ -103,6 +104,49 @@ namespace Popstation.Pbp
             return end - start;
         }
 
+        public bool TryGetBootImage(Stream stream, out Stream outputStream)
+        {
+            byte[] buffer = new byte[0x50];
+            var discEndOffset = Discs[Discs.Count - 1].EndOffset;
+
+            if (discEndOffset % 0x10 > 0)
+            {
+                discEndOffset = discEndOffset + (0x10 - (discEndOffset % 0x10));
+            }
+
+            stream.Seek(discEndOffset, SeekOrigin.Begin);
+            stream.Read(buffer, 0, 8);
+
+            var tempstr = Encoding.ASCII.GetString(buffer, 0, 8);
+
+            if (tempstr != "STARTDAT")
+            {
+                throw new Exception($"Invalid header found while reading STARTDAT");
+            }
+
+            var header = new uint[2];
+
+            stream.Seek(discEndOffset + 16, SeekOrigin.Begin);
+            stream.Read(header, 2);  // Read 2 ints into header
+
+            // header[0] - the size of the header (always 0x50)
+            // header[1] - the size of boot.png
+
+            // Go back and copy 0x50 bytes starting from STARTDAT
+            stream.Seek(discEndOffset, SeekOrigin.Begin);
+            stream.Read(buffer, 0, (int)header[0]);
+
+            var bootSize = (int)header[1];
+
+            byte[] imgbuffer = new byte[bootSize];
+
+            stream.Read(imgbuffer, 0, bootSize);
+
+            outputStream = new MemoryStream(imgbuffer);
+
+            return true;
+        }
+
         public bool TryGetResourceStream(ResourceType resource, Stream stream, out Stream outputStream)
         {
             var length = Seek(resource, stream);
@@ -117,10 +161,17 @@ namespace Popstation.Pbp
             return false;
         }
 
+        const uint PBPMAGIC = 0x50425000;
+        
         public PbpReader(Stream stream)
         {
             var buffer = new byte[16];
             stream.Read(buffer, 0, 4);
+
+            if (BitConverter.ToInt32(buffer, 0) != PBPMAGIC)
+            {
+                throw new Exception("Invalid Header found while reading PBP");
+            }
 
             stream.Seek(HEADER_SFO_OFFSET, SeekOrigin.Begin);
             var sfoOffset = stream.ReadUInteger();

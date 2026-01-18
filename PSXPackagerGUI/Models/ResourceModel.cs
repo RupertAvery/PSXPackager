@@ -74,6 +74,16 @@ namespace PSXPackagerGUI.Models
 
         public uint Size { get; private set; }
 
+        public void Clear()
+        {
+            Stream?.Dispose();
+            Stream = null;
+            Size = 0;
+            SourceUrl = null;
+            IsSaveAsEnabled = false;
+            Icon = null;
+        }
+
         public void FromStream(Stream stream)
         {
             Stream?.Dispose();
@@ -86,6 +96,7 @@ namespace PSXPackagerGUI.Models
         {
             Stream?.Dispose();
             Stream = new MemoryStream();
+            stream.Seek(0, SeekOrigin.Begin);
             stream.CopyTo(Stream);
             Stream.Seek(0, SeekOrigin.Begin);
             Size = (uint)Stream.Length;

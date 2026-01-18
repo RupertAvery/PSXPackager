@@ -63,17 +63,11 @@ namespace Popstation.Pbp
                 convertInfo.Icon1.Write(outputStream);
             }
 
-            if (convertInfo.Pic0.Exists)
-            {
-                Notify?.Invoke(PopstationEventEnum.WritePic0Png, null);
-                convertInfo.Pic0.Write(outputStream);
-            }
+            Notify?.Invoke(PopstationEventEnum.WritePic0Png, null);
+            convertInfo.Pic0.Write(outputStream);
 
-            if (convertInfo.Pic1.Exists)
-            {
-                Notify?.Invoke(PopstationEventEnum.WritePic1Png, null);
-                convertInfo.Pic1.Write(outputStream);
-            }
+            Notify?.Invoke(PopstationEventEnum.WritePic1Png, null);
+            convertInfo.Pic1.Write(outputStream);
 
             if (convertInfo.Snd0.Exists)
             {

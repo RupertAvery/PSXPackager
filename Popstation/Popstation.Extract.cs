@@ -97,8 +97,10 @@ namespace Popstation
         {
             var pbpStreamReader = new PbpReader(stream);
 
-            void TryExtract(ResourceType resourceType, string extension)
+            void TryExtract(ResourceType resourceType)
             {
+
+                var extension = GetExtensionFromType(resourceType);
 
                 if (pbpStreamReader.TryGetResourceStream(resourceType, stream, out Stream resourceStream))
                 {
@@ -114,11 +116,11 @@ namespace Popstation
                 }
             }
 
-            TryExtract(ResourceType.ICON0, ".png");
-            TryExtract(ResourceType.ICON1, ".pmf");
-            TryExtract(ResourceType.PIC0, ".png");
-            TryExtract(ResourceType.PIC1, ".png");
-            TryExtract(ResourceType.SND0, ".at3");
+            TryExtract(ResourceType.ICON0);
+            TryExtract(ResourceType.ICON1);
+            TryExtract(ResourceType.PIC0);
+            TryExtract(ResourceType.PIC1);
+            TryExtract(ResourceType.SND0);
        }
 
         private string GetResourcePath(ExtractOptions options, GameEntry entry, ResourceType type, string ext)

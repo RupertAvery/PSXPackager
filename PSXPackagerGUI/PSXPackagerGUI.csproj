@@ -56,6 +56,18 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Remove="Pages\SinglePage.xaml.cs" />
+		<None Remove="Pages\SinglePage.DropEvents.xaml.cs" />
+		<Content Include="Pages\SinglePage.xaml.cs">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Pages\SinglePage.DropEvents.xaml.cs">
+			<DependentUpon>Pages\SinglePage.xaml.cs</DependentUpon>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
 		<None Update="README.md">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>

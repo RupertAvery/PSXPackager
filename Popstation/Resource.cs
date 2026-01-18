@@ -71,6 +71,7 @@ namespace Popstation
             }
 
             var buffer = new byte[Size];
+            _stream.Seek(0, SeekOrigin.Begin);
             _stream.Read(buffer, 0, (int)Size);
             stream.Write(buffer, 0, (int)Size);
         }

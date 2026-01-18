@@ -7,12 +7,9 @@
              xmlns:models="clr-namespace:PSXPackagerGUI.Models"
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance models:ResourceModel, IsDesignTimeCreatable=True}"
+             AllowDrop="True"
              d:DesignHeight="200" d:DesignWidth="400">
     <Grid Margin="0,0,0,0" DataContext="{Binding Resource, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition/>
-            <ColumnDefinition Width="30"/>
-        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
             <RowDefinition/>
@@ -20,19 +17,20 @@
 
         <Label Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Content="{Binding Text, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}"></Label>
 
-        <Rectangle Grid.Row="1" Grid.Column="1" Fill="#15000060" AllowDrop="True" Drop="UIElement_OnDrop"></Rectangle>
+        <Rectangle Grid.Row="1" Grid.Column="1" Fill="#15000060" AllowDrop="True"></Rectangle>
 
-        <Border Grid.Row="1" Grid.Column="0"  BorderBrush="#60000000" BorderThickness="0.2">
-            <Image Stretch="None" VerticalAlignment="Center" Source="{Binding Icon}" AllowDrop="True" Drop="UIElement_OnDrop"></Image>
+        <Border Grid.Row="1" Grid.Column="0"  Background="{DynamicResource {x:Static SystemColors.WindowFrameBrushKey}}">
+            <Image Stretch="None" VerticalAlignment="Center" Source="{Binding Icon}" AllowDrop="True"></Image>
         </Border>
 
-        <Grid Grid.Row="1" Grid.Column="1">
-            <Grid.RowDefinitions>
-                <RowDefinition/>
-                <RowDefinition/>
-            </Grid.RowDefinitions>
-            <Button Grid.Row="0" x:Name="MoreButton" IsEnabled="{Binding IsEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}" Click="More_OnClick">...</Button>
-            <Button Grid.Row="1" x:Name="RemoveButton" IsEnabled="{Binding IsRemoveEnabled}" Click="Remove_OnClick">x</Button>
+        <Grid Grid.Row="0" Grid.Column="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="20"/>
+                <ColumnDefinition Width="20"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="1" x:Name="MoreButton" IsEnabled="{Binding IsEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}" Click="More_OnClick">...</Button>
+            <Button Grid.Column="2" x:Name="RemoveButton" IsEnabled="{Binding IsRemoveEnabled}" Click="Remove_OnClick">x</Button>
         </Grid>
 
     </Grid>

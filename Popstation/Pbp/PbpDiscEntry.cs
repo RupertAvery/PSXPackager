@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
+using DiscUtils.Streams;
 using Popstation.Iso;
 using PSXPackager.Common;
 
@@ -172,6 +173,15 @@ namespace Popstation.Pbp
             if (iso_index.Count == 0) throw new Exception("No iso index was found.");
 
             return iso_index;
+        }
+
+        public long EndOffset
+        {
+            get
+            {
+                var lastBlock = IsoIndex[IsoIndex.Count - 1];
+                return psar_offset + PSAR_ISO_OFFSET + lastBlock.Offset + lastBlock.Length;
+            }
         }
 
         public uint ReadBlock(int blockNo, byte[] buffer)

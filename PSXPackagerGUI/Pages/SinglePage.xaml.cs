@@ -9,10 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using DiscUtils.Streams;
 using Popstation;
 using Popstation.Database;
 using Popstation.Pbp;
@@ -26,120 +23,6 @@ using SFOEntry = PSXPackagerGUI.Models.SFOEntry;
 
 namespace PSXPackagerGUI.Pages
 {
-
-    public static class ImageProcessing
-    {
-
-        public static void SaveBitmapSource(BitmapSource bitmap, Stream stream, BitmapEncoder encoder)
-        {
-            encoder.Frames.Add(BitmapFrame.Create(bitmap));
-            encoder.Save(stream);
-        }
-
-        public static BitmapSource Resize(
-            BitmapSource source,
-            int maxWidth,
-            int maxHeight)
-        {
-            double scale = Math.Min(
-                (double)maxWidth / source.PixelWidth,
-                (double)maxHeight / source.PixelHeight);
-
-            if (scale >= 1.0)
-                return source;
-
-            int width = (int)(source.PixelWidth * scale);
-            int height = (int)(source.PixelHeight * scale);
-
-            var visual = new DrawingVisual();
-            using (var dc = visual.RenderOpen())
-            {
-                RenderOptions.SetBitmapScalingMode(
-                    visual,
-                    BitmapScalingMode.HighQuality);
-
-                dc.DrawImage(source, new Rect(0, 0, width, height));
-            }
-
-            var rtb = new RenderTargetBitmap(
-                width,
-                height,
-                source.DpiX,
-                source.DpiY,
-                PixelFormats.Pbgra32);
-
-            rtb.Render(visual);
-            rtb.Freeze();
-            return rtb;
-        }
-
-        public static BitmapSource ApplyAlphaMask(BitmapSource source, BitmapSource mask)
-        {
-            var visual = new DrawingVisual();
-
-            using (DrawingContext dc = visual.RenderOpen())
-            {
-                dc.PushOpacityMask(new ImageBrush(mask));
-                dc.DrawImage(source, new Rect(0, 0, source.PixelWidth, source.PixelHeight));
-                dc.Pop();
-            }
-
-            var result = new RenderTargetBitmap(
-                source.PixelWidth,
-                source.PixelHeight,
-                source.DpiX,
-                source.DpiY,
-                PixelFormats.Pbgra32);
-
-            result.Render(visual);
-            return result;
-        }
-
-        public static BitmapSource OverlayBitmaps(BitmapSource baseImage, BitmapSource overlayImage, int overlayX, int overlayY)
-        {
-            // Define the size of the final combined image
-            int finalWidth = (int)baseImage.Width;
-            int finalHeight = (int)baseImage.Height;
-
-            // 1. Create a DrawingGroup
-            var drawingGroup = new DrawingGroup();
-
-            // 2. Add ImageDrawing objects for each image
-            // Base image (drawn first, in the back)
-            drawingGroup.Children.Add(new ImageDrawing(baseImage, new Rect(0, 0, finalWidth, finalHeight)));
-
-            // Overlay image (drawn on top, at a specific position)
-            drawingGroup.Children.Add(new ImageDrawing(overlayImage, new Rect(overlayX, overlayY, finalWidth, finalHeight)));
-
-            // 3. Create a DrawingImage from the DrawingGroup
-            var drawingImage = new DrawingImage(drawingGroup);
-
-            // Set the dimensions for the drawing image to ensure proper rendering
-            drawingImage.Freeze(); // Freeze for performance
-
-            // 4. Render to a RenderTargetBitmap to get a new BitmapSource
-            var renderTargetBitmap = new RenderTargetBitmap(
-                finalWidth,
-                finalHeight,
-                96,
-                96,
-                PixelFormats.Pbgra32); // Use a format that supports transparency
-
-            // Create a Visual to render the DrawingImage onto
-            var visual = new DrawingVisual();
-            using (var context = visual.RenderOpen())
-            {
-                context.DrawImage(drawingImage, new Rect(0, 0, finalWidth, finalHeight));
-            }
-
-            renderTargetBitmap.Render(visual);
-            renderTargetBitmap.Freeze(); // Freeze for performance
-
-            return renderTargetBitmap;
-        }
-
-    }
-
     /// <summary>
     /// Interaction logic for Single.xaml
     /// </summary>
@@ -191,7 +74,7 @@ namespace PSXPackagerGUI.Pages
                 Pic0 = new ResourceModel() { Type = ResourceType.PIC0 },
                 Pic1 = new ResourceModel() { Type = ResourceType.PIC1 },
                 Snd0 = new ResourceModel() { Type = ResourceType.SND0 },
-                Boot = new ResourceModel() { Type = ResourceType.SND0 },
+                Boot = new ResourceModel() { Type = ResourceType.BOOT },
                 IsDirty = false,
                 MaxProgress = 100,
                 Progress = 0,
@@ -288,29 +171,48 @@ namespace PSXPackagerGUI.Pages
                     Model.Discs = new ObservableCollection<Disc>(discs.Concat(dummyDiscs));
 
 
-                    void LoadResource(ResourceType type, ResourceModel model)
+                    void LoadResource(ResourceModel model)
                     {
-                        if (pbpReader.TryGetResourceStream(type, stream, out var resourceStream))
+                        if (model.Type == ResourceType.BOOT)
                         {
-                            //using var outStream = new FileStream(@"D:\roms\PSX\Animetic Story Game 1 - Card Captor Sakura (English v1.0)\test2.png", FileMode.Create, FileAccess.Write);
-                            //resourceStream.CopyTo(outStream);
-                            //outStream.Flush();
-                            //resourceStream.Seek(0, SeekOrigin.Begin);
-
-
-                            model.Icon = GetBitmapImage(resourceStream);
-                            model.IsLoadEnabled = true;
-                            model.IsSaveAsEnabled = true;
-                            model.IsRemoveEnabled = true;
-                            model.SourceUrl = $"//pbp/{type.ToString().ToLower()}/{path}";
+                            if (pbpReader.TryGetBootImage(stream, out var bootStream))
+                            {
+                                model.Icon = GetBitmapImage(bootStream);
+                                model.CopyFromStream(bootStream);
+                                model.IsLoadEnabled = true;
+                                model.IsSaveAsEnabled = true;
+                                model.IsRemoveEnabled = true;
+                                model.SourceUrl = $"//pbp/{model.Type.ToString().ToLower()}/{path}";
+                            }
                         }
+                        else
+                        {
+                            if (pbpReader.TryGetResourceStream(model.Type, stream, out var resourceStream))
+                            {
+                                //using var outStream = new FileStream(@"D:\roms\PSX\Animetic Story Game 1 - Card Captor Sakura (English v1.0)\test2.png", FileMode.Create, FileAccess.Write);
+                                //resourceStream.CopyTo(outStream);
+                                //outStream.Flush();
+                                //resourceStream.Seek(0, SeekOrigin.Begin);
+
+                                model.Icon = GetBitmapImage(resourceStream);
+                                model.CopyFromStream(resourceStream);
+                                model.IsLoadEnabled = true;
+                                model.IsSaveAsEnabled = true;
+                                model.IsRemoveEnabled = true;
+                                model.SourceUrl = $"//pbp/{model.Type.ToString().ToLower()}/{path}";
+                            }
+                        }
+
+
                     }
 
 
-                    LoadResource(ResourceType.ICON0, Model.Icon0);
-                    LoadResource(ResourceType.ICON1, Model.Icon1);
-                    LoadResource(ResourceType.PIC0, Model.Pic0);
-                    LoadResource(ResourceType.PIC1, Model.Pic1);
+                    LoadResource(Model.Icon0);
+                    LoadResource(Model.Icon1);
+                    LoadResource(Model.Pic0);
+                    LoadResource(Model.Pic1);
+                    LoadResource(Model.Snd0);
+                    LoadResource(Model.Boot);
 
                     Model.SFOEntries = new ObservableCollection<SFOEntry>();
 
@@ -476,24 +378,30 @@ namespace PSXPackagerGUI.Pages
             };
         }
 
-        private Resource GetResource(ResourceModel resource)
-        {
-            return Resource.Empty(resource.Type);
-
-            //// If resource is from PBP
-
-            //return resource.SourceUrl == null ? Resource.Empty(resource.Type) : new Resource(resource.Type, resource.SourceUrl);
-        }
-
-
-        private Resource GetResourceOrDefault(ResourceType type, string ext, ResourceModel resource)
+        private Resource GetResourceOrEmpty(ResourceModel resource)
         {
             if (resource.Stream != null)
             {
                 return new Resource(resource.Type, resource.Stream, resource.Size);
             }
 
-            // If resource is from PBP
+            return Resource.Empty(resource.Type);
+        }
+
+
+
+
+        private Resource GetResourceOrDefault(ResourceModel resource)
+        {
+            if (resource.Stream != null)
+            {
+                return new Resource(resource.Type, resource.Stream, resource.Size);
+            }
+
+            var type = resource.Type;
+
+            var ext = Popstation.Popstation.GetExtensionFromType(type);
+
             var defaultUrl = Path.Combine(PSXPackager.Common.ApplicationInfo.AppPath, "Resources", $"{type}.{ext}");
 
             if (File.Exists(defaultUrl))
@@ -631,13 +539,13 @@ namespace PSXPackagerGUI.Pages
                     OutputPath = Path.GetDirectoryName(filename),
                     OriginalFilename = Path.GetFileName(filename),
                     DiscInfos = discs.Select(GetDiscInfo).ToList(),
-                    DataPsp = GetResourceOrDefault(ResourceType.DATA, "PSP", new ResourceModel()),
-                    Icon0 = GetResourceOrDefault(ResourceType.ICON0, "png", Model.Icon0),
-                    Icon1 = GetResource(Model.Icon1),
-                    Pic0 = GetResourceOrDefault(ResourceType.PIC0, "png", Model.Pic0),
-                    Pic1 = GetResourceOrDefault(ResourceType.PIC1, "png", Model.Pic1),
-                    Snd0 = GetResource(Model.Snd0),
-                    Boot = GetResourceOrDefault(ResourceType.BOOT, "png", Model.Boot),
+                    DataPsp = GetResourceOrDefault(new ResourceModel() { Type = ResourceType.DATA }),
+                    Icon0 = GetResourceOrDefault(Model.Icon0),
+                    Icon1 = GetResourceOrEmpty(Model.Icon1),
+                    Pic0 = GetResourceOrDefault(Model.Pic0),
+                    Pic1 = GetResourceOrDefault(Model.Pic1),
+                    Snd0 = GetResourceOrEmpty(Model.Snd0),
+                    Boot = GetResourceOrEmpty(Model.Boot),
                     MainGameTitle = disc1.SaveTitle,
                     MainGameID = disc1.SaveID,
                     MainGameRegion = disc1.Region,
@@ -847,83 +755,6 @@ namespace PSXPackagerGUI.Pages
             }
         }
 
-        private static string[] imageExtensions = new string[] { ".jpg", ".jpeg", ".png", ".bmp" };
-
-        private void Icon0_OnDrop(object sender, DragEventArgs e)
-        {
-            if (TryGetFilename(e.Data, imageExtensions, out var filename))
-            {
-                Model.Icon0.Icon = GetBitmapImage(GetImageStream(filename));
-                Model.Icon0.SourceUrl = filename;
-                return;
-            }
-            MessageBox.Show(Window, "Invalid fie type", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Warning);
-        }
-
-        private void Icon1_OnDrop(object sender, DragEventArgs e)
-        {
-            if (TryGetFilename(e.Data, imageExtensions, out var filename))
-            {
-                Model.Icon1.Icon = GetBitmapImage(GetImageStream(filename));
-                Model.Icon1.SourceUrl = filename;
-                return;
-            }
-            MessageBox.Show(Window, "Invalid fie type", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Warning);
-        }
-
-        private void Pic0_OnDrop(object sender, DragEventArgs e)
-        {
-            if (TryGetFilename(e.Data, imageExtensions, out var filename))
-            {
-                Model.Pic0.Icon = GetBitmapImage(GetImageStream(filename));
-                Model.Pic0.SourceUrl = filename;
-                return;
-            }
-            MessageBox.Show(Window, "Invalid fie type", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Warning);
-        }
-
-        private void Pic1_OnDrop(object sender, DragEventArgs e)
-        {
-            if (TryGetFilename(e.Data, imageExtensions, out var filename))
-            {
-                Model.Pic1.Icon = GetBitmapImage(GetImageStream(filename));
-                Model.Pic1.SourceUrl = filename;
-                return;
-            }
-            MessageBox.Show(Window, "Invalid fie type", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Warning);
-        }
-
-        private void Snd0_OnDrop(object sender, DragEventArgs e)
-        {
-            if (TryGetFilename(e.Data, new[] { ".at3" }, out var filename))
-            {
-                //_viewModel.Snd0.Icon = GetBitmapImage(GetImageStream(filename));
-                Model.Snd0.SourceUrl = filename;
-
-            }
-            MessageBox.Show(Window, "Invalid fie type", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Warning);
-        }
-
-        private bool TryGetFilename(IDataObject data, string[] allowedExtensions, out string filename)
-        {
-            filename = ((string[])data.GetData("FileName"))[0];
-            if (allowedExtensions.Contains(Path.GetExtension(filename).ToLower()))
-            {
-                return true;
-            }
-            return false;
-        }
-
-        private Stream GetImageStream(string filename)
-        {
-            return new FileStream(filename, FileMode.Open, FileAccess.Read);
-        }
-
-        private Stream GetDataStream(IDataObject data)
-        {
-            var filename = ((string[])data.GetData("FileName"))[0];
-            return new FileStream(filename, FileMode.Open, FileAccess.Read);
-        }
 
         private void DiscButton_OnClick(object sender, RoutedEventArgs e)
         {
@@ -1220,71 +1051,56 @@ namespace PSXPackagerGUI.Pages
             cm.IsOpen = true;
         }
 
-        private void LoadResource_OnClick(object sender, RoutedEventArgs e)
+        private void LoadResource(ResourceModel resource, string filename)
         {
-            var resource = (sender as MenuItem).DataContext as ResourceModel;
-
-            var openFileDialog = new Ookii.Dialogs.Wpf.VistaOpenFileDialog();
-
             switch (resource.Type)
             {
                 case ResourceType.ICON0:
-                case ResourceType.PIC0:
+                case ResourceType.BOOT:
                 case ResourceType.PIC1:
-                    openFileDialog.Filter = "Supported files|*.png|All files|*.*";
-                    break;
-                case ResourceType.ICON1:
-                    openFileDialog.Filter = "Supported files|*.png;*.pmf|All files|*.*";
-                    break;
-                case ResourceType.SND0:
-                    openFileDialog.Filter = "Supported files|*.at3|All files|*.*";
-                    break;
-            }
+                case ResourceType.PIC0:
+                    {
+                        var appPath = ApplicationInfo.AppPath;
 
-            openFileDialog.ShowDialog();
+                        using var fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read);
 
-            if (!string.IsNullOrEmpty(openFileDialog.FileName))
-            {
-                switch (resource.Type)
-                {
-                    case ResourceType.ICON0:
-                    case ResourceType.BOOT:
-                    case ResourceType.PIC1:
-                    case ResourceType.PIC0:
+                        BitmapSource image = GetBitmapImage(fileStream);
+
+                        switch (resource.Type)
                         {
-                            var appPath = ApplicationInfo.AppPath;
+                            case ResourceType.ICON0:
+                                {
+                                    image = ImageProcessing.Resize(image, 80, 80);
 
-                            using var fileStream = new FileStream(openFileDialog.FileName, FileMode.Open, FileAccess.Read);
-
-                            BitmapSource image = GetBitmapImage(fileStream);
-
-                            switch (resource.Type)
-                            {
-                                case ResourceType.ICON0:
+                                    if (_settings.GenerateIconFrame)
                                     {
-                                        image = ImageProcessing.Resize(image, 80, 80);
+                                        using var frameStream = new FileStream(Path.Combine(appPath, "Resources", "overlay.png"), FileMode.Open, FileAccess.Read);
+                                        using var maskStream = new FileStream(Path.Combine(appPath, "Resources", "alpha.png"), FileMode.Open, FileAccess.Read);
 
-                                        if (_settings.GenerateIconFrame)
-                                        {
-                                            using var frameStream = new FileStream(Path.Combine(appPath, "Resources", "overlay.png"), FileMode.Open, FileAccess.Read);
-                                            using var maskStream = new FileStream(Path.Combine(appPath, "Resources", "alpha.png"), FileMode.Open, FileAccess.Read);
+                                        var mask = GetBitmapImage(maskStream);
+                                        var overlay = GetBitmapImage(frameStream);
 
-                                            var mask = GetBitmapImage(maskStream);
-                                            var overlay = GetBitmapImage(frameStream);
-
-                                            var composite = ImageProcessing.OverlayBitmaps(image, overlay, 0, 0);
-                                            image = ImageProcessing.ApplyAlphaMask(composite, mask);
-                                        }
-
-                                        var stream = new MemoryStream();
-                                        ImageProcessing.SaveBitmapSource(image, stream, new PngBitmapEncoder());
-                                        resource.FromStream(stream);
-
-                                        break;
+                                        var composite = ImageProcessing.OverlayBitmaps(image, overlay, 0, 0);
+                                        image = ImageProcessing.ApplyAlphaMask(composite, mask);
                                     }
-                                case ResourceType.PIC1:
-                                case ResourceType.PIC0:
-                                case ResourceType.BOOT:
+
+                                    var stream = new MemoryStream();
+                                    ImageProcessing.SaveBitmapSource(image, stream, new PngBitmapEncoder());
+                                    resource.FromStream(stream);
+
+                                    break;
+                                }
+                            case ResourceType.PIC0:
+                                {
+                                    image = ImageProcessing.Resize(image, 310, 180);
+
+                                    var stream = new MemoryStream();
+                                    ImageProcessing.SaveBitmapSource(image, stream, new PngBitmapEncoder());
+                                    resource.FromStream(stream);
+                                    break;
+                                }
+                            case ResourceType.PIC1:
+                            case ResourceType.BOOT:
                                 {
                                     image = ImageProcessing.Resize(image, 480, 272);
 
@@ -1293,26 +1109,53 @@ namespace PSXPackagerGUI.Pages
                                     resource.FromStream(stream);
                                     break;
                                 }
-                            }
-
-                            resource.Icon = image;
-                            break;
                         }
-                    default:
-                        {
-                            using var fileStream = new FileStream(openFileDialog.FileName, FileMode.Open, FileAccess.Read);
-                            resource.CopyFromStream(fileStream);
-                            break;
-                        }
-                }
 
-                resource.IsLoadEnabled = true;
-                resource.IsSaveAsEnabled = false;
-                resource.IsRemoveEnabled = true;
-                resource.SourceUrl = openFileDialog.FileName;
+                        resource.Icon = image;
+                        break;
+                    }
+                default:
+                    {
+                        using var fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read);
+                        resource.CopyFromStream(fileStream);
+                        break;
+                    }
+            }
+
+            resource.IsLoadEnabled = true;
+            resource.IsSaveAsEnabled = false;
+            resource.IsRemoveEnabled = true;
+            resource.SourceUrl = filename;
+        }
+
+        private void LoadResource_OnClick(object sender, RoutedEventArgs e)
+        {
+            var resource = (sender as MenuItem).DataContext as ResourceModel;
+
+            var openFileDialog = new Ookii.Dialogs.Wpf.VistaOpenFileDialog();
+
+            openFileDialog.Filter = GetFilterFromType(resource.Type);
+
+            openFileDialog.ShowDialog();
+
+            if (!string.IsNullOrEmpty(openFileDialog.FileName))
+            {
+                LoadResource(resource, openFileDialog.FileName);
                 Model.IsDirty = true;
             }
 
+        }
+
+        private string GetFilterFromType(ResourceType type)
+        {
+            return type switch
+            {
+                ResourceType.ICON0 or ResourceType.PIC0 or ResourceType.PIC1 or ResourceType.BOOT =>
+                    "Supported files|*.png|All files|*.*",
+                ResourceType.ICON1 => "Supported files|*.png;*.pmf|All files|*.*",
+                ResourceType.SND0 => "Supported files|*.at3|All files|*.*",
+                _ => "All files|*.*"
+            };
         }
 
         private void SaveResource_OnClick(object sender, RoutedEventArgs e)
@@ -1320,79 +1163,29 @@ namespace PSXPackagerGUI.Pages
             var context = (sender as MenuItem).DataContext as ResourceModel;
             var saveFileDialog = new Ookii.Dialogs.Wpf.VistaSaveFileDialog();
             saveFileDialog.AddExtension = true;
-
-            switch (context.Type)
-            {
-                case ResourceType.ICON0:
-                case ResourceType.PIC0:
-                case ResourceType.PIC1:
-                    saveFileDialog.Filter = "Supported files|*.png|All files|*.*";
-                    break;
-                case ResourceType.ICON1:
-                    saveFileDialog.Filter = "Supported files|*.png;*.pmf|All files|*.*";
-                    break;
-                case ResourceType.SND0:
-                    saveFileDialog.Filter = "Supported files|*.at3|All files|*.*";
-                    break;
-            }
+            saveFileDialog.Filter = GetFilterFromType(context.Type);
             saveFileDialog.ShowDialog();
 
             if (!string.IsNullOrEmpty(saveFileDialog.FileName))
             {
-                var pbpRegex = new Regex("//pbp/(.*?)/(.*\\.pbp)", RegexOptions.IgnoreCase);
-
-                var match = pbpRegex.Match(context.SourceUrl);
-
-                if (match.Success)
+                using (var output = new FileStream(saveFileDialog.FileName, FileMode.OpenOrCreate,
+                           FileAccess.Write))
                 {
-                    Task.Run(() =>
-                    {
-                        using (var stream = new FileStream(match.Groups[2].Value, FileMode.Open, FileAccess.Read))
-                        {
-                            var pbpReader = new PbpReader(stream);
-                            using (var output = new FileStream(saveFileDialog.FileName, FileMode.OpenOrCreate,
-                                FileAccess.Write))
-                            {
-                                var type = match.Groups[1].Value switch
-                                {
-                                    "icon0" => ResourceType.ICON0,
-                                    "icon1" => ResourceType.ICON1,
-                                    "pic0" => ResourceType.PIC0,
-                                    "pic1" => ResourceType.PIC1,
-                                    "snd0" => ResourceType.SND0,
-                                };
-
-                                if (pbpReader.TryGetResourceStream(type, stream, out var resourceStream))
-                                {
-                                    resourceStream.CopyTo(output);
-                                    resourceStream.Dispose();
-                                    Dispatcher.Invoke(() =>
-                                    {
-                                        MessageBox.Show(Window, $"Resource has been extracted to \"{saveFileDialog.FileName}\"", "PSXPackager",
-                                            MessageBoxButton.OK, MessageBoxImage.Information);
-                                    });
-                                }
-                                //_viewModel.MaxProgress = disc.IsoSize;
-                                //_viewModel.IsBusy = true;
-                                //disc.ProgressEvent = ProgressEvent;
-                                //disc.CopyTo(output, cancellationTokenSource.Token);
-                                //_viewModel.MaxProgress = 100;
-                                //_viewModel.Progress = 0;
-                                //_viewModel.IsBusy = false;
-                            }
-                        }
-                    });
+                    context.Stream.Seek(0, SeekOrigin.Begin);
+                    context.Stream.CopyTo(output);
+                    context.Stream.Seek(0, SeekOrigin.Begin);
+                    MessageBox.Show(Window, $"Resource has been extracted to \"{saveFileDialog.FileName}\"", "PSXPackager",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
         }
 
         private void Resource_OnRemove(object sender, RoutedEventArgs e)
         {
-            var context = (sender as MenuItem).DataContext as ResourceModel;
+            var context = (sender as ResourceControl).Resource;
 
-            context.Icon = null;
-            context.IsSaveAsEnabled = false;
-            context.SourceUrl = null;
+            context.Clear();
+
             Model.IsDirty = true;
         }
 
@@ -1484,15 +1277,5 @@ namespace PSXPackagerGUI.Pages
 
         }
 
-        private void Boot_OnDrop(object sender, DragEventArgs e)
-        {
-            if (TryGetFilename(e.Data, imageExtensions, out var filename))
-            {
-                Model.Pic1.Icon = GetBitmapImage(GetImageStream(filename));
-                Model.Pic1.SourceUrl = filename;
-                return;
-            }
-            MessageBox.Show(Window, "Invalid fie type", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Warning);
-        }
     }
 }

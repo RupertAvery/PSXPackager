@@ -499,8 +499,10 @@ namespace Popstation
             }
 
 
-            Resource GetResourceOrDefault(ResourceType type, string ext)
+            Resource GetResourceOrDefault(ResourceType type)
             {
+                string ext = Popstation.GetExtensionFromType(type);
+
                 var filename = Popstation.GetResourceFilename(processOptions.ResourceFormat, options.OriginalFilename, entry.SerialID, entry.MainGameID, entry.Title, entry.MainGameTitle, entry.Region, type, ext);
 
                 var resourcePath = Path.Combine(processOptions.ResourceRoot, filename);
@@ -520,15 +522,14 @@ namespace Popstation
                     stream.Read(buffer, 0, (int)info.Length);
                     return new Resource(type, buffer, (uint)info.Length);
                 }
-
             }
 
-            options.Icon0 = GetResourceOrDefault(ResourceType.ICON0, "png");
-            options.Icon1 = GetResourceOrDefault(ResourceType.ICON1, "pmf");
-            options.Pic0 = GetResourceOrDefault(ResourceType.PIC0, "png");
-            options.Pic1 = GetResourceOrDefault(ResourceType.PIC1, "png");
-            options.Snd0 = GetResourceOrDefault(ResourceType.SND0, "at3");
-            options.Boot = GetResourceOrDefault(ResourceType.BOOT, "png");
+            options.Icon0 = GetResourceOrDefault(ResourceType.ICON0);
+            options.Icon1 = GetResourceOrDefault(ResourceType.ICON1);
+            options.Pic0 = GetResourceOrDefault(ResourceType.PIC0);
+            options.Pic1 = GetResourceOrDefault(ResourceType.PIC1);
+            options.Snd0 = GetResourceOrDefault(ResourceType.SND0);
+            options.Boot = GetResourceOrDefault(ResourceType.BOOT);
         }
 
         /// <summary>

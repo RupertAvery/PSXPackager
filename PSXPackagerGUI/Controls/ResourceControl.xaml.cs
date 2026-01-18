@@ -13,11 +13,6 @@ namespace PSXPackagerGUI.Controls
     /// </summary>
     public partial class ResourceControl : UserControl, INotifyPropertyChanged
     {
-        //public static readonly DependencyProperty IconProperty =
-        //    DependencyProperty.Register(nameof(Icon), typeof(ImageSource),
-        //        typeof(ResourceControl),
-        //        new FrameworkPropertyMetadata(OnIconChanged));
-
         public static readonly DependencyProperty TextProperty =
             DependencyProperty.Register(nameof(Text), typeof(string),
                 typeof(ResourceControl));
@@ -30,25 +25,9 @@ namespace PSXPackagerGUI.Controls
             EventManager.RegisterRoutedEvent(nameof(Remove), RoutingStrategy.Bubble, typeof(RoutedEventHandler),
                 typeof(ResourceControl));
 
-        //public static readonly DependencyProperty IsMoreEnabledProperty =
-        //    DependencyProperty.Register(nameof(IsMoreEnabled), typeof(bool),
-        //        typeof(ResourceControl));
-
-        //public static readonly DependencyProperty IsRemoveEnabledProperty =
-        //    DependencyProperty.Register(nameof(IsRemoveEnabled), typeof(bool),
-        //        typeof(ResourceControl));
-
         public static readonly DependencyProperty ResourceProperty =
             DependencyProperty.Register(nameof(Resource), typeof(ResourceModel),
                 typeof(ResourceControl), new PropertyMetadata(null, OnResourceChanged));
-        //new FrameworkPropertyMetadata(OnResourceChanged));
-
-
-        //private static void OnIconChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        //{
-        //    ((ResourceControl)d).Icon = (BitmapImage)e.NewValue;
-        //    ((ResourceControl)d).InvalidateVisual();
-        //}
 
         private static void OnResourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
@@ -84,26 +63,6 @@ namespace PSXPackagerGUI.Controls
             set { SetValue(ResourceProperty, value); InvalidateVisual(); }
         }
 
-        //public bool IsMoreEnabled
-        //{
-        //    get => (bool)GetValue(IsMoreEnabledProperty);
-        //    set
-        //    {
-        //        SetValue(IsMoreEnabledProperty, value);
-        //        OnPropertyChanged();
-        //    }
-        //}
-
-        //public bool IsRemoveEnabled
-        //{
-        //    get => (bool)GetValue(IsRemoveEnabledProperty);
-        //    set
-        //    {
-        //        SetValue(IsRemoveEnabledProperty, value); 
-        //        OnPropertyChanged();
-        //    }
-        //}
-
         public string Text
         {
             get => (string)GetValue(TextProperty);
@@ -114,24 +73,9 @@ namespace PSXPackagerGUI.Controls
             }
         }
 
-        //public ImageSource Icon
-        //{
-        //    get => (ImageSource)GetValue(IconProperty);
-        //    set
-        //    {
-        //        SetValue(IconProperty, value);
-        //        OnPropertyChanged();
-        //    }
-        //}
-
         public ResourceControl()
         {
             InitializeComponent();
-        }
-
-        private void UIElement_OnDrop(object sender, DragEventArgs e)
-        {
-
         }
 
         private void More_OnClick(object sender, RoutedEventArgs e)

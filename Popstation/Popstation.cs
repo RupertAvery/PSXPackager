@@ -71,5 +71,28 @@ namespace Popstation
             return !cancellationToken.IsCancellationRequested;
         }
 
+        public static string GetExtensionFromType(ResourceType type)
+        {
+            switch (type)
+            {
+                case ResourceType.SFO:
+                    return "sfo";
+                case ResourceType.ICON0:
+                case ResourceType.PIC0:
+                case ResourceType.PIC1:
+                case ResourceType.BOOT:
+                    return "png";
+                case ResourceType.ICON1:
+                    return "pmf";
+                case ResourceType.SND0:
+                    return "at3";
+                case ResourceType.DATA:
+                    return "psp";
+                case ResourceType.PSP:
+                case ResourceType.PSAR:
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(type), type, null);
+            }
+        }
     }
 }
