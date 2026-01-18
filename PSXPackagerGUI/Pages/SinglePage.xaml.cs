@@ -98,6 +98,12 @@ namespace PSXPackagerGUI.Pages
             Model.Pic1.Reset();
             Model.Snd0.Reset();
             Model.Boot.Reset();
+
+            LoadResource(Model.Icon0, GetDefaultResourceFile(Model.Icon0.Type));
+            LoadResource(Model.Pic0, GetDefaultResourceFile(Model.Pic0.Type));
+            LoadResource(Model.Pic1, GetDefaultResourceFile(Model.Pic1.Type));
+            //LoadResource(Model.Boot, GetDefaultResourceFile(Model.Boot.Type));
+
             Model.IsDirty = false;
             Model.MaxProgress = 100;
             Model.Progress = 0;
@@ -388,7 +394,12 @@ namespace PSXPackagerGUI.Pages
             return Resource.Empty(resource.Type);
         }
 
+        string GetDefaultResourceFile(ResourceType type)
+        {
+            var ext = Popstation.Popstation.GetExtensionFromType(type);
 
+            return  Path.Combine(PSXPackager.Common.ApplicationInfo.AppPath, "Resources", $"{type}.{ext}");
+        }
 
 
         private Resource GetResourceOrDefault(ResourceModel resource)
@@ -399,10 +410,7 @@ namespace PSXPackagerGUI.Pages
             }
 
             var type = resource.Type;
-
-            var ext = Popstation.Popstation.GetExtensionFromType(type);
-
-            var defaultUrl = Path.Combine(PSXPackager.Common.ApplicationInfo.AppPath, "Resources", $"{type}.{ext}");
+            var defaultUrl = GetDefaultResourceFile(resource.Type);
 
             if (File.Exists(defaultUrl))
             {

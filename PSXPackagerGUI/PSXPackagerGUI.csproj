@@ -16,6 +16,12 @@
 
 	<ItemGroup>
 		<None Remove="Resources\disc.png" />
+		<None Remove="Resources\Editor\back.png" />
+		<None Remove="Resources\Editor\boot.png" />
+		<None Remove="Resources\Editor\ICON0.PNG" />
+		<None Remove="Resources\Editor\no_icon0.png" />
+		<None Remove="Resources\Editor\PIC0.PNG" />
+		<None Remove="Resources\Editor\PIC1.PNG" />
 		<None Remove="Resources\floppy-48x48.png" />
 		<None Remove="Resources\games-48x48.png" />
 		<None Remove="Resources\gear-48x48.png" />
@@ -65,6 +71,15 @@
 			<DependentUpon>Pages\SinglePage.xaml.cs</DependentUpon>
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Resource Include="Resources\Editor\back.png" />
+	  <EmbeddedResource Include="Resources\Editor\boot.png" />
+	  <EmbeddedResource Include="Resources\Editor\ICON0.PNG" />
+	  <EmbeddedResource Include="Resources\Editor\no_icon0.png" />
+	  <EmbeddedResource Include="Resources\Editor\PIC0.PNG" />
+	  <EmbeddedResource Include="Resources\Editor\PIC1.PNG" />
 	</ItemGroup>
 
 	<ItemGroup>

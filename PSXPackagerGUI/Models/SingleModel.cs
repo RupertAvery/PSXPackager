@@ -21,6 +21,9 @@ namespace PSXPackagerGUI.Models
         private string _status;
         private ObservableCollection<SFOEntry> _sfoEntries;
         private SettingsModel _settings;
+        private bool _showIcon;
+        private bool _showInformation;
+        private bool _showBackground;
 
         public SettingsModel Settings
         {
@@ -38,8 +41,11 @@ namespace PSXPackagerGUI.Models
                     Size = 123456789
                 }
             };
+            ShowBackground = true;
+            ShowInformation = true;
+            ShowIcon = true;
         }
-        
+
         public Disc SelectedDisc { get => _selectedDisc; set => SetProperty(ref _selectedDisc, value); }
         public ObservableCollection<Disc> Discs { get => _discs; set => SetProperty(ref _discs, value); }
 
@@ -66,5 +72,23 @@ namespace PSXPackagerGUI.Models
         public bool IsBusy { get; set; }
 
         public bool IsNew { get; set; }
+
+        public bool ShowBackground
+        {
+            get => _showBackground;
+            set => SetProperty(ref _showBackground, value);
+        }
+
+        public bool ShowInformation
+        {
+            get => _showInformation;
+            set => SetProperty(ref _showInformation, value);
+        }
+
+        public bool ShowIcon
+        {
+            get => _showIcon;
+            set => SetProperty(ref _showIcon, value);
+        }
     }
 }

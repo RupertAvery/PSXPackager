@@ -16,6 +16,7 @@
         <converters:IsEmptyBrushConverter x:Key="IsEmptyBrushConverter"></converters:IsEmptyBrushConverter>
         <converters:NotConverter x:Key="NotConverter"></converters:NotConverter>
         <converters:IsoInformationConverter x:Key="IsoInformationConverter"></converters:IsoInformationConverter>
+        <converters:BooleanVisibilityConverter x:Key="VisibilityConverter"></converters:BooleanVisibilityConverter>
         <ContextMenu x:Key="DiscButtonContextMenu">
             <MenuItem Header="Load ISO" x:Name="LoadISO" Click="LoadISO_OnClick" />
             <MenuItem Header="Save As..." x:Name="SaveImage" Click="SaveImage_OnClick" />
@@ -32,8 +33,9 @@
         </Grid.RowDefinitions>
         <Grid Grid.Row="0" Margin="5,5,5,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition />
-                <ColumnDefinition />
+                <ColumnDefinition MinWidth="300"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition MinWidth="300"/>
             </Grid.ColumnDefinitions>
 
             <GroupBox Header="Discs">
@@ -121,31 +123,79 @@
 
             </GroupBox>
 
-            <TabControl  Grid.Column="1">
+            <GridSplitter
+                Grid.Column="1"
+                Width="5"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Stretch"
+                ShowsPreview="True"
+            />
+            <TabControl  Grid.Column="2">
                 <TabItem Header="Resources">
-                    <ScrollViewer Margin="0,5,0,5">
-                        <Grid Margin="0,0,10,0">
+                    <Grid Background="{DynamicResource {x:Static SystemColors.WindowFrameBrushKey}}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="30"/>
+                        </Grid.RowDefinitions>
+                        <ScrollViewer Grid.Row="0" Margin="0,5,0,5">
+                            <Grid Margin="0,0,10,0">
 
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="30"/>
-                                <RowDefinition Height="200"/>
-                                <RowDefinition Height="360"/>
-                                <RowDefinition Height="200"/>
-                                <RowDefinition Height="360"/>
-                                <RowDefinition Height="100"/>
-                                <RowDefinition Height="200"/>
-                            </Grid.RowDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="30"/>
+                                    <RowDefinition Height="200"/>
+                                    <RowDefinition Height="360"/>
+                                    <RowDefinition Height="300"/>
+                                    <RowDefinition Height="360"/>
+                                    <RowDefinition Height="100"/>
+                                    <RowDefinition Height="200"/>
+                                </Grid.RowDefinitions>
 
-                            <CheckBox Grid.Row="0" VerticalAlignment="Center" IsChecked="{Binding Settings.GenerateIconFrame}">Generate Icon Frame</CheckBox>
-                            <controls:ResourceControl AllowDrop="True" Resource="{Binding Icon0}" Grid.Row="1" Text="Icon Image (ICON0.PNG) 80x80" Drop="Icon0_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
-                            <controls:ResourceControl AllowDrop="True" Resource="{Binding Pic1}" Grid.Row="2" Text="Background Image (PIC1.PNG) 480x272"  Drop="Pic1_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
-                            <controls:ResourceControl AllowDrop="True" Resource="{Binding Pic0}" Grid.Row="3" Text="Information Overlay (PIC0.PNG) 310x180" Drop="Pic0_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
-                            <controls:ResourceControl AllowDrop="True" Resource="{Binding Boot}" Grid.Row="4" Text="Boot Image (BOOT.PNG) 480x272" Drop="Boot_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
-                            <controls:ResourceControl AllowDrop="True" Resource="{Binding Snd0}" Grid.Row="5" Text="Background Music (SND0.AT3)" Drop="Snd0_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
-                            <controls:ResourceControl AllowDrop="True" Resource="{Binding Icon1}" Grid.Row="6" Text="Animated Icon (ICON1.PMF)"  Drop="Icon1_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                                <CheckBox Grid.Row="0" VerticalAlignment="Center" IsChecked="{Binding Settings.GenerateIconFrame}">Generate Icon Frame</CheckBox>
+                                <controls:ResourceControl AllowDrop="True" Resource="{Binding Icon0}" Grid.Row="1" Text="Icon Image (ICON0.PNG) 80x80" Drop="Icon0_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                                <controls:ResourceControl AllowDrop="True" Resource="{Binding Pic1}" Grid.Row="2" Text="Background Image (PIC1.PNG) 480x272"  Drop="Pic1_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                                <controls:ResourceControl AllowDrop="True" Resource="{Binding Pic0}" Grid.Row="3" Text="Information Overlay (PIC0.PNG) 310x180" Drop="Pic0_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                                <controls:ResourceControl AllowDrop="True" Resource="{Binding Boot}" Grid.Row="4" Text="Boot Image (BOOT.PNG) 480x272" Drop="Boot_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                                <controls:ResourceControl AllowDrop="True" Resource="{Binding Snd0}" Grid.Row="5" Text="Background Music (SND0.AT3)" Drop="Snd0_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                                <controls:ResourceControl AllowDrop="True" Resource="{Binding Icon1}" Grid.Row="6" Text="Animated Icon (ICON1.PMF)"  Drop="Icon1_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
 
+                            </Grid>
+                        </ScrollViewer>
+                        <Grid  Grid.Row="1" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+                            <Label>Drag and drop images onto the resource areas to load into the resource</Label>
                         </Grid>
-                    </ScrollViewer>
+                    </Grid>
+
+                </TabItem>
+                <TabItem Header="Preview">
+                    <Grid Background="{DynamicResource {x:Static SystemColors.WindowFrameBrushKey}}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="30"/>
+                        </Grid.RowDefinitions>
+                        <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+                            <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                                <Label>Show/Hide</Label>
+                                <CheckBox VerticalAlignment="Center" IsChecked="{Binding ShowBackground}">Background</CheckBox>
+                                <CheckBox VerticalAlignment="Center" Margin="15,0,0,0" IsChecked="{Binding ShowInformation}">Information</CheckBox>
+                                <CheckBox VerticalAlignment="Center" Margin="15,0,0,0" IsChecked="{Binding ShowIcon}">Icon</CheckBox>
+                            </StackPanel>
+                        </Grid>
+                        <Grid Grid.Row="1">
+                            <Image Source="Pack://Application:,,,/Resources/Editor/back.png" Width="480" Height="272" ></Image>
+                            <Image AllowDrop="True" Drop="Pic1_OnDrop" Visibility="{Binding ShowBackground, Converter={StaticResource VisibilityConverter}}" Source="{Binding Pic1.Icon}" Width="480" Height="272"></Image>
+                            <Image AllowDrop="True" Drop="Pic0_OnDrop" Visibility="{Binding ShowInformation, Converter={StaticResource VisibilityConverter}}" Source="{Binding Pic0.Icon}" Width="310" Height="180" Margin="160,84,0,0"></Image>
+                            <Border AllowDrop="True" Drop="Icon0_OnDrop" Visibility="{Binding ShowIcon, Converter={StaticResource VisibilityConverter}}" CornerRadius="8" Height="80" Width="80" Margin="-280,0,0,0">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="15" ShadowDepth="1" Opacity="1"/>
+                                </Border.Effect>
+                                <Image Source="{Binding Icon0.Icon}" Height="80" Width="80"></Image>
+                            </Border>
+                        </Grid>
+                        <Grid  Grid.Row="2" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+                            <Label>Drag and drop images onto the resource areas to load into the resource</Label>
+                        </Grid>
+                    </Grid>
                 </TabItem>
                 <TabItem Header="PARAM.SFO">
                     <Grid>

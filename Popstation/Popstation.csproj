@@ -31,6 +31,9 @@
 		<None Update="Resources\BASE.PBP">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+		<None Update="Resources\boot.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 		<None Update="Resources\DATA.PSP">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>

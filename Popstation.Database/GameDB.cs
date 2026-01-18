@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -35,11 +36,42 @@ namespace Popstation.Database
             return GameEntries.FirstOrDefault(x => x.GameID == gameId.ToUpper());
         }
 
+        static Regex GameIdRegex = new Regex("(SCUS|SLUS|SLES|SCES|SCED|SLPS|SLPM|SCPS|SLED|SIPS|ESPM|PBPX)-?(\\d{5})", RegexOptions.IgnoreCase);
+
+        public static string GetRegionLetter(string gameId)
+        {
+            var match = GameIdRegex.Match(gameId);
+
+            if (match.Success)
+            {
+                var partyCode = match.Groups[1].Value.ToUpper();
+                switch (partyCode)
+                {
+                    case "SCUS":
+                    case "SLUS":
+                        return "U";
+                    case "SLES":
+                    case "SCES":
+                    case "SCED":
+                    case "SLED":
+                        return "P";
+                    case "SCPS":
+                    case "SLPS":
+                    case "SLPM":
+                        return "J";
+                    default:
+                        return "U";
+                }
+            }
+
+            return "U";
+        }
+
+        static Regex systemCnfEntryRegex = new Regex("(SCUS|SLUS|SLES|SCES|SCED|SLPS|SLPM|SCPS|SLED|SIPS|ESPM|PBPX)[_-](\\d{3})\\.(\\d{2})", RegexOptions.IgnoreCase);
+        static Regex bootRegex = new Regex("BOOT\\s*=\\s*cdrom:\\\\?(?:.*?\\\\)?(.*?);1");
 
         public static string FindGameId(string srcIso)
         {
-            var regex = new Regex("(SCUS|SLUS|SLES|SCES|SCED|SLPS|SLPM|SCPS|SLED|SLPS|SIPS|ESPM|PBPX)[_-](\\d{3})\\.(\\d{2})", RegexOptions.IgnoreCase);
-            var bootRegex = new Regex("BOOT\\s*=\\s*cdrom:\\\\?(?:.*?\\\\)?(.*?);1");
 
             using (var stream = new FileStream(srcIso, FileMode.Open, FileAccess.Read))
             {
@@ -71,7 +103,7 @@ namespace Popstation.Database
                         var bootmatch = bootRegex.Match(bootLine);
                         if (!bootmatch.Success) continue;
 
-                        var match = regex.Match(bootmatch.Groups[1].Value);
+                        var match = systemCnfEntryRegex.Match(bootmatch.Groups[1].Value);
                         if (match.Success)
                         {
                             return $"{match.Groups[1].Value}{match.Groups[2].Value}{match.Groups[3].Value}";
