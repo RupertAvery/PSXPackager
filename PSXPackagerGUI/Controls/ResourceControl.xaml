@@ -19,7 +19,7 @@
 
         <Rectangle Grid.Row="1" Grid.Column="1" Fill="#15000060" AllowDrop="True"></Rectangle>
 
-        <Border Grid.Row="1" Grid.Column="0"  Background="{DynamicResource {x:Static SystemColors.WindowFrameBrushKey}}">
+        <Border Grid.Row="1" Grid.Column="0"  Background="{DynamicResource {x:Static SystemColors.WindowFrameBrushKey}}" MouseRightButtonDown="UIElement_OnMouseRightButtonDown">
             <Image Stretch="None" VerticalAlignment="Center" Source="{Binding Icon}" AllowDrop="True"></Image>
         </Border>
 

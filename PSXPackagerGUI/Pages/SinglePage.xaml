@@ -132,7 +132,7 @@
             />
             <TabControl  Grid.Column="2">
                 <TabItem Header="Resources">
-                    <Grid Background="{DynamicResource {x:Static SystemColors.WindowFrameBrushKey}}">
+                    <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="30"/>
@@ -167,7 +167,7 @@
 
                 </TabItem>
                 <TabItem Header="Preview">
-                    <Grid Background="{DynamicResource {x:Static SystemColors.WindowFrameBrushKey}}">
+                    <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="30"/>
                             <RowDefinition Height="*"/>
@@ -181,19 +181,42 @@
                                 <CheckBox VerticalAlignment="Center" Margin="15,0,0,0" IsChecked="{Binding ShowIcon}">Icon</CheckBox>
                             </StackPanel>
                         </Grid>
-                        <Grid Grid.Row="1">
+                        <Grid Grid.Row="1" Background="{DynamicResource {x:Static SystemColors.WindowFrameBrushKey}}">
                             <Image Source="Pack://Application:,,,/Resources/Editor/back.png" Width="480" Height="272" ></Image>
-                            <Image AllowDrop="True" Drop="Pic1_OnDrop" Visibility="{Binding ShowBackground, Converter={StaticResource VisibilityConverter}}" Source="{Binding Pic1.Icon}" Width="480" Height="272"></Image>
-                            <Image AllowDrop="True" Drop="Pic0_OnDrop" Visibility="{Binding ShowInformation, Converter={StaticResource VisibilityConverter}}" Source="{Binding Pic0.Icon}" Width="310" Height="180" Margin="160,84,0,0"></Image>
-                            <Border AllowDrop="True" Drop="Icon0_OnDrop" Visibility="{Binding ShowIcon, Converter={StaticResource VisibilityConverter}}" CornerRadius="8" Height="80" Width="80" Margin="-280,0,0,0">
+                            <Image Tag="{Binding Pic1}" AllowDrop="True" Drop="Pic1_OnDrop" Visibility="{Binding ShowBackground, Converter={StaticResource VisibilityConverter}}" Source="{Binding Pic1.Icon}" Width="480" Height="272">
+                                <Image.ContextMenu>
+                                    <ContextMenu DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
+                                        <MenuItem Header="Load Background" Click="LoadResource_OnClick"></MenuItem>
+                                        <MenuItem IsEnabled="{Binding IsRemoveEnabled}" Header="Clear Background" Click="Resource_OnRemove"></MenuItem>
+                                        <MenuItem IsEnabled="{Binding IsSaveAsEnabled}" Header="Save Background As..." Click="SaveResource_OnClick"></MenuItem>
+                                    </ContextMenu>
+                                </Image.ContextMenu>
+                            </Image>
+                            <Image Tag="{Binding Pic0}" AllowDrop="True" Drop="Pic0_OnDrop" Visibility="{Binding ShowInformation, Converter={StaticResource VisibilityConverter}}" Source="{Binding Pic0.Icon}" Width="310" Height="180" Margin="160,84,0,0">
+                                <Image.ContextMenu>
+                                    <ContextMenu DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
+                                        <MenuItem Header="Load Information" Click="LoadResource_OnClick"></MenuItem>
+                                        <MenuItem IsEnabled="{Binding IsRemoveEnabled}" Header="Clear Information" Click="Resource_OnRemove"></MenuItem>
+                                        <MenuItem IsEnabled="{Binding IsSaveAsEnabled}" Header="Save Information As..." Click="SaveResource_OnClick"></MenuItem>
+                                    </ContextMenu>
+                                </Image.ContextMenu>
+                            </Image>
+                            <Border Tag="{Binding Icon0}" AllowDrop="True" Drop="Icon0_OnDrop" Visibility="{Binding ShowIcon, Converter={StaticResource VisibilityConverter}}" CornerRadius="8" Height="80" Width="80" Margin="-280,0,0,0">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="15" ShadowDepth="1" Opacity="1"/>
                                 </Border.Effect>
+                                <Border.ContextMenu>
+                                    <ContextMenu DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
+                                        <MenuItem Header="Load Icon" Click="LoadResource_OnClick"></MenuItem>
+                                        <MenuItem IsEnabled="{Binding IsRemoveEnabled}" Header="Clear Icon" Click="Resource_OnRemove"></MenuItem>
+                                        <MenuItem IsEnabled="{Binding IsSaveAsEnabled}" Header="Save Icon As..." Click="SaveResource_OnClick"></MenuItem>
+                                    </ContextMenu>
+                                </Border.ContextMenu>
                                 <Image Source="{Binding Icon0.Icon}" Height="80" Width="80"></Image>
                             </Border>
                         </Grid>
                         <Grid  Grid.Row="2" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-                            <Label>Drag and drop images onto the resource areas to load into the resource</Label>
+                            <Label>Drag and drop images onto the resource areas to load into the resource. Right-click to show context menu.</Label>
                         </Grid>
                     </Grid>
                 </TabItem>

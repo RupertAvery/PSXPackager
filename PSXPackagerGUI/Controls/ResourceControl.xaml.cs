@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using PSXPackagerGUI.Models;
@@ -95,6 +96,12 @@ namespace PSXPackagerGUI.Controls
         protected void OnPropertyChanged([CallerMemberName] string name = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
+
+        private void UIElement_OnMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            var newEventArgs = new RoutedEventArgs(MoreEvent, this);
+            RaiseEvent(newEventArgs);
         }
     }
 }

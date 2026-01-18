@@ -99,9 +99,10 @@ namespace PSXPackagerGUI.Pages
             Model.Snd0.Reset();
             Model.Boot.Reset();
 
-            LoadResource(Model.Icon0, GetDefaultResourceFile(Model.Icon0.Type));
-            LoadResource(Model.Pic0, GetDefaultResourceFile(Model.Pic0.Type));
-            LoadResource(Model.Pic1, GetDefaultResourceFile(Model.Pic1.Type));
+            LoadResource(Model.Icon0, GetDefaultResourceFile(Model.Icon0.Type), true);
+            LoadResource(Model.Pic0, GetDefaultResourceFile(Model.Pic0.Type), true);
+            LoadResource(Model.Pic1, GetDefaultResourceFile(Model.Pic1.Type), true);
+
             //LoadResource(Model.Boot, GetDefaultResourceFile(Model.Boot.Type));
 
             Model.IsDirty = false;
@@ -1059,7 +1060,7 @@ namespace PSXPackagerGUI.Pages
             cm.IsOpen = true;
         }
 
-        private void LoadResource(ResourceModel resource, string filename)
+        private void LoadResource(ResourceModel resource, string filename, bool isDefault = false)
         {
             switch (resource.Type)
             {
@@ -1131,8 +1132,8 @@ namespace PSXPackagerGUI.Pages
             }
 
             resource.IsLoadEnabled = true;
-            resource.IsSaveAsEnabled = false;
-            resource.IsRemoveEnabled = true;
+            resource.IsSaveAsEnabled = !isDefault;
+            resource.IsRemoveEnabled = !isDefault;
             resource.SourceUrl = filename;
         }
 
@@ -1168,33 +1169,65 @@ namespace PSXPackagerGUI.Pages
 
         private void SaveResource_OnClick(object sender, RoutedEventArgs e)
         {
-            var context = (sender as MenuItem).DataContext as ResourceModel;
-            var saveFileDialog = new Ookii.Dialogs.Wpf.VistaSaveFileDialog();
-            saveFileDialog.AddExtension = true;
-            saveFileDialog.Filter = GetFilterFromType(context.Type);
-            saveFileDialog.ShowDialog();
-
-            if (!string.IsNullOrEmpty(saveFileDialog.FileName))
+            ResourceModel? resource = sender switch
             {
-                using (var output = new FileStream(saveFileDialog.FileName, FileMode.OpenOrCreate,
-                           FileAccess.Write))
+                ResourceControl resourceControl => resourceControl.Resource,
+                MenuItem menu => menu.DataContext as ResourceModel,
+                _ => null
+            };
+
+            if (resource != null)
+            {
+                var saveFileDialog = new Ookii.Dialogs.Wpf.VistaSaveFileDialog();
+                saveFileDialog.AddExtension = true;
+                saveFileDialog.Filter = GetFilterFromType(resource.Type);
+                saveFileDialog.ShowDialog();
+
+                if (!string.IsNullOrEmpty(saveFileDialog.FileName))
                 {
-                    context.Stream.Seek(0, SeekOrigin.Begin);
-                    context.Stream.CopyTo(output);
-                    context.Stream.Seek(0, SeekOrigin.Begin);
-                    MessageBox.Show(Window, $"Resource has been extracted to \"{saveFileDialog.FileName}\"", "PSXPackager",
-                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    using (var output = new FileStream(saveFileDialog.FileName, FileMode.OpenOrCreate,
+                               FileAccess.Write))
+                    {
+                        resource.Stream.Seek(0, SeekOrigin.Begin);
+                        resource.Stream.CopyTo(output);
+                        resource.Stream.Seek(0, SeekOrigin.Begin);
+                        MessageBox.Show(Window, $"Resource has been extracted to \"{saveFileDialog.FileName}\"",
+                            "PSXPackager",
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
                 }
             }
         }
 
         private void Resource_OnRemove(object sender, RoutedEventArgs e)
         {
-            var context = (sender as ResourceControl).Resource;
+            ResourceModel? resource = sender switch
+            {
+                ResourceControl resourceControl => resourceControl.Resource,
+                MenuItem menu => menu.DataContext as ResourceModel,
+                _ => null
+            };
 
-            context.Clear();
+            if (resource != null)
+            {
+                switch (resource.Type)
+                {
+                    case ResourceType.ICON0:
+                        LoadResource(Model.Icon0, GetDefaultResourceFile(Model.Icon0.Type), true);
+                        break;
+                    case ResourceType.PIC0:
+                        LoadResource(Model.Pic0, GetDefaultResourceFile(Model.Pic0.Type), true);
+                        break;
+                    case ResourceType.PIC1:
+                        LoadResource(Model.Pic1, GetDefaultResourceFile(Model.Pic1.Type), true);
+                        break;
+                    default:
+                        resource.Clear();
+                        break;
+                }
 
-            Model.IsDirty = true;
+                Model.IsDirty = true;
+            }
         }
 
         public void NewPBP()
