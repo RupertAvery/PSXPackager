@@ -171,43 +171,44 @@ namespace Popstation.Pbp
                 basePbp.Seek(x + 16, SeekOrigin.Begin);
                 basePbp.Read(header, 2);  // Read 2 ints into header
 
+                // header[0] - the size of the header (always 0x50)
+                // header[1] - the size of boot.png
+
+                // Go back and copy 0x50 bytes starting from STARTDAT
                 basePbp.Seek(x, SeekOrigin.Begin);
                 basePbp.Read(buffer, 0, (int)header[0]);
+
+                if (convertInfo.Boot.Exists)
+                {
+                    // Update boot size in header
+                    var temp_buffer = BitConverter.GetBytes(convertInfo.Boot.Size);
+                    for (var j = 0; j < sizeof(uint); j++)
+                    {
+                        buffer[16 + 4 + j] = temp_buffer[j];
+                    }
+                }
+
+                // Write the header
+                outputStream.Write(buffer, 0, (int)header[0]);
 
 
                 if (!convertInfo.Boot.Exists)
                 {
-                    outputStream.Write(buffer, 0, (int)header[0]);
+                    // Copy boot.png from basePbp
                     basePbp.Read(buffer, 0, (int)header[1]);
                     outputStream.Write(buffer, 0, (int)header[1]);
                 }
                 else
                 {
-                    Console.WriteLine("Writing boot.png...\n");
                     Notify?.Invoke(PopstationEventEnum.WriteBootPng, null);
-
                     convertInfo.Boot.Write(outputStream);
 
-                    //ib[5] = boot_size;
-                    //var temp_buffer = BitConverter.GetBytes(boot_size);
-                    //for (var j = 0; j < sizeof(uint); j++)
-                    //{
-                    //    buffer[5 + j] = temp_buffer[i];
-                    //}
-
-                    //outputStream.Write(buffer, 0, (int)header[0]);
-
-                    //using (var t = new FileStream(convertInfo.Boot, FileMode.Open, FileAccess.Read, FileShare.Read))
-                    //{
-                    //    t.Read(buffer, 0, (int)boot_size);
-                    //    outputStream.Write(buffer, 0, (int)boot_size);
-                    //}
-
-                    //basePbp.Read(buffer, 0, (int)header[1]);
+                    // Skip boot.png in basePbp
+                    basePbp.Read(buffer, 0, (int)header[1]);
+                    //basePbp.Seek((int)header[1], SeekOrigin.Current);
                 }
 
-                //_base.Seek(x, SeekOrigin.Begin);
-
+                // Copy the rest of the STARTDAT (encrypted PGD?)
                 while ((x = (uint)basePbp.Read(buffer, 0, 1048576)) > 0)
                 {
                     outputStream.Write(buffer, 0, (int)x);
