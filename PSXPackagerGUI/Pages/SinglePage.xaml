@@ -18,7 +18,7 @@
         <converters:IsoInformationConverter x:Key="IsoInformationConverter"></converters:IsoInformationConverter>
         <converters:BooleanVisibilityConverter x:Key="VisibilityConverter"></converters:BooleanVisibilityConverter>
         <ContextMenu x:Key="DiscButtonContextMenu">
-            <MenuItem Header="Load ISO" x:Name="LoadISO" Click="LoadISO_OnClick" />
+            <MenuItem Header="Load Disc Image" x:Name="LoadISO" Click="LoadISO_OnClick" />
             <MenuItem Header="Save As..." x:Name="SaveImage" Click="SaveImage_OnClick" />
         </ContextMenu>
         <ContextMenu x:Key="ResourceButtonContextMenu">

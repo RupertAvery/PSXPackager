@@ -483,8 +483,8 @@ namespace Popstation.Pbp
             sfoBuilder.AddEntry(SFOKeys.DISC_ID, convertInfo.MainGameID);
             sfoBuilder.AddEntry(SFOKeys.DISC_VERSION, "1.00");
             sfoBuilder.AddEntry(SFOKeys.LICENSE, SFOValues.License);
-            sfoBuilder.AddEntry(SFOKeys.PARENTAL_LEVEL, 0x01);
-            sfoBuilder.AddEntry(SFOKeys.PSP_SYSTEM_VER, "3.01");
+            sfoBuilder.AddEntry(SFOKeys.PARENTAL_LEVEL, SFOValues.ParentalLevel);
+            sfoBuilder.AddEntry(SFOKeys.PSP_SYSTEM_VER, SFOValues.PSPSystemVersion);
             sfoBuilder.AddEntry(SFOKeys.REGION, 0x8000);
             sfoBuilder.AddEntry(SFOKeys.TITLE, convertInfo.MainGameTitle);
 

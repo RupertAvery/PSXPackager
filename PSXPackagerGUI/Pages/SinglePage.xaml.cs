@@ -9,7 +9,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media.Imaging;
 using Popstation;
 using Popstation.Database;
 using Popstation.Pbp;
@@ -17,7 +16,6 @@ using PSXPackager.Common;
 using PSXPackager.Common.Cue;
 using PSXPackager.Common.Notification;
 using PSXPackagerGUI.Common;
-using PSXPackagerGUI.Controls;
 using PSXPackagerGUI.Models;
 using PSXPackagerGUI.Models.Resource;
 using SFOEntry = PSXPackagerGUI.Models.SFOEntry;
@@ -155,9 +153,9 @@ namespace PSXPackagerGUI.Pages
                 new() { Key = SFOKeys.CATEGORY, Value = SFOValues.PS1Category, EntryType = SFOEntryType.STR, IsEditable = false  },
                 new() { Key = SFOKeys.DISC_ID, Value = "", EntryType = SFOEntryType.STR,IsEditable = true  },
                 new() { Key = SFOKeys.DISC_VERSION, Value =  "1.00", EntryType = SFOEntryType.STR, IsEditable = true  },
-                new() { Key = SFOKeys.LICENSE, Value =  SFOValues.License, EntryType = SFOEntryType.STR,IsEditable = true  },
-                new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  0x01 , EntryType = SFOEntryType.NUM, IsEditable = false },
-                new() { Key = SFOKeys.PSP_SYSTEM_VER, Value =  "3.01", EntryType = SFOEntryType.STR,IsEditable = true  },
+                new() { Key = SFOKeys.LICENSE, Value = SFOValues.License, EntryType = SFOEntryType.STR,IsEditable = true  },
+                new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  SFOValues.ParentalLevel, EntryType = SFOEntryType.NUM, IsEditable = false },
+                new() { Key = SFOKeys.PSP_SYSTEM_VER, Value =  SFOValues.PSPSystemVersion, EntryType = SFOEntryType.STR,IsEditable = true  },
                 new() { Key = SFOKeys.REGION, Value =  0x8000, EntryType = SFOEntryType.NUM, IsEditable = true },
                 new() { Key = SFOKeys.TITLE, Value = "", EntryType = SFOEntryType.STR, IsEditable = true  },
             };
@@ -403,7 +401,7 @@ namespace PSXPackagerGUI.Pages
             Model.Discs[disc.Index] = Disc.EmptyDisc(disc.Index);
             Model.IsDirty = true;
         }
-        
+
         private DiscInfo GetDiscInfo(Disc disc)
         {
             //var game = _gameDb.GetEntryByGameID(disc.GameID);
@@ -529,7 +527,7 @@ namespace PSXPackagerGUI.Pages
                 expectedIndex++;
             }
 
-            var filename = "";
+            string? filename = null;
 
             var gameId = Model.Discs.First().GameID;
 
@@ -537,23 +535,26 @@ namespace PSXPackagerGUI.Pages
             {
                 var ebootPath = Path.Combine(gameId, "EBOOT.PBP");
 
-                MessageBox.Show(Window, $"Select the folder to save {ebootPath}", "Save for PSP",
+                MessageBox.Show(Window, $"Select the GAME folder to save {ebootPath}", "Save for PSP",
                     MessageBoxButton.OK, MessageBoxImage.Information);
 
                 var selectFolderDialog = new Ookii.Dialogs.Wpf.VistaFolderBrowserDialog();
 
-                selectFolderDialog.ShowDialog();
+                var dialogResult = selectFolderDialog.ShowDialog();
 
-                filename = Path.Combine(selectFolderDialog.SelectedPath, ebootPath);
-
-                if (File.Exists(filename))
+                if (dialogResult is true)
                 {
-                    var result = MessageBox.Show(Window, $"The file {filename} exists! Overwrite?", "Save for PSP", MessageBoxButton.YesNo, MessageBoxImage.Warning,
-                        MessageBoxResult.No);
+                    filename = Path.Combine(selectFolderDialog.SelectedPath, ebootPath);
 
-                    if (result == MessageBoxResult.No)
+                    if (File.Exists(filename))
                     {
-                        return;
+                        var result = MessageBox.Show(Window, $"The file {filename} exists! Overwrite?", "Save for PSP", MessageBoxButton.YesNo, MessageBoxImage.Warning,
+                            MessageBoxResult.No);
+
+                        if (result == MessageBoxResult.No)
+                        {
+                            return;
+                        }
                     }
                 }
             }
@@ -563,11 +564,12 @@ namespace PSXPackagerGUI.Pages
                 saveFileDialog.AddExtension = true;
                 saveFileDialog.DefaultExt = ".pbp";
                 saveFileDialog.Filter = "EBOOT files|*.pbp|All files|*.*";
-                saveFileDialog.ShowDialog();
-                filename = saveFileDialog.FileName;
+                var dialogResult = saveFileDialog.ShowDialog();
+                if (dialogResult is true)
+                {
+                    filename = saveFileDialog.FileName;
+                }
             }
-
-
 
             if (!string.IsNullOrEmpty(filename))
             {
@@ -946,8 +948,8 @@ namespace PSXPackagerGUI.Pages
                         new() { Key = SFOKeys.DISC_ID, Value = gameId, IsEditable = true  },
                         new() { Key = SFOKeys.DISC_VERSION, Value =  "1.00", IsEditable = true  },
                         new() { Key = SFOKeys.LICENSE, Value =  SFOValues.License, IsEditable = true  },
-                        new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  0x01 , IsEditable = true },
-                        new() { Key = SFOKeys.PSP_SYSTEM_VER, Value =  "3.01", IsEditable = true  },
+                        new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  SFOValues.ParentalLevel, IsEditable = true },
+                        new() { Key = SFOKeys.PSP_SYSTEM_VER, Value =  SFOValues.PSPSystemVersion, IsEditable = true  },
                         new() { Key = SFOKeys.REGION, Value =  0x8000, IsEditable = true },
                         new() { Key = SFOKeys.TITLE, Value = disc.SaveTitle, IsEditable = true  },
                     };
@@ -1109,8 +1111,8 @@ namespace PSXPackagerGUI.Pages
                     new() { Key = SFOKeys.DISC_ID, Value = gameId, IsEditable = true  },
                     new() { Key = SFOKeys.DISC_VERSION, Value =  "1.00", IsEditable = true  },
                     new() { Key = SFOKeys.LICENSE, Value =  SFOValues.License, IsEditable = true  },
-                    new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  0x01 , IsEditable = true },
-                    new() { Key = SFOKeys.PSP_SYSTEM_VER, Value =  "3.01", IsEditable = true  },
+                    new() { Key = SFOKeys.PARENTAL_LEVEL, Value = SFOValues.ParentalLevel, IsEditable = true },
+                    new() { Key = SFOKeys.PSP_SYSTEM_VER, Value = SFOValues.PSPSystemVersion, IsEditable = true  },
                     new() { Key = SFOKeys.REGION, Value =  0x8000, IsEditable = true },
                     new() { Key = SFOKeys.TITLE, Value = game.MainGameTitle, IsEditable = true  },
                 };
@@ -1124,8 +1126,8 @@ namespace PSXPackagerGUI.Pages
                     new() { Key = SFOKeys.DISC_ID, Value = "", IsEditable = true  },
                     new() { Key = SFOKeys.DISC_VERSION, Value =  "1.00", IsEditable = true  },
                     new() { Key = SFOKeys.LICENSE, Value =  SFOValues.License, IsEditable = true  },
-                    new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  0x01 , IsEditable = true },
-                    new() { Key = SFOKeys.PSP_SYSTEM_VER, Value =  "3.01", IsEditable = true  },
+                    new() { Key = SFOKeys.PARENTAL_LEVEL, Value = SFOValues.ParentalLevel , IsEditable = true },
+                    new() { Key = SFOKeys.PSP_SYSTEM_VER, Value = SFOValues.PSPSystemVersion, IsEditable = true  },
                     new() { Key = SFOKeys.REGION, Value =  0x8000, IsEditable = true },
                     new() { Key = SFOKeys.TITLE, Value = "", IsEditable = true  },
                 };

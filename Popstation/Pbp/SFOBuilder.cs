@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SharpCompress.Common;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -29,10 +30,12 @@ namespace Popstation.Pbp
             sfo.Version = 0x00000101;
             sfo.Entries = new List<SFODir>();
 
-            var headerSize = 20;
-            var indexTableSize = _entries.Count * 16;
+            var validEntries = _entries.Where(entry => entry.Value != null && (entry.Value is string s && s.Trim().Length > 0) || (entry.Value is int)).ToList();
 
-            var keyTableSize = _entries.Sum(x => x.Key.Length + 1);
+            var headerSize = 20;
+            var indexTableSize = validEntries.Count * 16;
+
+            var keyTableSize = validEntries.Sum(x => x.Key.Length + 1);
 
             if (keyTableSize % 4 != 0)
             {
@@ -46,14 +49,16 @@ namespace Popstation.Pbp
             ushort keyOffset = 0;
             uint dataOffset = 0;
 
-            foreach (var entry in _entries)
+            foreach (var entry in validEntries)
             {
+               
+
                 var entryLength = GetEntryLength(entry.Key, entry.Value);
                 var maxLength = GetMaxLength(entry.Key);
 
                 if (entryLength > maxLength)
                 {
-                    throw new Exception("Value for {entry.Key} exceeds maximum allowed length");
+                    throw new Exception($"Value for {entry.Key} exceeds maximum allowed length");
                 }
 
                 sfo.Entries.Add(new SFODir()
