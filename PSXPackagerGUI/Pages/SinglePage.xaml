@@ -23,6 +23,7 @@
         </ContextMenu>
         <ContextMenu x:Key="ResourceButtonContextMenu">
             <MenuItem Header="Load Resource" x:Name="LoadResource" Click="LoadResource_OnClick" />
+            <MenuItem Header="Revert to Default" x:Name="ResetResource" Click="ResetResource_OnClick" />
             <MenuItem Header="Save As..." x:Name="SaveResource" Click="SaveResource_OnClick" />
         </ContextMenu>
     </Page.Resources>

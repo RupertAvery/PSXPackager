@@ -48,8 +48,7 @@
                 <ColumnDefinition Width="20"/>
                 <ColumnDefinition Width="20"/>
             </Grid.ColumnDefinitions>
-            <Button Grid.Column="1" x:Name="MoreButton" IsEnabled="{Binding IsEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}" Click="More_OnClick">...</Button>
-            <Button Grid.Column="2" x:Name="RemoveButton" IsEnabled="{Binding IsRemoveEnabled}" Click="Remove_OnClick">x</Button>
+            <Button Grid.Column="2" x:Name="MoreButton" IsEnabled="{Binding IsEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}" Click="More_OnClick">...</Button>
         </Grid>
 
         <Grid Grid.Row="1" Grid.Column="0"  Background="{DynamicResource {x:Static SystemColors.WindowFrameBrushKey}}">
@@ -74,7 +73,7 @@
                 </Border.ContextMenu>
                 <Grid>
                     <Image Stretch="None" VerticalAlignment="Center" Source="{Binding Composite.CompositeBitmap}" AllowDrop="True" MouseDown="UIElement_OnMouseDown" MouseMove="UIElement_OnMouseMove" MouseUp="UIElement_OnMouseUp" ></Image>
-                    <Image Stretch="None" VerticalAlignment="Center" Source="{Binding Composite.SelectionBitmap}"></Image>
+                    <Image Stretch="None" VerticalAlignment="Center" Source="{Binding Composite.SelectionBitmap}" IsHitTestVisible="False"></Image>
                 </Grid>
             </Border>
         </Grid>
