@@ -54,7 +54,7 @@ namespace PSXPackagerGUI.Pages
                                         resource.Composite.SetAplhaMask(ImageProcessing.GetBitmapImage(maskStream));
 
                                         resource.Composite.Layers.Add(new ImageLayer(image, "image", alphaMaskUri));
-                                        
+
                                         var overlayUri = Path.Combine(appPath, "Resources", "overlay.png");
                                         using var frameStream = new FileStream(overlayUri, FileMode.Open, FileAccess.Read);
                                         resource.Composite.Layers.Add(new ImageLayer(ImageProcessing.GetBitmapImage(frameStream), "frame", overlayUri));
@@ -125,7 +125,7 @@ namespace PSXPackagerGUI.Pages
             var control = sender as ResourceControl;
 
             var cm = this.FindResource("ResourceButtonContextMenu") as ContextMenu;
-            var menuItems = cm.Items.OfType<MenuItem>();
+            var menuItems = cm.Items.OfType<MenuItem>().Concat(cm.Items.OfType<Separator>().Cast<Control>());
             foreach (var menuItem in menuItems)
             {
                 menuItem.DataContext = control.Resource;
@@ -136,6 +136,15 @@ namespace PSXPackagerGUI.Pages
                         break;
                     case "SaveResource":
                         menuItem.IsEnabled = control.Resource.IsSaveAsEnabled;
+                        break;
+                    case "TemplateSeparator":
+                        menuItem.Visibility = control.Resource.IsTemplateEnabled ? Visibility.Visible : Visibility.Collapsed;
+                        break;
+                    case "LoadFromTemplate":
+                        menuItem.Visibility = control.Resource.IsTemplateEnabled ? Visibility.Visible : Visibility.Collapsed;
+                        break;
+                    case "SaveAsTemplate":
+                        menuItem.Visibility = control.Resource.IsTemplateEnabled ? Visibility.Visible : Visibility.Collapsed;
                         break;
                 }
             }
@@ -335,7 +344,7 @@ namespace PSXPackagerGUI.Pages
                 }
             }
 
-     
+
         }
     }
 }
