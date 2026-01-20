@@ -120,6 +120,8 @@ namespace PSXPackagerGUI.Models.Resource
                     _stream?.Dispose();
                     _stream = new MemoryStream();
                     Composite.SaveToPNG(_stream);
+                    _stream.Seek(0, SeekOrigin.Begin);
+                    Size = (uint)_stream.Length;
                     Composite.SetPristine();
                 }
                 return _stream;
