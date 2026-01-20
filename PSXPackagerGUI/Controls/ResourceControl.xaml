@@ -53,7 +53,12 @@
         </Grid>
 
         <Grid Grid.Row="1" Grid.Column="0"  Background="{DynamicResource {x:Static SystemColors.WindowFrameBrushKey}}">
-            <Border Tag="{Binding .}" Width="{Binding Composite.Width}" Height="{Binding Composite.Height}" BorderThickness="1" BorderBrush="#000000">
+            <Border Tag="{Binding .}" Width="{Binding Composite.Width}" Height="{Binding Composite.Height}" BorderThickness="1" BorderBrush="#000000"
+                    Focusable="True"
+                    KeyboardNavigation.IsTabStop="True"
+                    PreviewKeyDown="ResourceControl_OnPreviewKeyDown"
+                    MouseDown="Border_OnMouseDown"
+                    >
                 <Border.ContextMenu>
                     <ContextMenu IsEnabled="{Binding PlacementTarget.Tag.Composite.HasLayers, RelativeSource={RelativeSource Self}}">
                         <MenuItem Header="Insert Image Layer" Click="InsertImageLayer_OnClick"></MenuItem>
@@ -68,8 +73,8 @@
                     </ContextMenu>
                 </Border.ContextMenu>
                 <Grid>
-                    <Image Stretch="None" VerticalAlignment="Center" Source="{Binding Icon}" AllowDrop="True" MouseDown="UIElement_OnMouseDown" MouseMove="UIElement_OnMouseMove" MouseUp="UIElement_OnMouseUp" ></Image>
-                    <Image Stretch="None" VerticalAlignment="Center" Source="{Binding Composite.SelectionBitmap}" AllowDrop="True" MouseDown="UIElement_OnMouseDown" MouseMove="UIElement_OnMouseMove" MouseUp="UIElement_OnMouseUp" ></Image>
+                    <Image Stretch="None" VerticalAlignment="Center" Source="{Binding Composite.CompositeBitmap}" AllowDrop="True" MouseDown="UIElement_OnMouseDown" MouseMove="UIElement_OnMouseMove" MouseUp="UIElement_OnMouseUp" ></Image>
+                    <Image Stretch="None" VerticalAlignment="Center" Source="{Binding Composite.SelectionBitmap}"></Image>
                 </Grid>
             </Border>
         </Grid>

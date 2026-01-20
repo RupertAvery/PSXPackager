@@ -137,7 +137,9 @@
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="30"/>
                         </Grid.RowDefinitions>
-                        <ScrollViewer Grid.Row="0" Margin="0,5,0,5">
+                        <ScrollViewer Grid.Row="0" Margin="0,5,0,5"  Focusable="False"
+                                      KeyboardNavigation.DirectionalNavigation="None"
+                                      KeyboardNavigation.TabNavigation="None">
                             <Grid Margin="0,0,10,0">
 
                                 <Grid.RowDefinitions>

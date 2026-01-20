@@ -22,7 +22,7 @@ public class ImageComposite : BaseNotifyModel
     private Layer? _selectedLayer;
 
     private ObservableCollection<Layer> _layers;
-    private BitmapSource _compositeBitmap;
+    private ImageSource _compositeBitmap;
     private BitmapSource _selectionBitmap;
 
     public int Width { get; set; }
@@ -40,7 +40,7 @@ public class ImageComposite : BaseNotifyModel
         set => SetProperty(ref _selectedLayer, value);
     }
 
-    public BitmapSource CompositeBitmap
+    public ImageSource CompositeBitmap
     {
         get => _compositeBitmap;
         set => SetProperty(ref _compositeBitmap, value);
@@ -218,7 +218,7 @@ public class ImageComposite : BaseNotifyModel
     public void SaveToPNG(Stream stream)
     {
         var encoder = new PngBitmapEncoder();
-        encoder.Frames.Add(BitmapFrame.Create(CompositeBitmap));
+        encoder.Frames.Add(BitmapFrame.Create((BitmapSource)CompositeBitmap));
         encoder.Save(stream);
     }
 

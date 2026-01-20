@@ -52,7 +52,7 @@ namespace PSXPackagerGUI.Controls
             {
                 if (propertyChangedEventArgs.PropertyName == nameof(ResourceModel.Icon))
                 {
-                    control.InvalidateVisual();
+                    //control.InvalidateVisual();
                 }
             }
         }
@@ -113,12 +113,6 @@ namespace PSXPackagerGUI.Controls
         protected void OnPropertyChanged([CallerMemberName] string name = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-        }
-
-        private void UIElement_OnMouseRightButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            var newEventArgs = new RoutedEventArgs(MoreEvent, this);
-            RaiseEvent(newEventArgs);
         }
 
         public Layer? SelectedLayer
@@ -416,6 +410,35 @@ namespace PSXPackagerGUI.Controls
                 textLayer.DropShadow = model.DropShadow;
                 textLayer.RecalculateExtents();
             }
+        }
+
+        private void ResourceControl_OnPreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key is Key.Up or Key.Down or Key.Left or Key.Right && SelectedLayer != null)
+            {
+                switch (e.Key)
+                {
+                    case Key.Left:
+                        SelectedLayer.OffsetX--;
+                        break;
+                    case Key.Right:
+                        SelectedLayer.OffsetX++;
+                        break;
+                    case Key.Up:
+                        SelectedLayer.OffsetY--;
+                        break;
+                    case Key.Down:
+                        SelectedLayer.OffsetY++;
+                        break;
+                }
+                Resource.RefreshIcon();
+                e.Handled = true;
+            }
+        }
+
+        private void Border_OnMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            ((UIElement)sender).Focus();
         }
     }
 }
