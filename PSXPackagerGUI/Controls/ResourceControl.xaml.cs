@@ -257,7 +257,7 @@ namespace PSXPackagerGUI.Controls
 
         private void AppendImageLayer_OnClick(object sender, RoutedEventArgs e)
         {
-            var openFileDialog = new Ookii.Dialogs.Wpf.VistaOpenFileDialog();
+            var openFileDialog = new Microsoft.Win32.OpenFileDialog();
             openFileDialog.Filter = ImageProcessing.GetFilterFromType(Resource.Type);
 
             var result = openFileDialog.ShowDialog();
@@ -300,7 +300,7 @@ namespace PSXPackagerGUI.Controls
         {
             if (Resource.Composite != null && TryGetLayer(sender, out var layer))
             {
-                var openFileDialog = new Ookii.Dialogs.Wpf.VistaOpenFileDialog();
+                var openFileDialog = new Microsoft.Win32.OpenFileDialog();
                 openFileDialog.Filter = ImageProcessing.GetFilterFromType(Resource.Type);
 
                 var result = openFileDialog.ShowDialog();

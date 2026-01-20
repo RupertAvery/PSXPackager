@@ -350,27 +350,22 @@ namespace PSXPackagerGUI.Pages
 
         private void BrowseInput(object obj)
         {
-            var folderBrowserDialog = new Ookii.Dialogs.Wpf.VistaFolderBrowserDialog();
-            folderBrowserDialog.ShowDialog(Window);
-            if (string.IsNullOrEmpty(folderBrowserDialog.SelectedPath))
+            var folderBrowserDialog = new Microsoft.Win32.OpenFolderDialog();
+            var result = folderBrowserDialog.ShowDialog(Window);
+            if (result is true)
             {
-                return;
+                _model.Settings.InputPath = folderBrowserDialog.FolderName;
             }
-
-            _model.Settings.InputPath = folderBrowserDialog.SelectedPath;
         }
 
         private void BrowseOutput(object obj)
         {
-            var folderBrowserDialog = new Ookii.Dialogs.Wpf.VistaFolderBrowserDialog();
-            folderBrowserDialog.ShowDialog(Window);
-            if (string.IsNullOrEmpty(folderBrowserDialog.SelectedPath))
+            var folderBrowserDialog = new Microsoft.Win32.OpenFolderDialog();
+            var result = folderBrowserDialog.ShowDialog(Window);
+            if (result is true)
             {
-                return;
+                _model.Settings.OutputPath = folderBrowserDialog.FolderName;
             }
-
-            _model.Settings.OutputPath = folderBrowserDialog.SelectedPath;
-
         }
 
         public void UpdateToken(CancellationToken token)

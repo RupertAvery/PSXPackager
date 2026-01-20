@@ -1,6 +1,4 @@
-﻿using System.Globalization;
-using System.Windows;
-using System.Windows.Media;
+﻿using System.Windows.Media;
 
 namespace PSXPackagerGUI.Models.Resource;
 
@@ -50,13 +48,7 @@ public class TextLayer : Layer
 
     private (double Width, double Height) CalculateExtents()
     {
-        FormattedText formattedText = new FormattedText(
-            TextContent,
-            CultureInfo.GetCultureInfo("en-us"),
-            FlowDirection.LeftToRight,
-            new Typeface(FontFamily, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal),
-            FontSize,
-            Brushes.Black);
+        FormattedText formattedText = TextFormattingHelper.GetFormattedText(TextContent, FontFamily, FontSize);
 
         // Set a maximum width and height. If the text overflows these values, an ellipsis "..." appears.
         formattedText.MaxTextWidth = OriginalWidth;

@@ -1,21 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Pipes;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows.Documents;
+﻿using System.IO;
+using System.Windows;
 using System.Windows.Media;
-using System.Xml.Linq;
-using Popstation;
 using Popstation.Pbp;
-using PSXPackagerGUI.Pages;
-using SharpCompress.Compressors.Xz;
 
 namespace PSXPackagerGUI.Models.Resource
 {
     public class ResourceModel : BaseNotifyModel
     {
+        private Stream? _stream;
+        private ImageComposite? _composite;
         private ImageSource? _icon;
         private bool _isRemoveEnabled;
         private bool _isSaveAsEnabled;
@@ -36,8 +29,10 @@ namespace PSXPackagerGUI.Models.Resource
 
         public static ResourceModel OtherResource(ResourceType type)
         {
-            var resource = new ResourceModel();
-            resource.Type = type;
+            var resource = new ResourceModel
+            {
+                Type = type
+            };
             return resource;
         }
 
@@ -45,8 +40,9 @@ namespace PSXPackagerGUI.Models.Resource
         {
             var resource = new ResourceModel
             {
+                Type = type,
                 Composite = new ImageComposite(width, height),
-                Type = type
+                IsTemplateEnabled = true
             };
             return resource;
         }
@@ -108,9 +104,6 @@ namespace PSXPackagerGUI.Models.Resource
 
         public string? SourceUrl { get; set; }
 
-        private Stream? _stream;
-        private ImageComposite? _composite;
-
         public Stream? Stream
         {
             get
@@ -133,6 +126,7 @@ namespace PSXPackagerGUI.Models.Resource
         }
 
         public uint Size { get; private set; }
+        public bool IsTemplateEnabled { get; set; }
 
         public void Clear()
         {

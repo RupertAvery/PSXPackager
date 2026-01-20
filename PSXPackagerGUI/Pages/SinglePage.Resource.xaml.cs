@@ -1,7 +1,9 @@
-﻿using Popstation.Pbp;
+﻿using Microsoft.Win32;
+using Popstation.Pbp;
 using PSXPackager.Common.Notification;
 using PSXPackagerGUI.Controls;
 using PSXPackagerGUI.Models.Resource;
+using PSXPackagerGUI.Templates;
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -10,7 +12,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using System.Xml.Serialization;
-using PSXPackagerGUI.Templates;
 using ImageLayer = PSXPackagerGUI.Models.Resource.ImageLayer;
 using Layer = PSXPackagerGUI.Models.Resource.Layer;
 
@@ -102,16 +103,17 @@ namespace PSXPackagerGUI.Pages
 
         private void LoadResource_OnClick(object sender, RoutedEventArgs e)
         {
-            var resource = (sender as MenuItem).DataContext as ResourceModel;
+            var resource = (sender as MenuItem)!.DataContext as ResourceModel;
 
-            var openFileDialog = new Ookii.Dialogs.Wpf.VistaOpenFileDialog();
+            var openFileDialog = new Microsoft.Win32.OpenFileDialog();
+            openFileDialog.InitialDirectory = _settings.LastResourceDirectory;
+            openFileDialog.Filter = ImageProcessing.GetFilterFromType(resource!.Type);
 
-            openFileDialog.Filter = ImageProcessing.GetFilterFromType(resource.Type);
+            var result = openFileDialog.ShowDialog();
 
-            openFileDialog.ShowDialog();
-
-            if (!string.IsNullOrEmpty(openFileDialog.FileName))
+            if (result is true)
             {
+                _settings.LastResourceDirectory = Path.GetDirectoryName(openFileDialog.FileName);
                 LoadResource(resource, openFileDialog.FileName);
                 Model.IsDirty = true;
             }
@@ -153,17 +155,20 @@ namespace PSXPackagerGUI.Pages
 
             if (resource != null)
             {
-                var saveFileDialog = new Ookii.Dialogs.Wpf.VistaSaveFileDialog();
+                var saveFileDialog = new Microsoft.Win32.SaveFileDialog();
+                saveFileDialog.InitialDirectory = _settings.LastResourceDirectory;
                 saveFileDialog.AddExtension = true;
                 saveFileDialog.Filter = ImageProcessing.GetFilterFromType(resource.Type);
-                saveFileDialog.ShowDialog();
+                var result = saveFileDialog.ShowDialog();
 
-                if (!string.IsNullOrEmpty(saveFileDialog.FileName))
+                if (result is true)
                 {
+                    _settings.LastResourceDirectory = Path.GetDirectoryName(saveFileDialog.FileName);
+
                     using (var output = new FileStream(saveFileDialog.FileName, FileMode.OpenOrCreate,
                                FileAccess.Write))
                     {
-                        resource.Stream.Seek(0, SeekOrigin.Begin);
+                        resource.Stream!.Seek(0, SeekOrigin.Begin);
                         resource.Stream.CopyTo(output);
                         resource.Stream.Seek(0, SeekOrigin.Begin);
                         MessageBox.Show(Window, $"Resource has been extracted to \"{saveFileDialog.FileName}\"",
@@ -241,16 +246,20 @@ namespace PSXPackagerGUI.Pages
                 _ => null
             };
 
-            var saveFileDialog = new Ookii.Dialogs.Wpf.VistaSaveFileDialog();
+            var saveFileDialog = new Microsoft.Win32.SaveFileDialog();
+            saveFileDialog.InitialDirectory = _settings.LastTemplateDirectory ?? Path.Combine(ApplicationInfo.AppPath, "Templates");
             saveFileDialog.AddExtension = true;
             saveFileDialog.Filter = "Template files|*.xml|All files|*.*";
-            saveFileDialog.ShowDialog();
+            var result = saveFileDialog.ShowDialog();
 
-            if (!string.IsNullOrEmpty(saveFileDialog.FileName))
+            if (result is true)
             {
+
                 var basePath = Path.GetDirectoryName(saveFileDialog.FileName);
 
-                var template = resource.ToTemplateResource();
+                _settings.LastTemplateDirectory = basePath;
+
+                var template = resource!.ToTemplateResource();
 
                 foreach (var layer in template.Layers)
                 {
@@ -258,7 +267,7 @@ namespace PSXPackagerGUI.Pages
                     {
                         if (Path.GetDirectoryName(imageLayer.SourceUri) == basePath)
                         {
-                            imageLayer.SourceUri = Path.GetRelativePath(basePath, imageLayer.SourceUri);
+                            imageLayer.SourceUri = Path.GetRelativePath(basePath!, imageLayer.SourceUri);
                         }
                     }
                 }
@@ -280,25 +289,49 @@ namespace PSXPackagerGUI.Pages
                 _ => null
             };
 
-            var openFileDialog = new Ookii.Dialogs.Wpf.VistaOpenFileDialog();
+            var openFileDialog = new Microsoft.Win32.OpenFileDialog();
+            openFileDialog.InitialDirectory = _settings.LastTemplateDirectory ?? Path.Combine(ApplicationInfo.AppPath, "Templates");
 
             openFileDialog.Filter = "Template files|*.xml|All files|*.*";
 
-            openFileDialog.ShowDialog();
+            var result = openFileDialog.ShowDialog();
 
-            if (!string.IsNullOrEmpty(openFileDialog.FileName))
+            if (result is true)
             {
                 var basePath = Path.GetDirectoryName(openFileDialog.FileName);
+
+                _settings.LastTemplateDirectory = basePath;
 
                 XmlSerializer serializer = new XmlSerializer(typeof(Resource));
 
                 using (FileStream stream = File.OpenRead(openFileDialog.FileName))
                 {
-                    var xmlResource = (Resource)serializer.Deserialize(stream);
-                    var resourceTemplate = xmlResource.ToResourceTemplate(basePath);
-                    // TODO: Check if resource types match
-                    resource.Composite.Layers = new ObservableCollection<Layer>(resourceTemplate.Layers);
-                    resource.RefreshIcon();
+                    try
+                    {
+                        var xmlResource = (Resource)serializer.Deserialize(stream)!;
+                        var resourceTemplate = xmlResource.ToResourceTemplate(basePath!);
+                        if (resourceTemplate.ResourceType != resource.Type)
+                        {
+                            var confirmResult = MessageBox.Show(Window,
+                                $"The selected template does not match the resource type {resource.Type}. Are you sure you want to continue?",
+                                "PSXPackager",
+                                MessageBoxButton.YesNo,
+                                MessageBoxImage.Warning
+                            );
+
+                            if (confirmResult == MessageBoxResult.No)
+                            {
+                                return;
+                            }
+                        }
+                        resource.Composite.Layers = new ObservableCollection<Layer>(resourceTemplate.Layers);
+                        resource.RefreshIcon();
+                    }
+                    catch (Exception exception)
+                    {
+                        MessageBox.Show(Window, $"Failed to load template:\n{exception.Message}", "PSXPackager",
+                            MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
                 }
             }
 

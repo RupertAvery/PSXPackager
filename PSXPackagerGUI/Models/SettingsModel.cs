@@ -1,4 +1,5 @@
-﻿using System.Windows.Input;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Windows.Input;
 using Newtonsoft.Json;
 
 namespace PSXPackagerGUI.Models
@@ -14,6 +15,9 @@ namespace PSXPackagerGUI.Models
         private string _customResourcesPath;
         private ICommand _browseCustomResourcePath;
         private bool _generateIconFrame;
+        private string? _lastDiscImageDirectory;
+        private string? _lastResourceDirectory;
+        private string? _lastTemplateDirectory;
 
         public string FileNameFormat
         {
@@ -79,6 +83,24 @@ namespace PSXPackagerGUI.Models
         {
             get => _generateIconFrame;
             set => SetProperty(ref _generateIconFrame, value);
+        }
+
+        public string? LastDiscImageDirectory
+        {
+            get => _lastDiscImageDirectory;
+            set => SetProperty(ref _lastDiscImageDirectory, value);
+        }
+
+        public string? LastResourceDirectory
+        {
+            get => _lastResourceDirectory;
+            set => SetProperty(ref _lastResourceDirectory, value);
+        }
+
+        public string? LastTemplateDirectory
+        {
+            get => _lastTemplateDirectory;
+            set => SetProperty(ref _lastTemplateDirectory, value);
         }
     }
 }

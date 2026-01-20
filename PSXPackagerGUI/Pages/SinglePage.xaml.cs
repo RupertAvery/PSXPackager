@@ -1,15 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using Popstation;
+﻿using Popstation;
 using Popstation.Database;
 using Popstation.Pbp;
 using PSXPackager.Common;
@@ -18,6 +7,18 @@ using PSXPackager.Common.Notification;
 using PSXPackagerGUI.Common;
 using PSXPackagerGUI.Models;
 using PSXPackagerGUI.Models.Resource;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.IO;
+using System.Linq;
+using System.Runtime;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
 using SFOEntry = PSXPackagerGUI.Models.SFOEntry;
 
 namespace PSXPackagerGUI.Pages
@@ -65,6 +66,8 @@ namespace PSXPackagerGUI.Pages
             _cancellationTokenSource = new CancellationTokenSource();
 
             InitializeComponent();
+
+            TextFormattingHelper.Visual = this;
 
             Model = new SingleModel
             {
@@ -170,11 +173,11 @@ namespace PSXPackagerGUI.Pages
                 return;
             }
 
-            var openFileDialog = new Ookii.Dialogs.Wpf.VistaOpenFileDialog();
+            var openFileDialog = new Microsoft.Win32.OpenFileDialog();
             openFileDialog.Filter = "PBP Files|*.pbp|All files|*.*";
             var result = openFileDialog.ShowDialog();
 
-            if (!result.GetValueOrDefault(false))
+            if (result is not true)
             {
                 return;
             }
@@ -538,13 +541,13 @@ namespace PSXPackagerGUI.Pages
                 MessageBox.Show(Window, $"Select the GAME folder to save {ebootPath}", "Save for PSP",
                     MessageBoxButton.OK, MessageBoxImage.Information);
 
-                var selectFolderDialog = new Ookii.Dialogs.Wpf.VistaFolderBrowserDialog();
+                var selectFolderDialog = new Microsoft.Win32.OpenFolderDialog();
 
                 var dialogResult = selectFolderDialog.ShowDialog();
 
                 if (dialogResult is true)
                 {
-                    filename = Path.Combine(selectFolderDialog.SelectedPath, ebootPath);
+                    filename = Path.Combine(selectFolderDialog.FolderName, ebootPath);
 
                     if (File.Exists(filename))
                     {
@@ -560,7 +563,7 @@ namespace PSXPackagerGUI.Pages
             }
             else
             {
-                var saveFileDialog = new Ookii.Dialogs.Wpf.VistaSaveFileDialog();
+                var saveFileDialog = new Microsoft.Win32.SaveFileDialog();
                 saveFileDialog.AddExtension = true;
                 saveFileDialog.DefaultExt = ".pbp";
                 saveFileDialog.Filter = "EBOOT files|*.pbp|All files|*.*";
@@ -827,32 +830,37 @@ namespace PSXPackagerGUI.Pages
         {
             var disc = ((MenuItem)sender).DataContext as Disc;
 
-            var saveFileDialog = new Ookii.Dialogs.Wpf.VistaOpenFileDialog();
-            saveFileDialog.Filter = "Supported files|*.bin;*.cue;*.iso;*.img|All files|*.*";
-            var dlgResult = saveFileDialog.ShowDialog();
+            var openFileDialog = new Microsoft.Win32.OpenFileDialog();
+            openFileDialog.InitialDirectory = _settings.LastDiscImageDirectory;
+            openFileDialog.Filter = "Supported files|*.bin;*.cue;*.img|All files|*.*";
+            var dlgResult = openFileDialog.ShowDialog();
 
-            if (dlgResult.GetValueOrDefault(false))
+            if (dlgResult is true)
             {
-                // clear the old TOC
-                disc.SourceTOC = null;
+                var fileDirectory = Path.GetDirectoryName(openFileDialog.FileName);
 
-                var imagePath = saveFileDialog.FileName;
+                _settings.LastDiscImageDirectory = fileDirectory;
+
+                // clear the old TOC
+                disc!.SourceTOC = null;
+
+                var imagePath = openFileDialog.FileName;
 
                 var isCue = false;
 
-                if (Path.GetExtension(saveFileDialog.FileName).Equals(".cue", StringComparison.InvariantCultureIgnoreCase))
+                if (Path.GetExtension(openFileDialog.FileName).Equals(".cue", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    var sheet = CueFileReader.Read(saveFileDialog.FileName);
+                    var sheet = CueFileReader.Read(openFileDialog.FileName);
                     var firstEntry = sheet.FileEntries.First();
-                    var fileDirectory = Path.GetDirectoryName(saveFileDialog.FileName);
+                
                     imagePath = Path.Combine(fileDirectory, firstEntry.FileName);
-                    disc.SourceTOC = saveFileDialog.FileName;
+                    disc.SourceTOC = openFileDialog.FileName;
                     isCue = true;
                 }
                 else
                 {
                     var cueFilename = Path.GetFileNameWithoutExtension(imagePath) + ".cue";
-                    var dirPath = Path.GetDirectoryName(imagePath);
+                    var dirPath = Path.GetDirectoryName(imagePath)!;
                     var cuePath = Path.Combine(dirPath, cueFilename);
                     if (File.Exists(cuePath))
                     {
@@ -880,7 +888,7 @@ namespace PSXPackagerGUI.Pages
                         fileSize += (uint)fileInfo.Length;
                     }
 
-                    disc.SourceUrl = saveFileDialog.FileName;
+                    disc.SourceUrl = openFileDialog.FileName;
                 }
                 else
                 {
@@ -971,7 +979,7 @@ namespace PSXPackagerGUI.Pages
             var game = _gameDb.GetEntryByGameID(context.GameID);
 
 
-            var saveFileDialog = new Ookii.Dialogs.Wpf.VistaSaveFileDialog();
+            var saveFileDialog = new Microsoft.Win32.SaveFileDialog();
             saveFileDialog.OverwritePrompt = true;
             saveFileDialog.FileName = $"{game.Title}.bin";
             saveFileDialog.Filter = "BIN files|*.bin|All files|*.*";
@@ -979,7 +987,7 @@ namespace PSXPackagerGUI.Pages
             saveFileDialog.AddExtension = true;
             var result = saveFileDialog.ShowDialog(Window);
 
-            if (result.GetValueOrDefault(false))
+            if (result is true)
             {
                 var sourceUrl = Model.Discs.Single(d => d.Index == context.Index).SourceUrl;
 

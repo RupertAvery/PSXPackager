@@ -55,46 +55,51 @@ public static class ImageCompositeExtensions
     public static ResourceTemplate ToResourceTemplate(this Templates.Resource resource, string basePath)
     {
         var layers = new List<Layer>();
-        foreach (var layer in resource.Layers)
-        {
-            if (layer is Templates.ImageLayer imgLayer)
-            {
-                if (!Path.IsPathFullyQualified(imgLayer.SourceUri))
-                {
-                    imgLayer.SourceUri = Path.Combine(basePath, imgLayer.SourceUri);
-                }
 
-                var stream = new FileStream(imgLayer.SourceUri, FileMode.Open, FileAccess.Read);
-                var bitmap = ImageProcessing.GetBitmapImage(stream);
-                var imageLayer = new ImageLayer(bitmap, "image", imgLayer.SourceUri)
-                {
-                    Bitmap = bitmap,
-                    OffsetX = imgLayer.X,
-                    OffsetY = imgLayer.Y,
-                    Width = imgLayer.Width,
-                    Height = imgLayer.Height
-                };
-                layers.Add(imageLayer);
-            }
-            else if (layer is Templates.TextLayer textLayer)
+        if (resource.Layers != null)
+        {
+            foreach (var layer in resource.Layers)
             {
-                var textLayerModel = new TextLayer("text", 
-                    textLayer.Text, 
-                    FontManager.GetFontFamily(textLayer.FontFamily), 
-                    textLayer.FontSize, 
-                    new SolidColorBrush((Color)ColorConverter.ConvertFromString(textLayer.Color)),
-                    textLayer.DropShadow, 
-                    (int)textLayer.OriginalWidth, 
-                    (int)textLayer.OriginalHeight)
+                if (layer is Templates.ImageLayer imgLayer)
                 {
-                    OffsetX = textLayer.X,
-                    OffsetY = textLayer.Y,
-                    Width = textLayer.Width,
-                    Height = textLayer.Height
-                };
-                layers.Add(textLayerModel);
+                    if (!Path.IsPathFullyQualified(imgLayer.SourceUri))
+                    {
+                        imgLayer.SourceUri = Path.Combine(basePath, imgLayer.SourceUri);
+                    }
+
+                    var stream = new FileStream(imgLayer.SourceUri, FileMode.Open, FileAccess.Read);
+                    var bitmap = ImageProcessing.GetBitmapImage(stream);
+                    var imageLayer = new ImageLayer(bitmap, "image", imgLayer.SourceUri)
+                    {
+                        Bitmap = bitmap,
+                        OffsetX = imgLayer.X,
+                        OffsetY = imgLayer.Y,
+                        Width = imgLayer.Width,
+                        Height = imgLayer.Height
+                    };
+                    layers.Add(imageLayer);
+                }
+                else if (layer is Templates.TextLayer textLayer)
+                {
+                    var textLayerModel = new TextLayer("text",
+                        textLayer.Text,
+                        FontManager.GetFontFamily(textLayer.FontFamily),
+                        textLayer.FontSize,
+                        new SolidColorBrush((Color)ColorConverter.ConvertFromString(textLayer.Color)),
+                        textLayer.DropShadow,
+                        (int)textLayer.OriginalWidth,
+                        (int)textLayer.OriginalHeight)
+                    {
+                        OffsetX = textLayer.X,
+                        OffsetY = textLayer.Y,
+                        Width = textLayer.Width,
+                        Height = textLayer.Height
+                    };
+                    layers.Add(textLayerModel);
+                }
             }
         }
+
 
         return new ResourceTemplate()
         {

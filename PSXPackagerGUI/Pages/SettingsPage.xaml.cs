@@ -95,14 +95,12 @@ namespace PSXPackagerGUI.Pages
 
         private void BrowseCustomResourcePath(object obj)
         {
-            var folderBrowserDialog = new Ookii.Dialogs.Wpf.VistaFolderBrowserDialog();
-            folderBrowserDialog.ShowDialog(Window);
-            if (string.IsNullOrEmpty(folderBrowserDialog.SelectedPath))
+            var folderBrowserDialog = new Microsoft.Win32.OpenFolderDialog();
+            var result = folderBrowserDialog.ShowDialog(Window);
+            if (result is true)
             {
-                return;
+                Model.CustomResourcesPath = folderBrowserDialog.FolderName;
             }
-
-            Model.CustomResourcesPath = folderBrowserDialog.SelectedPath;
         }
 
         const string sample = "SCUS-94164;SCUS94163;Final Fantasy VII;Final Fantasy VII - Disc 2;NTSC;SCUS94164";
@@ -149,23 +147,23 @@ namespace PSXPackagerGUI.Pages
 
         private void ConvertMultiToSingleBin_OnClick(object sender, RoutedEventArgs e)
         {
-            var openFileDialog = new Ookii.Dialogs.Wpf.VistaOpenFileDialog();
+            var openFileDialog = new Microsoft.Win32.OpenFileDialog();
             openFileDialog.Filter = "Supported files|*.bin;*.cue|All files|*.*";
             openFileDialog.Multiselect = true;
             var openResult = openFileDialog.ShowDialog();
 
-            if (!openResult.GetValueOrDefault(false))
+            if (openResult is not true)
             {
                 return;
             }
 
-            var saveFileDialog = new Ookii.Dialogs.Wpf.VistaSaveFileDialog();
+            var saveFileDialog = new Microsoft.Win32.SaveFileDialog();
             saveFileDialog.Filter = "Supported files|*.bin;";
             saveFileDialog.DefaultExt = ".bin";
             saveFileDialog.AddExtension = true;
             var saveResult = saveFileDialog.ShowDialog();
 
-            if (!saveResult.GetValueOrDefault(false))
+            if (saveResult is not true)
             {
                 return;
             }
