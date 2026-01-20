@@ -26,4 +26,9 @@ public static class FontManager
             FontStretches.Normal);
 
     }
+
+    public static FontFamily GetFontFamily(string familyName)
+    {
+        return familyName == "NewRodin Pro DB" ? NewRodinProDBFontFamily : new FontFamily(familyName);
+    }
 }

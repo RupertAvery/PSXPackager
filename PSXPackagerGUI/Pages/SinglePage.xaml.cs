@@ -100,11 +100,14 @@ namespace PSXPackagerGUI.Pages
                 {
                     var appPath = ApplicationInfo.AppPath;
 
-                    using var maskStream = new FileStream(Path.Combine(appPath, "Resources", "alpha.png"), FileMode.Open, FileAccess.Read);
+                    var alphaMaskUri = Path.Combine(appPath, "Resources", "alpha.png");
+                    var overlayUri = Path.Combine(appPath, "Resources", "overlay.png");
+
+                    using var maskStream = new FileStream(alphaMaskUri, FileMode.Open, FileAccess.Read);
                     Model.Icon0.Composite.SetAplhaMask(ImageProcessing.GetBitmapImage(maskStream));
 
-                    using var frameStream = new FileStream(Path.Combine(appPath, "Resources", "overlay.png"), FileMode.Open, FileAccess.Read);
-                    Model.Icon0.Composite.AddLayer(new ImageLayer(ImageProcessing.GetBitmapImage(frameStream), "frame"));
+                    using var frameStream = new FileStream(overlayUri, FileMode.Open, FileAccess.Read);
+                    Model.Icon0.Composite.AddLayer(new ImageLayer(ImageProcessing.GetBitmapImage(frameStream), "frame", overlayUri));
 
                     Model.Icon0.RefreshIcon();
                 }
@@ -221,12 +224,12 @@ namespace PSXPackagerGUI.Pages
                             if (pbpReader.TryGetBootImage(stream, out var bootStream))
                             {
                                 model.Composite.Clear();
-                                model.Composite.AddLayer(new ImageLayer(ImageProcessing.GetBitmapImage(bootStream), "image"));
+                                model.Composite.AddLayer(new ImageLayer(ImageProcessing.GetBitmapImage(bootStream), "image", $"//pbp:/{path}#{model.Type}"));
                                 model.RefreshIcon();
                                 model.IsLoadEnabled = true;
                                 model.IsSaveAsEnabled = true;
                                 model.IsRemoveEnabled = true;
-                                model.SourceUrl = $"//pbp/{model.Type.ToString().ToLower()}/{path}";
+                                model.SourceUrl = $"//pbp:/{path}#{model.Type}";
                             }
                         }
                         else
@@ -238,12 +241,12 @@ namespace PSXPackagerGUI.Pages
                                 //outStream.Flush();
                                 //resourceStream.Seek(0, SeekOrigin.Begin);
                                 model.Composite.Clear();
-                                model.Composite.AddLayer(new ImageLayer(ImageProcessing.GetBitmapImage(resourceStream), "image"));
+                                model.Composite.AddLayer(new ImageLayer(ImageProcessing.GetBitmapImage(resourceStream), "image", $"//pbp:/{path}#{model.Type}"));
                                 model.RefreshIcon();
                                 model.IsLoadEnabled = true;
                                 model.IsSaveAsEnabled = true;
                                 model.IsRemoveEnabled = true;
-                                model.SourceUrl = $"//pbp/{model.Type.ToString().ToLower()}/{path}";
+                                model.SourceUrl = $"//pbp:/{path}#{model.Type}";
                             }
                         }
 

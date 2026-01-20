@@ -7,8 +7,6 @@ public abstract class Layer : BaseNotifyModel
     private BitmapSource _bitmap;
     private string _name;
 
-    protected double OriginalWidth;
-    protected double OriginalHeight;
     private double _offsetX;
     private double _offsetY;
     private double _scaleX;
@@ -32,6 +30,18 @@ public abstract class Layer : BaseNotifyModel
         set => SetProperty(ref _bitmap, value);
     }
 
+    public double OffsetX
+    {
+        get => _offsetX;
+        set => SetProperty(ref _offsetX, value);
+    }
+
+    public double OffsetY
+    {
+        get => _offsetY;
+        set => SetProperty(ref _offsetY, value);
+    }
+
     public double Width
     {
         get => _width;
@@ -44,17 +54,9 @@ public abstract class Layer : BaseNotifyModel
         set => SetProperty(ref _height, value);
     }
 
-    public double OffsetX
-    {
-        get => _offsetX;
-        set => SetProperty(ref _offsetX, value);
-    }
+    public double OriginalWidth { get; set; }
 
-    public double OffsetY
-    {
-        get => _offsetY;
-        set => SetProperty(ref _offsetY, value);
-    }
+    public double OriginalHeight { get; set; }
 
     public double ScaleX
     {

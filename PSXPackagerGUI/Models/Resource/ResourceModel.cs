@@ -22,7 +22,12 @@ namespace PSXPackagerGUI.Models.Resource
         private bool _isLoadEnabled;
         private bool _text;
         private bool _isMoreEnabled;
-        public ImageComposite? Composite { get; private set; }
+
+        public ImageComposite? Composite
+        {
+            get => _composite;
+            set => SetProperty(ref _composite, value);
+        }
 
         public ResourceModel()
         {
@@ -104,6 +109,7 @@ namespace PSXPackagerGUI.Models.Resource
         public string? SourceUrl { get; set; }
 
         private Stream? _stream;
+        private ImageComposite? _composite;
 
         public Stream? Stream
         {

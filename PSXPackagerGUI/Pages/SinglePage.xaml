@@ -22,8 +22,10 @@
             <MenuItem Header="Save As..." x:Name="SaveImage" Click="SaveImage_OnClick" />
         </ContextMenu>
         <ContextMenu x:Key="ResourceButtonContextMenu">
-            <MenuItem Header="Load Resource" x:Name="LoadResource" Click="LoadResource_OnClick" />
             <MenuItem Header="Revert to Default" x:Name="ResetResource" Click="ResetResource_OnClick" />
+            <MenuItem Header="Load Resource" x:Name="LoadResource" Click="LoadResource_OnClick" />
+            <MenuItem Header="Load From Template" x:Name="LoadFromTemplate" Click="LoadFromTemplate_OnClick" />
+            <MenuItem Header="Save As Template" x:Name="SaveAsTemplate" Click="SaveAsTemplate_OnClick" />
             <MenuItem Header="Save As..." x:Name="SaveResource" Click="SaveResource_OnClick" />
         </ContextMenu>
     </Page.Resources>

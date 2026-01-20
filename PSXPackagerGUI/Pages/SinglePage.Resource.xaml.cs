@@ -3,11 +3,16 @@ using PSXPackager.Common.Notification;
 using PSXPackagerGUI.Controls;
 using PSXPackagerGUI.Models.Resource;
 using System;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using System.Xml.Serialization;
+using PSXPackagerGUI.Templates;
+using ImageLayer = PSXPackagerGUI.Models.Resource.ImageLayer;
+using Layer = PSXPackagerGUI.Models.Resource.Layer;
 
 namespace PSXPackagerGUI.Pages
 {
@@ -43,17 +48,19 @@ namespace PSXPackagerGUI.Pages
 
                                     if (_settings.GenerateIconFrame)
                                     {
-                                        using var maskStream = new FileStream(Path.Combine(appPath, "Resources", "alpha.png"), FileMode.Open, FileAccess.Read);
+                                        var alphaMaskUri = Path.Combine(appPath, "Resources", "alpha.png");
+                                        using var maskStream = new FileStream(alphaMaskUri, FileMode.Open, FileAccess.Read);
                                         resource.Composite.SetAplhaMask(ImageProcessing.GetBitmapImage(maskStream));
 
-                                        resource.Composite.Layers.Add(new ImageLayer(image, "image"));
-
-                                        using var frameStream = new FileStream(Path.Combine(appPath, "Resources", "overlay.png"), FileMode.Open, FileAccess.Read);
-                                        resource.Composite.Layers.Add(new ImageLayer(ImageProcessing.GetBitmapImage(frameStream), "frame"));
+                                        resource.Composite.Layers.Add(new ImageLayer(image, "image", alphaMaskUri));
+                                        
+                                        var overlayUri = Path.Combine(appPath, "Resources", "overlay.png");
+                                        using var frameStream = new FileStream(overlayUri, FileMode.Open, FileAccess.Read);
+                                        resource.Composite.Layers.Add(new ImageLayer(ImageProcessing.GetBitmapImage(frameStream), "frame", overlayUri));
                                     }
                                     else
                                     {
-                                        resource.Composite.Layers.Add(new ImageLayer(image, "image"));
+                                        resource.Composite.Layers.Add(new ImageLayer(image, "image", filename));
                                     }
 
 
@@ -63,7 +70,7 @@ namespace PSXPackagerGUI.Pages
                                 {
                                     //image = ImageProcessing.Resize(image, 310, 180);
 
-                                    resource.Composite.Layers.Add(new ImageLayer(image, "image"));
+                                    resource.Composite.Layers.Add(new ImageLayer(image, "image", filename));
                                     break;
                                 }
                             case ResourceType.PIC1:
@@ -71,7 +78,7 @@ namespace PSXPackagerGUI.Pages
                                 {
                                     //image = ImageProcessing.Resize(image, 480, 272);
 
-                                    resource.Composite.Layers.Add(new ImageLayer(image, "image"));
+                                    resource.Composite.Layers.Add(new ImageLayer(image, "image", filename));
                                     break;
                                 }
                         }
@@ -88,7 +95,7 @@ namespace PSXPackagerGUI.Pages
             }
 
             resource.IsLoadEnabled = true;
-            resource.IsSaveAsEnabled = !isDefault;
+            resource.IsSaveAsEnabled = true;
             resource.IsRemoveEnabled = !isDefault;
             resource.SourceUrl = filename;
         }
@@ -212,13 +219,9 @@ namespace PSXPackagerGUI.Pages
                 switch (resource.Type)
                 {
                     case ResourceType.ICON0:
-                        LoadResource(Model.Icon0, GetDefaultResourceFile(Model.Icon0.Type), true);
-                        break;
                     case ResourceType.PIC0:
-                        LoadResource(Model.Pic0, GetDefaultResourceFile(Model.Pic0.Type), true);
-                        break;
                     case ResourceType.PIC1:
-                        LoadResource(Model.Pic1, GetDefaultResourceFile(Model.Pic1.Type), true);
+                        LoadResource(resource, GetDefaultResourceFile(resource.Type), true);
                         break;
                     default:
                         resource.Clear();
@@ -227,6 +230,78 @@ namespace PSXPackagerGUI.Pages
 
                 Model.IsDirty = true;
             }
+        }
+
+        private void SaveAsTemplate_OnClick(object sender, RoutedEventArgs e)
+        {
+            ResourceModel? resource = sender switch
+            {
+                ResourceControl resourceControl => resourceControl.Resource,
+                MenuItem menu => menu.DataContext as ResourceModel,
+                _ => null
+            };
+
+            var saveFileDialog = new Ookii.Dialogs.Wpf.VistaSaveFileDialog();
+            saveFileDialog.AddExtension = true;
+            saveFileDialog.Filter = "Template files|*.xml|All files|*.*";
+            saveFileDialog.ShowDialog();
+
+            if (!string.IsNullOrEmpty(saveFileDialog.FileName))
+            {
+                var basePath = Path.GetDirectoryName(saveFileDialog.FileName);
+
+                var template = resource.Composite.ToTemplateResource();
+
+                foreach (var layer in template.Layers)
+                {
+                    if (layer is Templates.ImageLayer imageLayer)
+                    {
+                        if (Path.GetDirectoryName(imageLayer.SourceUri) == basePath)
+                        {
+                            imageLayer.SourceUri = Path.GetRelativePath(basePath, imageLayer.SourceUri);
+                        }
+                    }
+                }
+
+                XmlSerializer serializer = new XmlSerializer(typeof(Resource));
+                using (TextWriter writer = new StreamWriter(saveFileDialog.FileName))
+                {
+                    serializer.Serialize(writer, template);
+                }
+            }
+        }
+
+        private void LoadFromTemplate_OnClick(object sender, RoutedEventArgs e)
+        {
+            ResourceModel? resource = sender switch
+            {
+                ResourceControl resourceControl => resourceControl.Resource,
+                MenuItem menu => menu.DataContext as ResourceModel,
+                _ => null
+            };
+
+            var openFileDialog = new Ookii.Dialogs.Wpf.VistaOpenFileDialog();
+
+            openFileDialog.Filter = "Template files|*.xml|All files|*.*";
+
+            openFileDialog.ShowDialog();
+
+            if (!string.IsNullOrEmpty(openFileDialog.FileName))
+            {
+                var basePath = Path.GetDirectoryName(openFileDialog.FileName);
+
+                XmlSerializer serializer = new XmlSerializer(typeof(Resource));
+
+                using (FileStream stream = File.OpenRead(openFileDialog.FileName))
+                {
+                    var xmlResource = (Resource)serializer.Deserialize(stream);
+
+                    resource.Composite.Layers = new ObservableCollection<Layer>(xmlResource.ToLayers(basePath));
+                    resource.RefreshIcon();
+                }
+            }
+
+     
         }
     }
 }

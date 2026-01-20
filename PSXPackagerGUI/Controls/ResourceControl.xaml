@@ -99,7 +99,13 @@
                 </ItemsControl>
             </Grid>-->
 
-            <Border BorderBrush="#C0C0C0" BorderThickness="1" Width="100" Grid.Column="2">
+            <Border Tag="{Binding .}" BorderBrush="#C0C0C0" BorderThickness="1" Width="100" Grid.Column="1">
+                <Border.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Insert Image Layer" Click="AppendImageLayer_OnClick"></MenuItem>
+                        <MenuItem Header="Insert Text Layer" Click="AppendTextLayer_OnClick"></MenuItem>
+                    </ContextMenu>
+                </Border.ContextMenu>
                 <ScrollViewer Background="{DynamicResource {x:Static SystemColors.WindowFrameBrushKey}}" Visibility="{Binding Type, Converter={StaticResource VisibilityConverter}}" VerticalScrollBarVisibility="Auto">
                     <ItemsControl ItemsSource="{Binding Composite.Layers}" VerticalAlignment="Top">
                         <ItemsControl.ItemTemplate>

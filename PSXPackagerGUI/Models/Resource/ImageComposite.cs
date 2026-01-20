@@ -1,9 +1,9 @@
-﻿using System.Collections.ObjectModel;
+﻿using PSXPackagerGUI.Templates;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -249,5 +249,4 @@ public class ImageComposite : BaseNotifyModel
             Layers.Move(index, index - 1);
         }
     }
-
 }

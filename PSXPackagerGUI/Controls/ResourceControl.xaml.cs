@@ -1,4 +1,8 @@
-﻿using System;
+﻿using Popstation;
+using Popstation.Pbp;
+using PSXPackagerGUI.Models.Resource;
+using PSXPackagerGUI.Pages;
+using System;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -7,11 +11,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using Popstation;
-using Popstation.Pbp;
-using PSXPackagerGUI.Models.Resource;
-using PSXPackagerGUI.Pages;
 
 namespace PSXPackagerGUI.Controls
 {
@@ -256,6 +255,47 @@ namespace PSXPackagerGUI.Controls
             }
         }
 
+        private void AppendImageLayer_OnClick(object sender, RoutedEventArgs e)
+        {
+            var openFileDialog = new Ookii.Dialogs.Wpf.VistaOpenFileDialog();
+            openFileDialog.Filter = ImageProcessing.GetFilterFromType(Resource.Type);
+
+            var result = openFileDialog.ShowDialog();
+            if (result != true)
+                return;
+
+            using var stream = new FileStream(openFileDialog.FileName, FileMode.Open, FileAccess.Read);
+            var newLayer = new ImageLayer(ImageProcessing.GetBitmapImage(stream), "image", openFileDialog.FileName);
+
+            Resource.Composite.AddLayer(newLayer);
+
+            SelectedLayer = newLayer;
+            Resource.RefreshIcon();
+        }
+
+        private void AppendTextLayer_OnClick(object sender, RoutedEventArgs e)
+        {
+            var textEditorWindow = new TextEditorWindow();
+            var model = textEditorWindow.Model;
+
+            model.Text = "Sample Text";
+            model.Color = Brushes.White;
+            model.DropShadow = true;
+
+            textEditorWindow.Owner = Application.Current.MainWindow;
+            var result = textEditorWindow.ShowDialog();
+
+            if (result is true)
+            {
+                var newLayer = new TextLayer("Text", model.Text, model.FontFamily, model.FontSize, model.Color, model.DropShadow, Resource.Composite.Width - 20, Resource.Composite.Height);
+
+                Resource.Composite.AddLayer(newLayer);
+
+                SelectedLayer = newLayer;
+                Resource.RefreshIcon();
+            }
+        }
+
         private void InsertImageLayer_OnClick(object sender, RoutedEventArgs e)
         {
             if (Resource.Composite != null && TryGetLayer(sender, out var layer))
@@ -268,7 +308,7 @@ namespace PSXPackagerGUI.Controls
                     return;
 
                 using var stream = new FileStream(openFileDialog.FileName, FileMode.Open, FileAccess.Read);
-                var newLayer = new ImageLayer(ImageProcessing.GetBitmapImage(stream), "image");
+                var newLayer = new ImageLayer(ImageProcessing.GetBitmapImage(stream), "image", openFileDialog.FileName);
 
                 Resource.Composite.InsertLayerAfter(newLayer, layer);
 
