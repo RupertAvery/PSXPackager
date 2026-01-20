@@ -1,27 +1,60 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.IO.Pipes;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows.Documents;
 using System.Windows.Media;
+using System.Xml.Linq;
 using Popstation;
 using Popstation.Pbp;
+using PSXPackagerGUI.Pages;
+using SharpCompress.Compressors.Xz;
 
-namespace PSXPackagerGUI.Models
+namespace PSXPackagerGUI.Models.Resource
 {
     public class ResourceModel : BaseNotifyModel
     {
-        private ImageSource _icon;
+        private ImageSource? _icon;
         private bool _isRemoveEnabled;
         private bool _isSaveAsEnabled;
         private bool _isLoadEnabled;
         private bool _text;
         private bool _isMoreEnabled;
+        public ImageComposite? Composite { get; private set; }
 
         public ResourceModel()
         {
             IsLoadEnabled = true;
         }
 
+        public static ResourceModel OtherResource(ResourceType type)
+        {
+            var resource = new ResourceModel();
+            resource.Type = type;
+            return resource;
+        }
+
+        public static ResourceModel ImageResource(ResourceType type, int width, int height)
+        {
+            var resource = new ResourceModel
+            {
+                Composite = new ImageComposite(width, height),
+                Type = type
+            };
+            return resource;
+        }
+
+        public void RefreshIcon()
+        {
+            Composite?.Render();
+            Icon = Composite?.CompositeBitmap;
+        }
+
         public void Reset()
         {
+            Composite?.Clear();
             Icon = null;
             IsLoadEnabled = true;
             IsSaveAsEnabled = false;
@@ -32,7 +65,7 @@ namespace PSXPackagerGUI.Models
 
         public ResourceType Type { get; set; }
 
-        public ImageSource Icon
+        public ImageSource? Icon
         {
             get => _icon;
             set => SetProperty(ref _icon, value);
@@ -70,7 +103,26 @@ namespace PSXPackagerGUI.Models
 
         public string? SourceUrl { get; set; }
 
-        public Stream? Stream { get; private set; }
+        private Stream? _stream;
+
+        public Stream? Stream
+        {
+            get
+            {
+                if (Composite != null && Composite.IsDirty)
+                {
+                    _stream?.Dispose();
+                    _stream = new MemoryStream();
+                    Composite.SaveToPNG(_stream);
+                    Composite.SetPristine();
+                }
+                return _stream;
+            }
+            private set
+            {
+                _stream = value;
+            }
+        }
 
         public uint Size { get; private set; }
 
@@ -84,13 +136,13 @@ namespace PSXPackagerGUI.Models
             Icon = null;
         }
 
-        public void FromStream(Stream stream)
-        {
-            Stream?.Dispose();
-            Stream = stream;
-            Stream.Seek(0, SeekOrigin.Begin);
-            Size = (uint)Stream.Length;
-        }
+        //public void FromStream(Stream stream)
+        //{
+        //    Stream?.Dispose();
+        //    Stream = stream;
+        //    Stream.Seek(0, SeekOrigin.Begin);
+        //    Size = (uint)Stream.Length;
+        //}
 
         public void CopyFromStream(Stream stream)
         {
@@ -101,5 +153,6 @@ namespace PSXPackagerGUI.Models
             Stream.Seek(0, SeekOrigin.Begin);
             Size = (uint)Stream.Length;
         }
+
     }
 }

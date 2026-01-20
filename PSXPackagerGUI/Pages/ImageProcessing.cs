@@ -3,11 +3,34 @@ using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Popstation.Pbp;
 
 namespace PSXPackagerGUI.Pages;
 
 public static class ImageProcessing
 {
+    public static string GetFilterFromType(ResourceType type)
+    {
+        return type switch
+        {
+            ResourceType.ICON0 or ResourceType.PIC0 or ResourceType.PIC1 or ResourceType.BOOT =>
+                "Supported files|*.png;*.jpg;*.bmp;*.gif|All files|*.*",
+            ResourceType.ICON1 => "Supported files|*.png;*.pmf|All files|*.*",
+            ResourceType.SND0 => "Supported files|*.at3|All files|*.*",
+            _ => "All files|*.*"
+        };
+    }
+
+    public static BitmapImage GetBitmapImage(Stream stream)
+    {
+        var bmp = new BitmapImage();
+        bmp.BeginInit();
+        bmp.CacheOption = BitmapCacheOption.OnLoad; // 🔴 THIS IS THE FIX
+        bmp.StreamSource = stream;
+        bmp.EndInit();
+        bmp.Freeze(); // optional but recommended
+        return bmp;
+    }
 
     public static void SaveBitmapSource(BitmapSource bitmap, Stream stream, BitmapEncoder encoder)
     {
@@ -74,7 +97,7 @@ public static class ImageProcessing
         return result;
     }
 
-    public static BitmapSource OverlayBitmaps(BitmapSource baseImage, BitmapSource overlayImage, int overlayX, int overlayY)
+    public static BitmapSource OverlayBitmaps(BitmapSource baseImage, BitmapSource overlayImage, double overlayX, double overlayY)
     {
         // Define the size of the final combined image
         int finalWidth = (int)baseImage.Width;

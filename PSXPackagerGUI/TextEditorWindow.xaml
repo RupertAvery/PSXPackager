@@ -1,0 +1,49 @@
+﻿<Window x:Class="PSXPackagerGUI.TextEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:models="clr-namespace:PSXPackagerGUI.Models"
+        mc:Ignorable="d"
+        WindowStyle="ToolWindow"
+        d:DataContext="{d:DesignInstance models:TextEditorModel}"
+        WindowStartupLocation="CenterOwner"
+        FocusManager.FocusedElement="{Binding ElementName=TextBox}"
+        PreviewKeyDown="TextEditorWindow_OnPreviewKeyDown"
+        Title="Text Editor" Height="250" Width="600">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"/>
+            <RowDefinition/>
+            <RowDefinition Height="35"/>
+        </Grid.RowDefinitions>
+        <ToolBar Grid.Row="0">
+            <Label>Font</Label>
+            <ComboBox Width="150" ItemsSource="{Binding FontFamilies}" SelectedItem="{Binding FontFamily}">
+            </ComboBox>
+            <Label>Size</Label>
+            <ComboBox Width="60" ItemsSource="{Binding FontSizes}" SelectedItem="{Binding FontSize}">
+            </ComboBox>
+            <Label>Color</Label>
+            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="10" Width="10" Background="White" BorderBrush="Black" BorderThickness="1"></Border>
+            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="10" Width="10" Background="Black" BorderBrush="Black" BorderThickness="1"></Border>
+            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="10" Width="10" Background="Red" BorderBrush="Black" BorderThickness="1"></Border>
+            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="10" Width="10" Background="Green" BorderBrush="Black" BorderThickness="1"></Border>
+            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="10" Width="10" Background="Blue" BorderBrush="Black" BorderThickness="1"></Border>
+            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="10" Width="10" Background="Cyan" BorderBrush="Black" BorderThickness="1"></Border>
+            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="10" Width="10" Background="Magenta" BorderBrush="Black" BorderThickness="1"></Border>
+            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="10" Width="10" Background="Yellow" BorderBrush="Black" BorderThickness="1"></Border>
+
+            <Grid Margin="10,0,0,0" >
+                <CheckBox IsChecked="{Binding DropShadow}" Content="Drop Shadow" VerticalContentAlignment="Center"></CheckBox>
+            </Grid>
+        </ToolBar>
+        <TextBox x:Name="TextBox" Grid.Row="1" FontFamily="{Binding FontFamily}" Text="{Binding Text}" FontSize="{Binding FontSize}" TextWrapping="WrapWithOverflow" VerticalScrollBarVisibility="Auto"></TextBox>
+        <Grid Grid.Row="2">
+            <StackPanel Height="30" HorizontalAlignment="Center" Orientation="Horizontal">
+                <Button Width="100" Click="Cancel_Click">Cancel</Button>
+                <Button Width="100" Click="Save_Click" Margin="10,0,0,0">Save</Button>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

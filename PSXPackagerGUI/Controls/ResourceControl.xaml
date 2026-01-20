@@ -4,24 +4,43 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:PSXPackagerGUI.Controls"
+             xmlns:converters="clr-namespace:PSXPackagerGUI.Converters"
              xmlns:models="clr-namespace:PSXPackagerGUI.Models"
+             xmlns:resource="clr-namespace:PSXPackagerGUI.Models.Resource"
              mc:Ignorable="d" 
-             d:DataContext="{d:DesignInstance models:ResourceModel, IsDesignTimeCreatable=True}"
+             d:DataContext="{d:DesignInstance resource:ResourceModel, IsDesignTimeCreatable=True}"
              AllowDrop="True"
              d:DesignHeight="200" d:DesignWidth="400">
+    <UserControl.Resources>
+        <converters:ReferenceEqualsConverter x:Key="ReferenceEqualsConverter"></converters:ReferenceEqualsConverter>
+        <converters:NotNullVisibilityConverter x:Key="NotNullVisibilityConverter"></converters:NotNullVisibilityConverter>
+        <converters:ImageResourceTypeVisibilityConverter x:Key="VisibilityConverter"></converters:ImageResourceTypeVisibilityConverter>
+        <converters:ValueEqualsVisibilityConverter x:Key="ValueEqualsVisibilityConverter"></converters:ValueEqualsVisibilityConverter>
+        <DataTemplate x:Key="ImageLayerTemplate" DataType="{x:Type resource:ImageLayer}">
+            <Image Height="50" Source="{Binding Bitmap}"></Image>
+        </DataTemplate>
+        <DataTemplate x:Key="TextLayerTemplate" DataType="{x:Type resource:TextLayer}">
+            <TextBlock Height="50" 
+                       FontSize="35" 
+                       FontFamily="Times New Roman" 
+                       TextAlignment="Center" 
+                       Padding="5,5,5,5"
+                       Foreground="White">
+                T
+            </TextBlock>
+        </DataTemplate>
+
+    </UserControl.Resources>
+
     <Grid Margin="0,0,0,0" DataContext="{Binding Resource, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}">
+
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
             <RowDefinition/>
+            <RowDefinition Height="30"/>
         </Grid.RowDefinitions>
 
         <Label Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Content="{Binding Text, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}"></Label>
-
-        <Rectangle Grid.Row="1" Grid.Column="1" Fill="#15000060" AllowDrop="True"></Rectangle>
-
-        <Border Grid.Row="1" Grid.Column="0"  Background="{DynamicResource {x:Static SystemColors.WindowFrameBrushKey}}" MouseRightButtonDown="UIElement_OnMouseRightButtonDown">
-            <Image Stretch="None" VerticalAlignment="Center" Source="{Binding Icon}" AllowDrop="True"></Image>
-        </Border>
 
         <Grid Grid.Row="0" Grid.Column="0">
             <Grid.ColumnDefinitions>
@@ -33,5 +52,118 @@
             <Button Grid.Column="2" x:Name="RemoveButton" IsEnabled="{Binding IsRemoveEnabled}" Click="Remove_OnClick">x</Button>
         </Grid>
 
+        <Grid Grid.Row="1" Grid.Column="0"  Background="{DynamicResource {x:Static SystemColors.WindowFrameBrushKey}}">
+            <Border Tag="{Binding .}" Width="{Binding Composite.Width}" Height="{Binding Composite.Height}" BorderThickness="1" BorderBrush="#000000">
+                <Border.ContextMenu>
+                    <ContextMenu IsEnabled="{Binding PlacementTarget.Tag.Composite.HasLayers, RelativeSource={RelativeSource Self}}">
+                        <MenuItem Header="Insert Image Layer" Click="InsertImageLayer_OnClick"></MenuItem>
+                        <MenuItem Header="Insert Text Layer" Click="InsertTextLayer_OnClick"></MenuItem>
+                        <MenuItem Header="Remove Layer" Click="RemoveLayer_OnClick"></MenuItem>
+                        <MenuItem Header="Replace Layer" Click="ReplaceLayer_OnClick"></MenuItem>
+                        <Separator></Separator>
+                        <MenuItem Header="Move up" Click="MoveUpLayer_OnClick"></MenuItem>
+                        <MenuItem Header="Move down" Click="MoveDownLayer_OnClick"></MenuItem>
+                        <Separator></Separator>
+                        <MenuItem Header="Reset Layer" Click="ResetLayer_OnClick"></MenuItem>
+                    </ContextMenu>
+                </Border.ContextMenu>
+                <Grid>
+                    <Image Stretch="None" VerticalAlignment="Center" Source="{Binding Icon}" AllowDrop="True" MouseDown="UIElement_OnMouseDown" MouseMove="UIElement_OnMouseMove" MouseUp="UIElement_OnMouseUp" ></Image>
+                    <Image Stretch="None" VerticalAlignment="Center" Source="{Binding Composite.SelectionBitmap}" AllowDrop="True" MouseDown="UIElement_OnMouseDown" MouseMove="UIElement_OnMouseMove" MouseUp="UIElement_OnMouseUp" ></Image>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid Grid.Row="1" Grid.Column="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="100"/>
+            </Grid.ColumnDefinitions>
+
+            <!--<Grid Visibility="{Binding Type, Converter={StaticResource VisibilityConverter}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="30"/>
+                </Grid.ColumnDefinitions>
+                <ItemsControl>
+                    <ItemsControl.Items>
+                        <Button Grid.Column="0" Grid.Row="0" Height="30"></Button>
+                        <Button Grid.Column="0" Grid.Row="0" Height="30"></Button>
+                        <Button Grid.Column="0" Grid.Row="0" Height="30"></Button>
+                        <Button Grid.Column="0" Grid.Row="0" Height="30"></Button>
+                        <Button Grid.Column="0" Grid.Row="0" Height="30"></Button>
+                    </ItemsControl.Items>
+                </ItemsControl>
+            </Grid>-->
+
+            <Border BorderBrush="#C0C0C0" BorderThickness="1" Width="100" Grid.Column="2">
+                <ScrollViewer Background="{DynamicResource {x:Static SystemColors.WindowFrameBrushKey}}" Visibility="{Binding Type, Converter={StaticResource VisibilityConverter}}" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Composite.Layers}" VerticalAlignment="Top">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Tag="{Binding .}" BorderBrush="#C0C0C0" BorderThickness="1" IsHitTestVisible="True" MouseDown="Layer_OnMouseDown">
+                                    <Border.ContextMenu>
+                                        <ContextMenu DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}" >
+                                            <MenuItem Header="Edit Text" Click="EditText_OnClick" Visibility="{Binding LayerType, Converter={StaticResource ValueEqualsVisibilityConverter}, ConverterParameter={x:Static resource:LayerType.Text}}"></MenuItem>
+                                            <MenuItem Header="Insert Image Layer" Click="InsertImageLayer_OnClick"></MenuItem>
+                                            <MenuItem Header="Insert Text Layer" Click="InsertTextLayer_OnClick"></MenuItem>
+                                            <MenuItem Header="Remove Layer" Click="RemoveLayer_OnClick"></MenuItem>
+                                            <Separator></Separator>
+                                            <MenuItem Header="Move up" Click="MoveUpLayer_OnClick"></MenuItem>
+                                            <MenuItem Header="Move down" Click="MoveDownLayer_OnClick"></MenuItem>
+                                            <Separator></Separator>
+                                            <MenuItem Header="Reset Layer" Click="ResetLayer_OnClick"></MenuItem>
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <DataTrigger Value="True">
+                                                    <DataTrigger.Binding>
+                                                        <MultiBinding Converter="{StaticResource ReferenceEqualsConverter}">
+                                                            <Binding />
+                                                            <Binding Path="SelectedLayer" RelativeSource="{RelativeSource AncestorType=UserControl}" />
+                                                        </MultiBinding>
+                                                    </DataTrigger.Binding>
+                                                    <Setter Property="Background" Value="#80000000"></Setter>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                            <Setter Property="Background" Value="Transparent"></Setter>
+                                        </Style>
+                                    </Border.Style>
+                                    <ContentControl Content="{Binding Path=.}">
+                                        <ContentControl.Style>
+                                            <Style TargetType="ContentControl">
+                                                <Setter Property="ContentTemplate" Value="{StaticResource ImageLayerTemplate}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding LayerType}" Value="{x:Static resource:LayerType.Image}">
+                                                        <Setter Property="ContentTemplate" Value="{StaticResource ImageLayerTemplate}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding LayerType}" Value="{x:Static resource:LayerType.Text}">
+                                                        <Setter Property="ContentTemplate" Value="{StaticResource TextLayerTemplate}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ContentControl.Style>
+                                    </ContentControl>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <Grid Grid.Row="2" Grid.Column="0" Visibility="{Binding SelectedLayer, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}, Converter={StaticResource NotNullVisibilityConverter}}">
+            <StackPanel Orientation="Horizontal">
+                <Label VerticalContentAlignment="Center">X:</Label>
+                <TextBox Width="30" TextAlignment="Center" VerticalContentAlignment="Center" Text="{Binding SelectedLayer.OffsetX, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" KeyUp="Redraw" LostFocus="UIElement_OnLostFocus"></TextBox>
+                <Label VerticalContentAlignment="Center">Y:</Label>
+                <TextBox Width="30" TextAlignment="Center" VerticalContentAlignment="Center" Text="{Binding SelectedLayer.OffsetY, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" KeyUp="Redraw" LostFocus="UIElement_OnLostFocus"></TextBox>
+                <Label VerticalContentAlignment="Center">Width:</Label>
+                <TextBox Width="30" TextAlignment="Center" VerticalContentAlignment="Center" Text="{Binding SelectedLayer.Width, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" KeyUp="Redraw" LostFocus="UIElement_OnLostFocus"></TextBox>
+                <Label VerticalContentAlignment="Center">Height:</Label>
+                <TextBox Width="30" TextAlignment="Center" VerticalContentAlignment="Center" Text="{Binding SelectedLayer.Height, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" KeyUp="Redraw" LostFocus="UIElement_OnLostFocus"></TextBox>
+            </StackPanel>
+        </Grid>
     </Grid>
 </UserControl>

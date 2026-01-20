@@ -19,6 +19,7 @@ using PSXPackager.Common.Notification;
 using PSXPackagerGUI.Common;
 using PSXPackagerGUI.Controls;
 using PSXPackagerGUI.Models;
+using PSXPackagerGUI.Models.Resource;
 using SFOEntry = PSXPackagerGUI.Models.SFOEntry;
 
 namespace PSXPackagerGUI.Pages
@@ -69,24 +70,59 @@ namespace PSXPackagerGUI.Pages
 
             Model = new SingleModel
             {
-                Icon0 = new ResourceModel() { Type = ResourceType.ICON0 },
-                Icon1 = new ResourceModel() { Type = ResourceType.ICON1 },
-                Pic0 = new ResourceModel() { Type = ResourceType.PIC0 },
-                Pic1 = new ResourceModel() { Type = ResourceType.PIC1 },
-                Snd0 = new ResourceModel() { Type = ResourceType.SND0 },
-                Boot = new ResourceModel() { Type = ResourceType.BOOT },
+                Icon0 = ResourceModel.ImageResource(ResourceType.ICON0, 80, 80),
+                Icon1 = ResourceModel.OtherResource(ResourceType.ICON1),
+                Pic0 = ResourceModel.ImageResource(ResourceType.PIC0, 310, 180),
+                Pic1 = ResourceModel.ImageResource(ResourceType.PIC1, 480, 272),
+                Snd0 = ResourceModel.OtherResource(ResourceType.SND0),
+                Boot = ResourceModel.ImageResource(ResourceType.BOOT, 480, 272),
                 IsDirty = false,
                 MaxProgress = 100,
                 Progress = 0,
                 Settings = _settings
             };
 
-
             DataContext = Model;
+
+            Model.PropertyChanged += ModelOnPropertyChanged;
+            _settings.PropertyChanged += SettingsOnPropertyChanged;
 
             ResetModel();
 
             //Closing += OnClosing;
+        }
+
+        private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(SettingsModel.GenerateIconFrame))
+            {
+                if (_settings.GenerateIconFrame)
+                {
+                    var appPath = ApplicationInfo.AppPath;
+
+                    using var maskStream = new FileStream(Path.Combine(appPath, "Resources", "alpha.png"), FileMode.Open, FileAccess.Read);
+                    Model.Icon0.Composite.SetAplhaMask(ImageProcessing.GetBitmapImage(maskStream));
+
+                    using var frameStream = new FileStream(Path.Combine(appPath, "Resources", "overlay.png"), FileMode.Open, FileAccess.Read);
+                    Model.Icon0.Composite.AddLayer(new ImageLayer(ImageProcessing.GetBitmapImage(frameStream), "frame"));
+
+                    Model.Icon0.RefreshIcon();
+                }
+                else
+                {
+                    Model.Icon0.Composite.RemoveAplhaMask();
+                    var layers = Model.Icon0.Composite.Layers.Where(d => d.Name == "frame").ToList();
+                    foreach (var layer in layers)
+                    {
+                        Model.Icon0.Composite.Layers.Remove(layer);
+                    }
+                    Model.Icon0.RefreshIcon();
+                }
+            }
+        }
+
+        private void ModelOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
         }
 
 
@@ -184,8 +220,9 @@ namespace PSXPackagerGUI.Pages
                         {
                             if (pbpReader.TryGetBootImage(stream, out var bootStream))
                             {
-                                model.Icon = GetBitmapImage(bootStream);
-                                model.CopyFromStream(bootStream);
+                                model.Composite.Clear();
+                                model.Composite.AddLayer(new ImageLayer(ImageProcessing.GetBitmapImage(bootStream), "image"));
+                                model.RefreshIcon();
                                 model.IsLoadEnabled = true;
                                 model.IsSaveAsEnabled = true;
                                 model.IsRemoveEnabled = true;
@@ -200,9 +237,9 @@ namespace PSXPackagerGUI.Pages
                                 //resourceStream.CopyTo(outStream);
                                 //outStream.Flush();
                                 //resourceStream.Seek(0, SeekOrigin.Begin);
-
-                                model.Icon = GetBitmapImage(resourceStream);
-                                model.CopyFromStream(resourceStream);
+                                model.Composite.Clear();
+                                model.Composite.AddLayer(new ImageLayer(ImageProcessing.GetBitmapImage(resourceStream), "image"));
+                                model.RefreshIcon();
                                 model.IsLoadEnabled = true;
                                 model.IsSaveAsEnabled = true;
                                 model.IsRemoveEnabled = true;
@@ -363,16 +400,7 @@ namespace PSXPackagerGUI.Pages
             Model.Discs[disc.Index] = Disc.EmptyDisc(disc.Index);
             Model.IsDirty = true;
         }
-
-        public static BitmapImage GetBitmapImage(Stream stream)
-        {
-            var bitmapImage = new BitmapImage();
-            bitmapImage.BeginInit();
-            bitmapImage.StreamSource = stream;
-            bitmapImage.EndInit();
-            return bitmapImage;
-        }
-
+        
         private DiscInfo GetDiscInfo(Disc disc)
         {
             //var game = _gameDb.GetEntryByGameID(disc.GameID);
@@ -399,7 +427,7 @@ namespace PSXPackagerGUI.Pages
         {
             var ext = Popstation.Popstation.GetExtensionFromType(type);
 
-            return  Path.Combine(PSXPackager.Common.ApplicationInfo.AppPath, "Resources", $"{type}.{ext}");
+            return Path.Combine(PSXPackager.Common.ApplicationInfo.AppPath, "Resources", $"{type}.{ext}");
         }
 
 
@@ -1069,58 +1097,57 @@ namespace PSXPackagerGUI.Pages
                 case ResourceType.PIC1:
                 case ResourceType.PIC0:
                     {
+                        resource.Composite.Clear();
+
                         var appPath = ApplicationInfo.AppPath;
 
                         using var fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read);
 
-                        BitmapSource image = GetBitmapImage(fileStream);
+                        BitmapSource image = ImageProcessing.GetBitmapImage(fileStream);
 
                         switch (resource.Type)
                         {
                             case ResourceType.ICON0:
                                 {
-                                    image = ImageProcessing.Resize(image, 80, 80);
+                                    //image = ImageProcessing.Resize(image, 80, 80);
+
 
                                     if (_settings.GenerateIconFrame)
                                     {
-                                        using var frameStream = new FileStream(Path.Combine(appPath, "Resources", "overlay.png"), FileMode.Open, FileAccess.Read);
                                         using var maskStream = new FileStream(Path.Combine(appPath, "Resources", "alpha.png"), FileMode.Open, FileAccess.Read);
+                                        resource.Composite.SetAplhaMask(ImageProcessing.GetBitmapImage(maskStream));
 
-                                        var mask = GetBitmapImage(maskStream);
-                                        var overlay = GetBitmapImage(frameStream);
+                                        resource.Composite.Layers.Add(new ImageLayer(image, "image"));
 
-                                        var composite = ImageProcessing.OverlayBitmaps(image, overlay, 0, 0);
-                                        image = ImageProcessing.ApplyAlphaMask(composite, mask);
+                                        using var frameStream = new FileStream(Path.Combine(appPath, "Resources", "overlay.png"), FileMode.Open, FileAccess.Read);
+                                        resource.Composite.Layers.Add(new ImageLayer(ImageProcessing.GetBitmapImage(frameStream), "frame"));
+                                    }
+                                    else
+                                    {
+                                        resource.Composite.Layers.Add(new ImageLayer(image, "image"));
                                     }
 
-                                    var stream = new MemoryStream();
-                                    ImageProcessing.SaveBitmapSource(image, stream, new PngBitmapEncoder());
-                                    resource.FromStream(stream);
 
                                     break;
                                 }
                             case ResourceType.PIC0:
                                 {
-                                    image = ImageProcessing.Resize(image, 310, 180);
+                                    //image = ImageProcessing.Resize(image, 310, 180);
 
-                                    var stream = new MemoryStream();
-                                    ImageProcessing.SaveBitmapSource(image, stream, new PngBitmapEncoder());
-                                    resource.FromStream(stream);
+                                    resource.Composite.Layers.Add(new ImageLayer(image, "image"));
                                     break;
                                 }
                             case ResourceType.PIC1:
                             case ResourceType.BOOT:
                                 {
-                                    image = ImageProcessing.Resize(image, 480, 272);
+                                    //image = ImageProcessing.Resize(image, 480, 272);
 
-                                    var stream = new MemoryStream();
-                                    ImageProcessing.SaveBitmapSource(image, stream, new PngBitmapEncoder());
-                                    resource.FromStream(stream);
+                                    resource.Composite.Layers.Add(new ImageLayer(image, "image"));
                                     break;
                                 }
                         }
 
-                        resource.Icon = image;
+                        resource.RefreshIcon();
                         break;
                     }
                 default:
@@ -1143,7 +1170,7 @@ namespace PSXPackagerGUI.Pages
 
             var openFileDialog = new Ookii.Dialogs.Wpf.VistaOpenFileDialog();
 
-            openFileDialog.Filter = GetFilterFromType(resource.Type);
+            openFileDialog.Filter = ImageProcessing.GetFilterFromType(resource.Type);
 
             openFileDialog.ShowDialog();
 
@@ -1155,17 +1182,7 @@ namespace PSXPackagerGUI.Pages
 
         }
 
-        private string GetFilterFromType(ResourceType type)
-        {
-            return type switch
-            {
-                ResourceType.ICON0 or ResourceType.PIC0 or ResourceType.PIC1 or ResourceType.BOOT =>
-                    "Supported files|*.png|All files|*.*",
-                ResourceType.ICON1 => "Supported files|*.png;*.pmf|All files|*.*",
-                ResourceType.SND0 => "Supported files|*.at3|All files|*.*",
-                _ => "All files|*.*"
-            };
-        }
+
 
         private void SaveResource_OnClick(object sender, RoutedEventArgs e)
         {
@@ -1180,7 +1197,7 @@ namespace PSXPackagerGUI.Pages
             {
                 var saveFileDialog = new Ookii.Dialogs.Wpf.VistaSaveFileDialog();
                 saveFileDialog.AddExtension = true;
-                saveFileDialog.Filter = GetFilterFromType(resource.Type);
+                saveFileDialog.Filter = ImageProcessing.GetFilterFromType(resource.Type);
                 saveFileDialog.ShowDialog();
 
                 if (!string.IsNullOrEmpty(saveFileDialog.FileName))
