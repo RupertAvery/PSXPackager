@@ -9,14 +9,15 @@ namespace PSXPackagerGUI.Models.Resource;
 
 public static class ImageCompositeExtensions
 {
-    public static Templates.Resource ToTemplateResource(this ImageComposite imageComposite)
+    public static Templates.Resource ToTemplateResource(this ResourceModel resource)
     {
         // Convert ImageComposite back to Templates.Resource
         return new Templates.Resource()
         {
-            Width = imageComposite.Width,
-            Height = imageComposite.Height,
-            Layers = imageComposite.Layers.Select(layer =>
+            ResourceType = resource.Type,
+            Width = resource.Composite.Width,
+            Height = resource.Composite.Height,
+            Layers = resource.Composite.Layers.Select(layer =>
             {
                 return layer switch
                 {
@@ -51,7 +52,7 @@ public static class ImageCompositeExtensions
 
     }
 
-    public static List<Layer> ToLayers(this Templates.Resource resource, string basePath)
+    public static ResourceTemplate ToResourceTemplate(this Templates.Resource resource, string basePath)
     {
         var layers = new List<Layer>();
         foreach (var layer in resource.Layers)
@@ -94,6 +95,13 @@ public static class ImageCompositeExtensions
                 layers.Add(textLayerModel);
             }
         }
-        return layers;
+
+        return new ResourceTemplate()
+        {
+            ResourceType = resource.ResourceType,
+            Width = resource.Width,
+            Height = resource.Height,
+            Layers = layers
+        };
     }
 }

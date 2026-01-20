@@ -1,55 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Resource xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <ResourceType>SFO</ResourceType>
-  <Width>310</Width>
-  <Height>180</Height>
-  <ImageLayer>
-    <X>0</X>
-    <Y>0</Y>
-    <Width>310</Width>
-    <Height>180</Height>
-    <OriginalWidth>310</OriginalWidth>
-    <OriginalHeight>180</OriginalHeight>
+<Resource xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ResourceType="PIC0" Width="310" Height="180">
+  <ImageLayer X="0" Y="0" Width="310" Height="180" OriginalWidth="310" OriginalHeight="180">
     <SourceUri>PIC0.png</SourceUri>
   </ImageLayer>
-  <ImageLayer>
-    <X>15.199999999999818</X>
-    <Y>107.99999999999989</Y>
-    <Width>124</Width>
-    <Height>59</Height>
-    <OriginalWidth>124</OriginalWidth>
-    <OriginalHeight>59</OriginalHeight>
+  <ImageLayer X="15.199999999999818" Y="107.99999999999989" Width="124" Height="59" OriginalWidth="124" OriginalHeight="59">
     <SourceUri>E.png</SourceUri>
   </ImageLayer>
-  <ImageLayer>
-    <X>230.39999999999986</X>
-    <Y>107.20000000000016</Y>
-    <Width>68</Width>
-    <Height>61</Height>
-    <OriginalWidth>68</OriginalWidth>
-    <OriginalHeight>61</OriginalHeight>
+  <ImageLayer X="230.39999999999986" Y="107.20000000000016" Width="68" Height="61" OriginalWidth="68" OriginalHeight="61">
     <SourceUri>PS3PSP.png</SourceUri>
   </ImageLayer>
-  <TextLayer>
-    <X>12.799999999999727</X>
-    <Y>8.799999999999898</Y>
-    <Width>110</Width>
-    <Height>24</Height>
-    <OriginalWidth>290</OriginalWidth>
-    <OriginalHeight>180</OriginalHeight>
+  <TextLayer X="12.799999999999727" Y="8.799999999999898" Width="110" Height="24" OriginalWidth="290" OriginalHeight="180">
     <Text>Sample Text</Text>
     <FontFamily>NewRodin Pro DB</FontFamily>
     <FontSize>20</FontSize>
     <Color>#FFFFFFFF</Color>
     <DropShadow>true</DropShadow>
   </TextLayer>
-  <TextLayer>
-    <X>16.799999999999727</X>
-    <Y>47.200000000000045</Y>
-    <Width>89</Width>
-    <Height>19</Height>
-    <OriginalWidth>290</OriginalWidth>
-    <OriginalHeight>180</OriginalHeight>
+  <TextLayer X="16.799999999999727" Y="47.200000000000045" Width="89" Height="19" OriginalWidth="290" OriginalHeight="180">
     <Text>Sample Text</Text>
     <FontFamily>NewRodin Pro DB</FontFamily>
     <FontSize>16</FontSize>

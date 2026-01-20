@@ -6,9 +6,13 @@ namespace PSXPackagerGUI.Templates
 {
     public class Resource
     {
+        [XmlAttribute]
         public ResourceType ResourceType { get; set; }
+        [XmlAttribute]
         public int Width { get; set; }
+        [XmlAttribute]
         public int Height { get; set; }
+        [XmlAttribute]
         public string Name { get; set; }
 
         [XmlElement(typeof(ImageLayer))]

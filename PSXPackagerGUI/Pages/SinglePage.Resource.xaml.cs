@@ -250,7 +250,7 @@ namespace PSXPackagerGUI.Pages
             {
                 var basePath = Path.GetDirectoryName(saveFileDialog.FileName);
 
-                var template = resource.Composite.ToTemplateResource();
+                var template = resource.ToTemplateResource();
 
                 foreach (var layer in template.Layers)
                 {
@@ -295,8 +295,9 @@ namespace PSXPackagerGUI.Pages
                 using (FileStream stream = File.OpenRead(openFileDialog.FileName))
                 {
                     var xmlResource = (Resource)serializer.Deserialize(stream);
-
-                    resource.Composite.Layers = new ObservableCollection<Layer>(xmlResource.ToLayers(basePath));
+                    var resourceTemplate = xmlResource.ToResourceTemplate(basePath);
+                    // TODO: Check if resource types match
+                    resource.Composite.Layers = new ObservableCollection<Layer>(resourceTemplate.Layers);
                     resource.RefreshIcon();
                 }
             }

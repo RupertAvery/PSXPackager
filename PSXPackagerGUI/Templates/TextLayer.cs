@@ -1,4 +1,6 @@
-﻿namespace PSXPackagerGUI.Templates;
+﻿using System.Xml.Serialization;
+
+namespace PSXPackagerGUI.Templates;
 
 public class TextLayer : Layer
 {
@@ -7,6 +9,4 @@ public class TextLayer : Layer
     public double FontSize { get; set; }
     public string Color { get; set; }
     public bool DropShadow { get; set; }
-    public double OriginalWidth { get; set; }
-    public double OriginalHeight { get; set; }
 }
