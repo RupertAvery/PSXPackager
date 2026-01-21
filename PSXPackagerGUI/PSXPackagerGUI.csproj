@@ -30,6 +30,8 @@
 		<None Remove="Resources\package-16x16.png" />
 		<None Remove="Resources\package-24x24.png" />
 		<None Remove="Resources\package-48x48.png" />
+		<None Remove="Resources\pause-24x24.png" />
+		<None Remove="Resources\play-24x24.png" />
 		<None Remove="Resources\psp-48x48.png" />
 		<None Remove="Resources\search-48x48.png" />
 		<None Remove="Resources\start-48x48.png" />
@@ -42,6 +44,7 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\Popstation\Popstation.csproj" />
+	  <ProjectReference Include="..\PSXPackager.Audio\PSXPackager.Audio.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -54,6 +57,8 @@
 		<Resource Include="Resources\package-16x16.png" />
 		<Resource Include="Resources\package-24x24.png" />
 		<Resource Include="Resources\package-48x48.png" />
+		<Resource Include="Resources\pause-24x24.png" />
+		<Resource Include="Resources\play-24x24.png" />
 		<Resource Include="Resources\psp-48x48.png" />
 		<Resource Include="Resources\search-48x48.png" />
 		<Resource Include="Resources\start-48x48.png" />

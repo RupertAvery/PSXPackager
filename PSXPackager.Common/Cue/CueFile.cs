@@ -5,7 +5,8 @@ namespace PSXPackager.Common.Cue
 {
     public class CueFile
     {
-        public List<CueFileEntry> FileEntries { get; }
+        public string Path { get; set; }
+        public List<CueFileEntry> FileEntries { get; set; }
 
         public CueFile()
         {
@@ -17,5 +18,4 @@ namespace PSXPackager.Common.Cue
             FileEntries = cueFileEntry.ToList();
         }
     }
-
 }

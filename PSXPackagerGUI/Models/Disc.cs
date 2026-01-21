@@ -1,8 +1,80 @@
-﻿using System.Drawing;
+﻿using System.Collections.Generic;
+using PSXPackager.Common;
+using PSXPackager.Common.Cue;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Drawing;
+using System.Runtime.CompilerServices;
 using System.Windows.Input;
 
 namespace PSXPackagerGUI.Models
 {
+    public enum TrackStatus
+    {
+        Stopped,
+        Playing,
+    }
+
+    public class Track : INotifyPropertyChanged 
+    {
+        private bool _isSelected;
+        private TrackStatus _status;
+        private int _number;
+        private string _dataType;
+
+        public TrackStatus Status
+        {
+            get => _status;
+            set => SetField(ref _status, value);
+        }
+
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set => SetField(ref _isSelected, value);
+        }
+
+        public int Number
+        {
+            get => _number;
+            set => SetField(ref _number, value);
+        }
+
+        public string DataType
+        {
+            get => _dataType;
+            set => SetField(ref _dataType, value);
+        }
+
+        public CueTrack CueTrack { get; private set; }
+
+        public Track()
+        {
+        }
+        
+        public Track(CueTrack track)
+        {
+            DataType = track.DataType;
+            Number = track.Number;
+            CueTrack = track;
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        protected bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+        {
+            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+            field = value;
+            OnPropertyChanged(propertyName);
+            return true;
+        }
+    }
+
     public class Disc : BaseNotifyModel
     {
         private string _title;
@@ -16,6 +88,7 @@ namespace PSXPackagerGUI.Models
         private bool _isSaveAsEnabled;
         private bool _isLoadEnabled;
         private ICommand _removeCommand;
+        private ObservableCollection<Track> _tracks;
 
         public int Index { get; set; }
 
@@ -96,6 +169,12 @@ namespace PSXPackagerGUI.Models
 
         public string SourceUrl { get; set; }
         public string SourceTOC { get; set; }
+
+        public ObservableCollection<Track> Tracks
+        {
+            get => _tracks;
+            set => SetProperty(ref _tracks, value);
+        }
 
         public static Disc EmptyDisc(int index)
         {

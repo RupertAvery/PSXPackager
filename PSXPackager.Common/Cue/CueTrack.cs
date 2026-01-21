@@ -7,5 +7,7 @@ namespace PSXPackager.Common.Cue
         public int Number { get; set; }
         public string DataType { get; set; }
         public List<CueIndex> Indexes { get; set; }
+        public CueFileEntry FileEntry { get; set; }
+        public CueTrack? Next { get; set; }
     }
 }

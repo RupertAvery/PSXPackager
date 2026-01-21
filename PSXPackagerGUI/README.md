@@ -6,7 +6,7 @@ EBOOT.PBP is a Sony Playstation file format for PS1 Classics on the PSP and PS3 
 
 # Features
 
-* Convert .BIN+CUE, .ISO, .IMG to .PBP
+* Convert .BIN+CUE, .IMG to .PBP
 * Extact and convert .7z, .RAR directly to .PBP (if only one BIN/CUE/ISO is found inside)
 * Auto-merge multi-track discs (games with multiple .BINs named TRACK01,TRACK02...)
 * Convert multi-disc games like Final Fantasy 7 into one .PBP
@@ -47,7 +47,7 @@ To create a PBP, you need to add one or more Playstation 1 disc images.
 
 Select a disc by clicking the ... icon in the first slot, and select **Load ISO**.
 
-You can select `.BIN`, `.CUE`, `.IMG`, or `.ISO` files. If your disc has audio tracks, make sure to select the `.CUE` file.
+You can select `.BIN`, `.CUE` or `.IMG` files. If your disc has audio tracks, make sure to select the `.CUE` file.
 
 ## Customizing the PBP
 
@@ -78,7 +78,7 @@ To extract a resource, click on ... next to the resource you want to extract and
 
 # Batch Conversion Mode
 
-* Scan a folder for .BIN+CUE, .M3U, .ISO or .IMG files to convert to PBP
+* Scan a folder for .BIN+CUE, .M3U, .IMG files to convert to PBP
 * Scan a folder for .PBP files to convert to .BIN+.CUE,
 * Use custom resources from disk when converting to .PBP
 * Extract resources from scanned files

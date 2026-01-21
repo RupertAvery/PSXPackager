@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.5.33516.290
+# Visual Studio Version 18
+VisualStudioVersion = 18.2.11408.102 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PSXPackager", "PSXPackager\PSXPackager.csproj", "{782E9EB1-BE0D-411E-82EA-CB3A2860945C}"
 EndProject
@@ -20,6 +20,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Popstation.Database", "Popstation.Database\Popstation.Database.csproj", "{0C859033-57EF-49C0-B201-E9F4D4F4428F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PSXPackager.Tests", "PSXPackager.Tests\PSXPackager.Tests.csproj", "{B4D77059-15BA-4D9C-86CB-9C7BDFA2DE28}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestHarness", "TestHarness\TestHarness.csproj", "{E9D98EE4-0616-49CE-9392-17AD373BA2A6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PSXPackager.Audio", "PSXPackager.Audio\PSXPackager.Audio.csproj", "{71CA2456-0A74-4D28-9392-6FC1D7170637}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -63,6 +67,14 @@ Global
 		{B4D77059-15BA-4D9C-86CB-9C7BDFA2DE28}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B4D77059-15BA-4D9C-86CB-9C7BDFA2DE28}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B4D77059-15BA-4D9C-86CB-9C7BDFA2DE28}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E9D98EE4-0616-49CE-9392-17AD373BA2A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E9D98EE4-0616-49CE-9392-17AD373BA2A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E9D98EE4-0616-49CE-9392-17AD373BA2A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E9D98EE4-0616-49CE-9392-17AD373BA2A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{71CA2456-0A74-4D28-9392-6FC1D7170637}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71CA2456-0A74-4D28-9392-6FC1D7170637}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71CA2456-0A74-4D28-9392-6FC1D7170637}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71CA2456-0A74-4D28-9392-6FC1D7170637}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

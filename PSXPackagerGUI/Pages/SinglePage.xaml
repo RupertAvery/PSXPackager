@@ -8,7 +8,7 @@
       xmlns:controls="clr-namespace:PSXPackagerGUI.Controls"
       xmlns:models="clr-namespace:PSXPackagerGUI.Models"
       mc:Ignorable="d" 
-      d:DataContext="{d:DesignInstance models:SingleModel, IsDesignTimeCreatable=True}"
+      d:DataContext="{d:DesignInstance models:SingleModelDesignTime, IsDesignTimeCreatable=True}"
       d:DesignHeight="450" d:DesignWidth="800"
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
       Title="Single">
@@ -97,32 +97,100 @@
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
-                    <GroupBox Grid.Row="1" Header="Disc Metadata">
-                        <Grid Margin="5,5,5,5" VerticalAlignment="Top">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="100"/>
-                                <ColumnDefinition/>
-                                <ColumnDefinition Width="20"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="30"/>
-                                <RowDefinition Height="30"/>
-                                <RowDefinition Height="30"/>
-                                <RowDefinition Height="30"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <Label Grid.Column="0" Grid.Row="0" >Game ID</Label>
-                            <Label Grid.Column="0" Grid.Row="1" >Game Title</Label>
-                            <Label Grid.Column="0" Grid.Row="2" >Save ID</Label>
-                            <Label Grid.Column="0" Grid.Row="3" >Save Title</Label>
-                            <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="0" Text="{Binding SelectedDisc.GameID}" MaxLength="9"></TextBox>
-                            <Button Grid.Column="2" Click="SelectGameID_Click">...</Button>
-                            <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="1" Text="{Binding SelectedDisc.Title}" MaxLength="128"></TextBox>
-                            <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="2" Text="{Binding SelectedDisc.SaveID}" MaxLength="9"></TextBox>
-                            <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="3" Text="{Binding SelectedDisc.SaveTitle}" MaxLength="128"></TextBox>
+                    <TabControl Grid.Row="1">
+                        <TabItem Header="Disc Metadata">
+                            <Grid Margin="5,5,5,5" VerticalAlignment="Top">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="20"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="30"/>
+                                    <RowDefinition Height="30"/>
+                                    <RowDefinition Height="30"/>
+                                    <RowDefinition Height="30"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Label Grid.Column="0" Grid.Row="0" >Game ID</Label>
+                                <Label Grid.Column="0" Grid.Row="1" >Game Title</Label>
+                                <Label Grid.Column="0" Grid.Row="2" >Save ID</Label>
+                                <Label Grid.Column="0" Grid.Row="3" >Save Title</Label>
+                                <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="0" Text="{Binding SelectedDisc.GameID}" MaxLength="9"></TextBox>
+                                <Button Grid.Column="2" Click="SelectGameID_Click">...</Button>
+                                <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="1" Text="{Binding SelectedDisc.Title}" MaxLength="128"></TextBox>
+                                <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="2" Text="{Binding SelectedDisc.SaveID}" MaxLength="9"></TextBox>
+                                <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="3" Text="{Binding SelectedDisc.SaveTitle}" MaxLength="128"></TextBox>
 
-                        </Grid>
-                    </GroupBox>
+                            </Grid>
+                        </TabItem>
+                        <TabItem Header="Tracks">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60"/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="30"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Label Grid.Column="0">Track #</Label>
+                                <Label Grid.Column="1">Type</Label>
+                                <ListView Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{Binding SelectedDisc.Tracks}" SelectedItem="{Binding SelectedTrack}">
+                                    <ListView.ItemContainerStyle>
+                                        <Style TargetType="{x:Type ListViewItem}">
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                            <EventSetter Event="MouseDoubleClick" Handler="Track_OnMouseDoubleClick"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Tag" Value="Hovered"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ListView.ItemContainerStyle>
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="60"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="24"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Label Content="{Binding Number}"></Label>
+                                                <Label Grid.Column="1" Content="{Binding DataType}"></Label>
+                                                <Grid Grid.Column="2">
+                                                    <Image Width="24" Height="24" MouseDown="PlayControls_OnMouseDown">
+                                                        <Image.Style>
+                                                            <Style TargetType="Image">
+                                                                <Setter Property="Visibility" Value="Hidden"></Setter>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=Tag}"
+                                                                            Value="Hovered">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </DataTrigger>
+
+                                                                    <DataTrigger Binding="{Binding IsSelected}" Value="true">
+                                                                        <Setter Property="Visibility" Value="Visible"></Setter>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static models:TrackStatus.Stopped}">
+                                                                        <Setter Property="Source" Value="../Resources/play-24x24.png"></Setter>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static models:TrackStatus.Playing}">
+                                                                        <Setter Property="Source" Value="../Resources/pause-24x24.png"></Setter>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Image.Style>
+                                                    </Image>
+                                                </Grid>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+                            </Grid>
+
+                        </TabItem>
+                    </TabControl>
                 </Grid>
 
             </GroupBox>

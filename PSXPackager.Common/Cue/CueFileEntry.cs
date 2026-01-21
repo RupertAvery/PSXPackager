@@ -4,6 +4,7 @@ namespace PSXPackager.Common.Cue
 {
     public class CueFileEntry
     {
+        public CueFile CueFile { get; set; }
         public string FileName { get; set; }
         /// <summary>
         /// Only "BINARY" for now

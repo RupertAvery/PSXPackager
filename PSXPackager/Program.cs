@@ -185,7 +185,7 @@ namespace PSXPackager
             // https://github.com/adamhathcock/sharpcompress/blob/master/FORMATS.md
             var supportedFiles = new List<string>() {
                 ".rar", ".zip", ".tar", ".gz", ".7z",
-                ".bin", ".cue", ".img", ".iso", ".pbp"
+                ".bin", ".cue", ".img", ".pbp"
             };
 
             if (string.IsNullOrEmpty(filterExpression))

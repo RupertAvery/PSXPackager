@@ -10,7 +10,6 @@ namespace PSXPackager.Common
         public const string Audio = "AUDIO";
     }
 
-
     public static class TOCHelper
     {
         public static string GetDataType(TrackTypeEnum trackType)
@@ -72,14 +71,19 @@ namespace PSXPackager.Common
 
         public static CueFile TOCtoCUE(List<TOCEntry> tocEntries, string dataPath)
         {
-            var cueFile = new CueFileEntry()
+            var cueFile = new CueFile();
+
+            var cueFileEntry = new CueFileEntry()
             {
+                CueFile = cueFile,
                 FileName = dataPath,
                 Tracks = new List<CueTrack>(),
-                FileType = "BINARY"
+                FileType = FileTypes.BINARY
             };
 
-            var audioLeadin = new IndexPosition { Seconds = 2 };
+            cueFile.FileEntries.Add(cueFileEntry);
+
+            var audioLeadIn = new IndexPosition { Seconds = 2 };
 
             foreach (var track in tocEntries)
             {
@@ -97,7 +101,7 @@ namespace PSXPackager.Common
                     indexes.Add(new CueIndex()
                     {
                         Number = 0,
-                        Position = position - audioLeadin,
+                        Position = position - audioLeadIn,
                     });
                 }
 
@@ -109,16 +113,17 @@ namespace PSXPackager.Common
 
                 var cueTrack = new CueTrack()
                 {
+                    FileEntry = cueFileEntry,
                     DataType = GetDataType(track.TrackType),
                     Indexes = indexes,
                     Number = track.TrackNo
                 };
 
 
-                cueFile.Tracks.Add(cueTrack);
+                cueFileEntry.Tracks.Add(cueTrack);
             }
 
-            return new CueFile(new[] { cueFile });
+            return cueFile;
         }
     }
 }

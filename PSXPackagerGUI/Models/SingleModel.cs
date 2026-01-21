@@ -25,6 +25,7 @@ namespace PSXPackagerGUI.Models
         private bool _showIcon;
         private bool _showInformation;
         private bool _showBackground;
+        private Track? _selectedTrack;
 
         public SettingsModel Settings
         {
@@ -34,14 +35,6 @@ namespace PSXPackagerGUI.Models
 
         public SingleModel()
         {
-            Discs = new ObservableCollection<Disc>()
-            {
-                new Disc()
-                {
-                    Title = "Final Fantasy VII - Disc 1",
-                    Size = 123456789
-                }
-            };
             ShowBackground = true;
             ShowInformation = true;
             ShowIcon = true;
@@ -90,6 +83,12 @@ namespace PSXPackagerGUI.Models
         {
             get => _showIcon;
             set => SetProperty(ref _showIcon, value);
+        }
+
+        public Track? SelectedTrack
+        {
+            get => _selectedTrack;
+            set => SetProperty(ref _selectedTrack, value);
         }
     }
 }

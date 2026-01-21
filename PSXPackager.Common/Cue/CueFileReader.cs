@@ -1,22 +1,80 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Reflection.Metadata;
 using System.Text.RegularExpressions;
 
 namespace PSXPackager.Common.Cue
 {
+    public static class FileTypes
+    {
+        public static string BINARY = "BINARY";
+    }
+
+    public static class DataTypes
+    {
+        public static string DATA = "MODE2/2352";
+        public static string AUDIO = "AUDIO";
+    }
+
     public class CueFileReader
     {
         private static readonly Regex FileRegex = new Regex("^FILE \"(.*?)\" (.*?)\\s*$");
         private static readonly Regex TrackRegex = new Regex("^\\s*TRACK (\\d+) (.*?)\\s*$");
         private static readonly Regex IndexRegex = new Regex("^\\s*INDEX (\\d+) (\\d+:\\d+:\\d+)\\s*$");
 
-        public static CueFile Read(string file)
+        public static CueFile Dummy(string file)
         {
             var cueFile = new CueFile();
 
+            var fileEntry = new CueFileEntry
+            {
+                CueFile = cueFile,
+                FileName = file,
+                FileType = FileTypes.BINARY,
+
+            };
+
+            cueFile.FileEntries =
+            [
+                fileEntry
+            ];
+
+            fileEntry.Tracks =
+            [
+                new CueTrack
+                {
+                    FileEntry = fileEntry,
+                    Number = 1,
+                    DataType = DataTypes.DATA,
+                    Indexes =
+                    [
+                        new CueIndex
+                        {
+                            Number = 0,
+                            Position =
+                            {
+                                Frames = 0,
+                                Minutes = 0,
+                                Seconds = 0
+                            }
+                        }
+                    ]
+                }
+            ];
+
+            return cueFile;
+        }
+
+        public static CueFile Read(string file)
+        {
+            var cueFile = new CueFile() { Path = file };
+
             CueFileEntry cueFileEntry = null;
             CueTrack cueTrack = null;
+            CueTrack lastTrack = null;
+
             var cueLines = File.ReadAllLines(file);
+
             foreach (var line in cueLines)
             {
                 var fileMatch = FileRegex.Match(line);
@@ -27,11 +85,14 @@ namespace PSXPackager.Common.Cue
                 {
                     cueFileEntry = new CueFileEntry
                     {
+                        CueFile = cueFile,
                         FileName = fileMatch.Groups[1].Value,
                         FileType = fileMatch.Groups[2].Value,
                         Tracks = new List<CueTrack>()
                     };
                     cueFile.FileEntries.Add(cueFileEntry);
+
+                    lastTrack = null;
                 }
                 else if (trackMatch.Success)
                 {
@@ -41,11 +102,20 @@ namespace PSXPackager.Common.Cue
 
                     cueTrack = new CueTrack
                     {
+                        FileEntry = cueFileEntry,
                         Number = int.Parse(trackMatch.Groups[1].Value),
                         DataType = trackMatch.Groups[2].Value,
                         Indexes = new List<CueIndex>()
                     };
+
                     cueFileEntry.Tracks.Add(cueTrack);
+
+                    if (lastTrack != null)
+                    {
+                        lastTrack.Next = cueTrack;
+                    }
+
+                    lastTrack = cueTrack;
                 }
                 else if (indexMatch.Success)
                 {

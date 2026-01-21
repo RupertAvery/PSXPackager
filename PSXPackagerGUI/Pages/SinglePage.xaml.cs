@@ -1,6 +1,7 @@
 ﻿using Popstation;
 using Popstation.Database;
 using Popstation.Pbp;
+using PSXPackager.Audio;
 using PSXPackager.Common;
 using PSXPackager.Common.Cue;
 using PSXPackager.Common.Notification;
@@ -13,12 +14,12 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Runtime;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using SFOEntry = PSXPackagerGUI.Models.SFOEntry;
 
 namespace PSXPackagerGUI.Pages
@@ -33,6 +34,7 @@ namespace PSXPackagerGUI.Pages
         private readonly Window _window;
         private readonly SettingsModel _settings;
         private readonly GameDB _gameDb;
+        private readonly CDAudioPlayer _player;
 
         private IEnumerable<Disc> DummyDisc(int start, int count)
         {
@@ -64,6 +66,7 @@ namespace PSXPackagerGUI.Pages
             _settings = settings;
             _gameDb = gameDb;
             _cancellationTokenSource = new CancellationTokenSource();
+            _player = new CDAudioPlayer();
 
             InitializeComponent();
 
@@ -204,10 +207,13 @@ namespace PSXPackagerGUI.Pages
                             IsLoadEnabled = true,
                             IsSaveAsEnabled = true,
                             IsEmpty = false,
-                            SourceUrl = $"//pbp/disc{i}/{path}"
+                            SourceUrl = $"//pbp/{path}/{i}"
                         };
 
                         disc.RemoveCommand = new RelayCommand((o) => Remove(disc));
+
+                        disc.Tracks = new ObservableCollection<Track>(TOCHelper.TOCtoCUE(d.TOC, disc.SourceUrl)
+                            .FileEntries.SelectMany(d => d.Tracks).Select(d => new Track(d)));
 
                         return disc;
                     }).ToList();
@@ -852,9 +858,10 @@ namespace PSXPackagerGUI.Pages
                 {
                     var sheet = CueFileReader.Read(openFileDialog.FileName);
                     var firstEntry = sheet.FileEntries.First();
-                
+
                     imagePath = Path.Combine(fileDirectory, firstEntry.FileName);
                     disc.SourceTOC = openFileDialog.FileName;
+                    disc.Tracks = new ObservableCollection<Track>(sheet.FileEntries.SelectMany(d => d.Tracks).Select(d => new Track(d)));
                     isCue = true;
                 }
                 else
@@ -862,14 +869,34 @@ namespace PSXPackagerGUI.Pages
                     var cueFilename = Path.GetFileNameWithoutExtension(imagePath) + ".cue";
                     var dirPath = Path.GetDirectoryName(imagePath)!;
                     var cuePath = Path.Combine(dirPath, cueFilename);
+                    var generateCue = false;
+
+
                     if (File.Exists(cuePath))
                     {
                         var result = MessageBox.Show("A CUE file was found for the selected image, do you want to use it?", "Load ISO", MessageBoxButton.YesNo, MessageBoxImage.Question);
                         if (result == MessageBoxResult.Yes)
                         {
+                            var sheet = CueFileReader.Read(openFileDialog.FileName);
                             disc.SourceTOC = Path.Combine(dirPath, cueFilename);
+                            disc.Tracks = new ObservableCollection<Track>(sheet.FileEntries.SelectMany(d => d.Tracks).Select(d => new Track(d)));
+
                             isCue = true;
                         }
+                        else
+                        {
+                            generateCue = true;
+                        }
+                    }
+                    else
+                    {
+                        generateCue = true;
+                    }
+
+                    if (generateCue)
+                    {
+                        var sheet = CueFileReader.Dummy(imagePath);
+                        disc.Tracks = new ObservableCollection<Track>(sheet.FileEntries.SelectMany(d => d.Tracks).Select(d => new Track(d)));
                     }
                 }
 
@@ -974,7 +1001,7 @@ namespace PSXPackagerGUI.Pages
         private void SaveImage_OnClick(object sender, RoutedEventArgs e)
         {
             var context = ((MenuItem)sender).DataContext as Disc;
-            var pbpRegex = new Regex("//pbp/disc(\\d)/(.*\\.pbp)", RegexOptions.IgnoreCase);
+            var pbpRegex = new Regex("//pbp/(.*\\.pbp)/(\\d)", RegexOptions.IgnoreCase);
 
             var game = _gameDb.GetEntryByGameID(context.GameID);
 
@@ -992,11 +1019,12 @@ namespace PSXPackagerGUI.Pages
                 var sourceUrl = Model.Discs.Single(d => d.Index == context.Index).SourceUrl;
 
                 var match = pbpRegex.Match(sourceUrl);
+
                 if (match.Success)
                 {
                     Task.Run(() =>
                     {
-                        using (var stream = new FileStream(match.Groups[2].Value, FileMode.Open, FileAccess.Read))
+                        using (var stream = new FileStream(match.Groups[1].Value, FileMode.Open, FileAccess.Read))
                         {
                             var pbpReader = new PbpReader(stream);
                             using (var output = new FileStream(saveFileDialog.FileName, FileMode.Create,
@@ -1166,5 +1194,52 @@ namespace PSXPackagerGUI.Pages
             }
 
         }
+
+
+        private void Track_OnMouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (((ListViewItem)sender).DataContext is Track { DataType: "AUDIO" } track)
+            {
+                Play(track);
+
+                e.Handled = true;
+            }
+        }
+
+        private void PlayControls_OnMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (((Image)sender).DataContext is Track { DataType: "AUDIO" } track)
+            {
+                Play(track);
+
+                e.Handled = true;
+            }
+        }
+
+
+        private void Play(Track track)
+        {
+            if (_model.SelectedTrack != null && _model.SelectedTrack != track)
+            {
+                _model.SelectedTrack.Status = TrackStatus.Stopped;
+                _model.SelectedTrack.IsSelected = false;
+            }
+
+            _model.SelectedTrack = track;
+            track.IsSelected = true;
+
+            switch (track.Status)
+            {
+                case TrackStatus.Stopped:
+                    _player.PlayCueTrack(track.CueTrack);
+                    track.Status = TrackStatus.Playing;
+                    break;
+                case TrackStatus.Playing:
+                    _player.Stop();
+                    track.Status = TrackStatus.Stopped;
+                    break;
+            }
+        }
+
     }
 }
