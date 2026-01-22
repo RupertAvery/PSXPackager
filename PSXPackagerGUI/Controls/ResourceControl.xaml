@@ -51,13 +51,29 @@
             <Button Grid.Column="2" x:Name="MoreButton" IsEnabled="{Binding IsEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}" Click="More_OnClick">...</Button>
         </Grid>
 
-        <Grid Grid.Row="1" Grid.Column="0"  Background="{DynamicResource {x:Static SystemColors.WindowFrameBrushKey}}">
+        <Grid Grid.Row="1" Grid.Column="0">
+            <Grid.Background>
+                <DrawingBrush TileMode="Tile"
+                              Viewport="0,0,16,16"
+                              ViewportUnits="Absolute">
+                    <DrawingBrush.Drawing>
+                        <DrawingGroup>
+                            <GeometryDrawing Brush="#FFFFFFFF"
+                                             Geometry="M0,0 H16 V16 H0 Z"/>
+                            <GeometryDrawing Brush="#FFCCCCCC"
+                                             Geometry="M0,0 H8 V8 H0 Z"/>
+                            <GeometryDrawing Brush="#FFCCCCCC"
+                                             Geometry="M8,8 H16 V16 H8 Z"/>
+                        </DrawingGroup>
+                    </DrawingBrush.Drawing>
+                </DrawingBrush>
+            </Grid.Background>
             <Border Tag="{Binding .}" Width="{Binding Composite.Width}" Height="{Binding Composite.Height}" BorderThickness="1" BorderBrush="#000000"
                     Focusable="True"
                     KeyboardNavigation.IsTabStop="True"
                     PreviewKeyDown="ResourceControl_OnPreviewKeyDown"
                     MouseDown="Border_OnMouseDown"
-                    >
+            >
                 <Border.ContextMenu>
                     <ContextMenu IsEnabled="{Binding PlacementTarget.Tag.Composite.HasLayers, RelativeSource={RelativeSource Self}}">
                         <MenuItem Header="Insert Image Layer" Click="InsertImageLayer_OnClick"></MenuItem>
