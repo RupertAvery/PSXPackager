@@ -2,6 +2,7 @@
 using Popstation.Pbp;
 using PSXPackagerGUI.Models.Resource;
 using PSXPackagerGUI.Pages;
+using PSXPackagerGUI.Templates;
 using System;
 using System.ComponentModel;
 using System.IO;
@@ -11,10 +12,12 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using ImageLayer = PSXPackagerGUI.Models.Resource.ImageLayer;
+using Layer = PSXPackagerGUI.Models.Resource.Layer;
+using TextLayer = PSXPackagerGUI.Models.Resource.TextLayer;
 
 namespace PSXPackagerGUI.Controls
 {
-
     /// <summary>
     /// Interaction logic for Resource.xaml
     /// </summary>
@@ -90,9 +93,21 @@ namespace PSXPackagerGUI.Controls
             }
         }
 
+        public Selection? Selection
+        {
+            get => _selection;
+            set
+            {
+                _selection = value;
+                OnPropertyChanged();
+            }
+        }
+
         public ResourceControl()
         {
             InitializeComponent();
+            Selection = new Selection();
+            SizeChanged += (s, e) => UpdateSelection();
         }
 
         private void More_OnClick(object sender, RoutedEventArgs e)
@@ -118,10 +133,7 @@ namespace PSXPackagerGUI.Controls
         {
             get => _selectedLayer;
             set { _selectedLayer = value;
-                if (Resource.Composite != null)
-                {
-                    Resource.Composite.SelectedLayer = _selectedLayer;
-                }
+                UpdateSelection();
                 OnPropertyChanged();
             }
         }
@@ -131,6 +143,50 @@ namespace PSXPackagerGUI.Controls
         private Layer? _selectedLayer;
         private bool resizeMode;
         private bool dragStarted;
+        private Selection? _selection;
+
+        private void UpdateSelection()
+        {
+            if (SelectedLayer == null)
+            {
+                Selection.Visibility = Visibility.Hidden;
+                return;
+            }
+
+            Selection.Visibility = Visibility.Visible;
+            var offsetX = (Grid.ActualWidth - Resource.Composite.Width) / 2;
+            var offsetY = (Grid.ActualHeight - Resource.Composite.Height) / 2;
+
+            var left = offsetX + SelectedLayer.OffsetX;
+            var top = offsetY + SelectedLayer.OffsetY;
+            var width = SelectedLayer.Width;
+            var height = SelectedLayer.Height;
+
+            Selection.C1.X = left - 2;
+            Selection.C1.Y = top - 2;
+
+            Selection.C2.X = left + width - 2;
+            Selection.C2.Y = top - 2;
+
+            Selection.C3.X = left + width - 2;
+            Selection.C3.Y = top + height - 2;
+
+            Selection.C4.X = left - 2;
+            Selection.C4.Y = top + height - 2;
+
+            Selection.E1.X = left;
+            Selection.E1.Y = top;
+
+            Selection.E2.X = left + width;
+            Selection.E2.Y = top;
+
+            Selection.E3.X = left + width;
+            Selection.E3.Y = top + height;
+
+            Selection.E4.X = left;
+            Selection.E4.Y = top + height;
+
+        }
 
         private void UIElement_OnMouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -160,13 +216,18 @@ namespace PSXPackagerGUI.Controls
 
                 var slayer = SelectedLayer;
 
+                var offsetX = (Grid.ActualWidth - Resource.Composite.Width) / 2;
+                var offsetY = (Grid.ActualHeight - Resource.Composite.Height) / 2;
+
+
                 if (slayer != null)
                 {
-                    var cornerX = slayer.OffsetX + slayer.Width;
-                    var cornerY = slayer.OffsetY + slayer.Height;
 
-                    if (pos.X >= cornerX - 2 && pos.X <= cornerX + 2 &&
-                        pos.Y >= cornerY - 2 && pos.Y <= cornerY + 2)
+                    var cornerX = offsetX + slayer.OffsetX + slayer.Width;
+                    var cornerY = offsetY + slayer.OffsetY + slayer.Height;
+
+                    if (pos.X >= cornerX - 4 && pos.X <= cornerX + 4 &&
+                        pos.Y >= cornerY - 4 && pos.Y <= cornerY + 4)
                     {
                         resizeMode = true;
                     }
@@ -177,11 +238,10 @@ namespace PSXPackagerGUI.Controls
                 {
                     foreach (var layer in Resource.Composite.Layers.Reverse())
                     {
-                        if (pos.X >= layer.OffsetX && pos.X <= layer.OffsetX + layer.Width &&
-                            pos.Y >= layer.OffsetY && pos.Y <= layer.OffsetY + layer.Height)
+                        if (pos.X >= offsetX + layer.OffsetX && pos.X <= offsetX + layer.OffsetX + layer.Width &&
+                            pos.Y >= offsetY + layer.OffsetY && pos.Y <= offsetY + layer.OffsetY + layer.Height)
                         {
                             SelectedLayer = layer;
-                            Resource.RefreshIcon();
                             break;
                         }
                     }
@@ -218,7 +278,7 @@ namespace PSXPackagerGUI.Controls
 
             if (resizeMode || dragStarted)
             {
-                Resource.Composite.Render();
+                UpdateSelection();
                 Resource.RefreshIcon();
             }
         }
@@ -243,7 +303,6 @@ namespace PSXPackagerGUI.Controls
                     Resource.RefreshIcon();
                 }
             }
-            Resource.RefreshIcon();
         }
 
         private void MoveDownLayer_OnClick(object sender, RoutedEventArgs e)
@@ -270,6 +329,7 @@ namespace PSXPackagerGUI.Controls
             Resource.Composite.AddLayer(newLayer);
 
             SelectedLayer = newLayer;
+            UpdateSelection();
             Resource.RefreshIcon();
         }
 
@@ -292,6 +352,7 @@ namespace PSXPackagerGUI.Controls
                 Resource.Composite.AddLayer(newLayer);
 
                 SelectedLayer = newLayer;
+                UpdateSelection();
                 Resource.RefreshIcon();
             }
         }
@@ -308,11 +369,41 @@ namespace PSXPackagerGUI.Controls
                     return;
 
                 using var stream = new FileStream(openFileDialog.FileName, FileMode.Open, FileAccess.Read);
-                var newLayer = new ImageLayer(ImageProcessing.GetBitmapImage(stream), "image", openFileDialog.FileName);
+
+                var image = ImageProcessing.GetBitmapImage(stream);
+
+                double scale = Math.Min(
+                    (double)Resource.Composite.Width / image.PixelWidth,
+                    (double)Resource.Composite.Height / image.PixelHeight);
+
+                int width = image.PixelWidth;
+                int height = image.PixelHeight;
+
+                if (scale >= 1)
+                {
+                    var resizeResult = MessageBox.Show(App.Current.MainWindow,
+                        "The selected image is larger than the content area. Do you want to resize it to fit?",
+                        "Load image", MessageBoxButton.YesNoCancel);
+
+                    if (resizeResult == MessageBoxResult.Yes)
+                    {
+                        width = (int)(width * scale);
+                        height = (int)(width * scale);
+
+                    }
+                }
+
+                var newLayer = new Models.Resource.ImageLayer(image, "image", openFileDialog.FileName);
+
+                newLayer.Width = width;
+                newLayer.Height = height;
+                newLayer.OriginalWidth = width;
+                newLayer.OriginalHeight = height;
 
                 Resource.Composite.InsertLayerAfter(newLayer, layer);
 
                 SelectedLayer = newLayer;
+                UpdateSelection();
                 Resource.RefreshIcon();
             }
         }
@@ -338,6 +429,7 @@ namespace PSXPackagerGUI.Controls
                     Resource.Composite.InsertLayerAfter(newLayer, layer);
 
                     SelectedLayer = newLayer;
+                    UpdateSelection();
                     Resource.RefreshIcon();
                 }
             }
@@ -352,6 +444,7 @@ namespace PSXPackagerGUI.Controls
                 {
                     SelectedLayer = null;
                 }
+                UpdateSelection();
                 Resource.RefreshIcon();
             }
         }
@@ -378,6 +471,7 @@ namespace PSXPackagerGUI.Controls
             if (Resource.Composite != null && TryGetLayer(sender, out var layer))
             {
                 layer.Reset();
+                UpdateSelection();
                 Resource.RefreshIcon();
             }
 

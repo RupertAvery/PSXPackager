@@ -51,7 +51,7 @@
             <Button Grid.Column="2" x:Name="MoreButton" IsEnabled="{Binding IsEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}" Click="More_OnClick">...</Button>
         </Grid>
 
-        <Grid Grid.Row="1" Grid.Column="0">
+        <Grid x:Name="Grid" Tag="{Binding .}" Grid.Row="1" Grid.Column="0" MouseDown="UIElement_OnMouseDown" MouseMove="UIElement_OnMouseMove" MouseUp="UIElement_OnMouseUp">
             <Grid.Background>
                 <DrawingBrush TileMode="Tile"
                               Viewport="0,0,16,16"
@@ -68,30 +68,60 @@
                     </DrawingBrush.Drawing>
                 </DrawingBrush>
             </Grid.Background>
-            <Border Tag="{Binding .}" Width="{Binding Composite.Width}" Height="{Binding Composite.Height}" BorderThickness="1" BorderBrush="#000000"
+            <Grid.ContextMenu>
+                <ContextMenu IsEnabled="{Binding PlacementTarget.Tag.Composite.HasLayers, RelativeSource={RelativeSource Self}}">
+                    <MenuItem Header="Fit to bounds"></MenuItem>
+                    <MenuItem Header="Fit to width"></MenuItem>
+                    <MenuItem Header="Fit to height"></MenuItem>
+                    <Separator></Separator>
+                    <MenuItem Header="Insert image layer" Click="InsertImageLayer_OnClick"></MenuItem>
+                    <MenuItem Header="Insert text layer" Click="InsertTextLayer_OnClick"></MenuItem>
+                    <MenuItem Header="Remove layer" Click="RemoveLayer_OnClick"></MenuItem>
+                    <Separator></Separator>
+                    <MenuItem Header="Move up" Click="MoveUpLayer_OnClick"></MenuItem>
+                    <MenuItem Header="Move down" Click="MoveDownLayer_OnClick"></MenuItem>
+                    <Separator></Separator>
+                    <MenuItem Header="Reset layer" Click="ResetLayer_OnClick"></MenuItem>
+                </ContextMenu>
+            </Grid.ContextMenu>
+            <Border Width="{Binding Composite.Width}" Height="{Binding Composite.Height}" BorderThickness="1" BorderBrush="#000000"
                     Focusable="True"
                     KeyboardNavigation.IsTabStop="True"
                     PreviewKeyDown="ResourceControl_OnPreviewKeyDown"
                     MouseDown="Border_OnMouseDown"
             >
-                <Border.ContextMenu>
-                    <ContextMenu IsEnabled="{Binding PlacementTarget.Tag.Composite.HasLayers, RelativeSource={RelativeSource Self}}">
-                        <MenuItem Header="Insert Image Layer" Click="InsertImageLayer_OnClick"></MenuItem>
-                        <MenuItem Header="Insert Text Layer" Click="InsertTextLayer_OnClick"></MenuItem>
-                        <MenuItem Header="Remove Layer" Click="RemoveLayer_OnClick"></MenuItem>
-                        <MenuItem Header="Replace Layer" Click="ReplaceLayer_OnClick"></MenuItem>
-                        <Separator></Separator>
-                        <MenuItem Header="Move up" Click="MoveUpLayer_OnClick"></MenuItem>
-                        <MenuItem Header="Move down" Click="MoveDownLayer_OnClick"></MenuItem>
-                        <Separator></Separator>
-                        <MenuItem Header="Reset Layer" Click="ResetLayer_OnClick"></MenuItem>
-                    </ContextMenu>
-                </Border.ContextMenu>
-                <Grid>
-                    <Image Stretch="None" VerticalAlignment="Center" Source="{Binding Composite.CompositeBitmap}" AllowDrop="True" MouseDown="UIElement_OnMouseDown" MouseMove="UIElement_OnMouseMove" MouseUp="UIElement_OnMouseUp" ></Image>
-                    <Image Stretch="None" VerticalAlignment="Center" Source="{Binding Composite.SelectionBitmap}" IsHitTestVisible="False"></Image>
-                </Grid>
+                <Image  Stretch="None" VerticalAlignment="Center" Source="{Binding Composite.CompositeBitmap}" AllowDrop="True"></Image>
             </Border>
+            <Canvas DataContext="{Binding Selection, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}"
+                    Visibility="{Binding Visibility}"
+                    ClipToBounds="True"
+                    IsHitTestVisible="False"
+            >
+                <Line X1="{Binding E1.X}" Y1="{Binding E1.Y}" X2="{Binding E2.X}" Y2="{Binding E2.Y}" Stroke="#70A0FF"></Line>
+                <Line X1="{Binding E2.X}" Y1="{Binding E2.Y}" X2="{Binding E3.X}" Y2="{Binding E3.Y}" Stroke="#70A0FF"></Line>
+                <Line X1="{Binding E3.X}" Y1="{Binding E3.Y}" X2="{Binding E4.X}" Y2="{Binding E4.Y}" Stroke="#70A0FF"></Line>
+                <Line X1="{Binding E4.X}" Y1="{Binding E4.Y}" X2="{Binding E1.X}" Y2="{Binding E1.Y}" Stroke="#70A0FF"></Line>
+                <Rectangle  
+                    Canvas.Left="{Binding C1.X}" 
+                    Canvas.Top="{Binding C1.Y}"
+                    Width="5" Height="5" Fill="White" Stroke="#70A0FF">
+                </Rectangle>
+                <Rectangle 
+                    Canvas.Left="{Binding C2.X}" 
+                    Canvas.Top="{Binding C2.Y}"
+                    Width="5" Height="5" Fill="White" Stroke="#70A0FF">
+                </Rectangle>
+                <Rectangle 
+                    Canvas.Left="{Binding C3.X}" 
+                    Canvas.Top="{Binding C3.Y}"
+                    Width="5" Height="5" Fill="White" Stroke="#70A0FF">
+                </Rectangle>
+                <Rectangle 
+                    Canvas.Left="{Binding C4.X}" 
+                    Canvas.Top="{Binding C4.Y}"
+                    Width="5" Height="5" Fill="White" Stroke="#70A0FF">
+                </Rectangle>
+            </Canvas>
         </Grid>
 
         <Grid Grid.Row="1" Grid.Column="0">

@@ -37,7 +37,7 @@ namespace PSXPackagerGUI.Controls
 
             }
 
-            dc.DrawImage(bitmapSource, new Rect(new Point(), RenderSize));
+            dc.DrawImage(bitmapSource, new Rect(new System.Windows.Point(), RenderSize));
         }
     }
 }
