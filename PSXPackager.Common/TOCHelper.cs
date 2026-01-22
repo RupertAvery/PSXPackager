@@ -83,6 +83,8 @@ namespace PSXPackager.Common
 
             cueFile.FileEntries.Add(cueFileEntry);
 
+            CueTrack? lastTrack = null;
+
             var audioLeadIn = new IndexPosition { Seconds = 2 };
 
             foreach (var track in tocEntries)
@@ -119,6 +121,12 @@ namespace PSXPackager.Common
                     Number = track.TrackNo
                 };
 
+                if (lastTrack != null)
+                {
+                    lastTrack.Next = cueTrack;
+                }
+
+                lastTrack = cueTrack;
 
                 cueFileEntry.Tracks.Add(cueTrack);
             }

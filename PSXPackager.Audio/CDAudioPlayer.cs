@@ -3,11 +3,31 @@ using PSXPackager.Common.Cue;
 
 namespace PSXPackager.Audio
 {
+    public class CDAudioPlayerStopped
+    {
+        public Exception? Exception { get; set; }
+    }
+
+    public class CDAudioPlayerStarted
+    {
+        public CueTrack Track { get; set; }
+    }
+
+    public enum CDAudioPlayerStatus
+    {
+        Stopped,
+        Playing,
+        Paused
+    }
+
     public class CDAudioPlayer : IDisposable
     {
         const int SectorSize = 2352;
         private readonly WaveOutEvent _waveOutEvent;
         private readonly BufferedWaveProvider _buffer;
+
+        public event EventHandler<CDAudioPlayerStarted> Started;
+        public event EventHandler<CDAudioPlayerStopped> Stopped;
 
         public CDAudioPlayer()
         {
@@ -20,6 +40,13 @@ namespace PSXPackager.Audio
 
             _waveOutEvent = new WaveOutEvent();
             _waveOutEvent.Init(_buffer);
+
+            _waveOutEvent.PlaybackStopped += WaveOutEventOnPlaybackStopped;
+        }
+
+        private void WaveOutEventOnPlaybackStopped(object? sender, StoppedEventArgs e)
+        {
+            Stopped?.Invoke(this, new CDAudioPlayerStopped() { Exception = e.Exception });
         }
 
         public void Pause()
@@ -46,12 +73,11 @@ namespace PSXPackager.Audio
             {
                 _waveOutEvent.Stop();
             }
-            cts?.Cancel();
-            cts = new CancellationTokenSource();
-            resetEvent.WaitOne(100);
-            resetEvent.Reset();
 
-            _buffer.ClearBuffer();
+            resetEvent.Reset();
+            cts?.Cancel();
+            resetEvent.WaitOne(100);
+            cts = new CancellationTokenSource();
             PlayCueTrack(track, cts.Token);
         }
 
@@ -64,8 +90,10 @@ namespace PSXPackager.Audio
                 binPath = Path.Combine(Path.GetDirectoryName(track.FileEntry.CueFile.Path), binPath);
             }
 
+            _buffer.ClearBuffer();
             _waveOutEvent.Play();
 
+            // Skip pre-gap
             var startIndex = track.Indexes.First(i => i.Number == 1);
             int startSector = startIndex.Position.ToSector();
 
@@ -75,13 +103,13 @@ namespace PSXPackager.Audio
                 endSector = track.Next.Indexes.First(i => i.Number == 1).Position.ToSector();
             else
             {
-                long fileSize = new FileInfo(binPath).Length;
+                var fileSize = FileAbstraction.GetFileSizeFromUri(binPath);
                 endSector = (int)(fileSize / SectorSize);
             }
 
             Task.Run(() =>
             {
-                using var fs = File.OpenRead(binPath);
+                using var fs = FileAbstraction.GetStreamFromUri(binPath);
 
                 fs.Seek((long)startSector * SectorSize, SeekOrigin.Begin);
 
@@ -109,8 +137,20 @@ namespace PSXPackager.Audio
                     currentSector++;
                 }
 
+
+                while (_buffer.BufferedBytes > 0)
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        break;
+                    }
+                    Thread.Sleep(5); // wait for space
+                }
+
+                Stop();
                 resetEvent.Set();
             });
+
         }
 
 
@@ -118,10 +158,12 @@ namespace PSXPackager.Audio
         {
             if (_waveOutEvent.PlaybackState == PlaybackState.Playing)
             {
-                _waveOutEvent.Stop();
+                Stop();
             }
             _buffer.ClearBuffer();
+            _waveOutEvent.PlaybackStopped -= WaveOutEventOnPlaybackStopped;
             _waveOutEvent.Dispose();
         }
+
     }
 }

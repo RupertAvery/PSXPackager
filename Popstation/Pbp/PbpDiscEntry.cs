@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using DiscUtils.Streams;
 using Popstation.Iso;
 using PSXPackager.Common;
 
 namespace Popstation.Pbp
 {
-    public class PbpDiscEntry
+    public class PbpDiscEntry : IDisposable, IAsyncDisposable
     {
         // The maximum possible number of ISO indexes
         const int MAX_INDEXES = 0x7E00;
@@ -267,6 +268,16 @@ namespace Popstation.Pbp
                 }
             }
 
+        }
+
+        public void Dispose()
+        {
+            stream?.Dispose();
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (stream != null) await stream.DisposeAsync();
         }
     }
 }

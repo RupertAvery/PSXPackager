@@ -66,25 +66,24 @@ public class PbpDiscStream : Stream
 
     public override long Seek(long offset, SeekOrigin origin)
     {
-        throw new NotSupportedException();
-        //long newPos = origin switch
-        //{
-        //    SeekOrigin.Begin => offset,
-        //    SeekOrigin.Current => _position + offset,
-        //    SeekOrigin.End => _reader.IsoSize + offset,
-        //    _ => throw new ArgumentOutOfRangeException()
-        //};
+        long newPos = origin switch
+        {
+            SeekOrigin.Begin => offset,
+            SeekOrigin.Current => _position + offset,
+            SeekOrigin.End => _reader.IsoSize + offset,
+            _ => throw new ArgumentOutOfRangeException()
+        };
 
-        //if (newPos < 0 || newPos > _reader.IsoSize)
-        //    throw new IOException("Seek out of range");
+        if (newPos < 0 || newPos > _reader.IsoSize)
+            throw new IOException("Seek out of range");
 
-        //_position = newPos;
+        _position = newPos;
 
-        //// Reset buffer and compute block index
-        //_blockIndex = (int)(_position / _buffer.Length);
-        //_bufPos = _bufLen = 0;
+        // Reset buffer and compute block index
+        _blockIndex = (int)(_position / _buffer.Length);
+        _bufPos = _bufLen = 0;
 
-        //return _position;
+        return _position;
     }
 
     public override bool CanRead => true;
@@ -102,4 +101,9 @@ public class PbpDiscStream : Stream
     public override void Flush() { }
     public override void SetLength(long value) => throw new NotSupportedException();
     public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+    }
 }
