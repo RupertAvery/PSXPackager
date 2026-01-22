@@ -1,0 +1,87 @@
+// WPF Pixel Shader (ps_2_0)
+
+sampler2D inputSampler : register(s0);
+
+// Time in seconds
+float Time : register(c0);
+
+// ---------- Utility ----------
+
+float gradient(float p)
+{
+    float2 pt0 = float2(0.00, 0.0);
+    float2 pt1 = float2(0.86, 0.1);
+    float2 pt2 = float2(0.955, 0.40);
+    float2 pt3 = float2(0.99, 1.0);
+    float2 pt4 = float2(1.00, 0.0);
+
+    if (p < pt0.x) return pt0.y;
+    if (p < pt1.x) return lerp(pt0.y, pt1.y, (p - pt0.x) / (pt1.x - pt0.x));
+    if (p < pt2.x) return lerp(pt1.y, pt2.y, (p - pt1.x) / (pt2.x - pt1.x));
+    if (p < pt3.x) return lerp(pt2.y, pt3.y, (p - pt2.x) / (pt3.x - pt2.x));
+    if (p < pt4.x) return lerp(pt3.y, pt4.y, (p - pt3.x) / (pt4.x - pt3.x));
+
+    return pt4.y;
+}
+
+float waveN(float2 uv, float2 s12, float2 t12, float2 f12, float2 h12)
+{
+    float2 x12 = sin((Time * s12 + t12 + uv.x) * f12) * h12;
+    float g = gradient(uv.y / (0.5 + x12.x + x12.y));
+    return g * 0.27;
+}
+
+float wave1(float2 uv)
+{
+    return waveN(float2(uv.x, uv.y - 0.25),
+        float2(0.03, 0.06),
+        float2(0.00, 0.02),
+        float2(8.0, 3.7),
+        float2(0.06, 0.05));
+}
+
+float wave2(float2 uv)
+{
+    return waveN(float2(uv.x, uv.y - 0.25),
+        float2(0.04, 0.07),
+        float2(0.16, -0.37),
+        float2(6.7, 2.89),
+        float2(0.06, 0.05));
+}
+
+float wave3(float2 uv)
+{
+    return waveN(float2(uv.x, 0.75 - uv.y),
+        float2(0.035, 0.055),
+        float2(-0.09, 0.27),
+        float2(7.4, 2.51),
+        float2(0.06, 0.05));
+}
+
+float wave4(float2 uv)
+{
+    return waveN(float2(uv.x, 0.75 - uv.y),
+        float2(0.032, 0.09),
+        float2(0.08, -0.22),
+        float2(6.5, 3.89),
+        float2(0.06, 0.05));
+}
+
+// ---------- Pixel Shader ----------
+
+float4 main(float2 uv : TEXCOORD) : COLOR
+{
+    float waves = wave1(uv) + wave2(uv) + wave3(uv) + wave4(uv);
+
+    float x = uv.x;
+    float y = 1.0 - uv.y;
+
+    float3 bg = lerp(
+        float3(0.05, 0.05, 0.3),
+        float3(0.1, 0.65, 0.85),
+        (x + y) * 0.55);
+
+    float3 ac = bg + waves.xxx;
+
+    return float4(ac, 1.0);
+}

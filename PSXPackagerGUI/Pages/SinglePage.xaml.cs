@@ -8,10 +8,12 @@ using PSXPackager.Common.Notification;
 using PSXPackagerGUI.Common;
 using PSXPackagerGUI.Models;
 using PSXPackagerGUI.Models.Resource;
+using PSXPackagerGUI.Shaders;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -20,6 +22,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using SFOEntry = PSXPackagerGUI.Models.SFOEntry;
 
 namespace PSXPackagerGUI.Pages
@@ -93,9 +96,19 @@ namespace PSXPackagerGUI.Pages
             _settings.PropertyChanged += SettingsOnPropertyChanged;
 
             ResetModel();
-
+            _stopwatch = Stopwatch.StartNew();
+            CompositionTarget.Rendering += CompositionTargetOnRendering;
             //Closing += OnClosing;
         }
+
+
+        private Stopwatch _stopwatch;
+
+        private void CompositionTargetOnRendering(object? sender, EventArgs e)
+        {
+            WavesEffect.Time = _stopwatch.Elapsed.TotalSeconds;
+        }
+
 
         private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {

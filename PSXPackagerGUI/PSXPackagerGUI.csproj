@@ -36,6 +36,7 @@
 		<None Remove="Resources\search-48x48.png" />
 		<None Remove="Resources\start-48x48.png" />
 		<None Remove="Resources\stop-48x48.png" />
+		<None Remove="Shaders\pspwaves.ps.cso" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -67,6 +68,7 @@
 
 	<ItemGroup>
 	  <Resource Include="Resources\Editor\back.png" />
+	  <Resource Include="Shaders\pspwaves.ps.cso" />
 	  <EmbeddedResource Include="Resources\Editor\boot.png" />
 	  <EmbeddedResource Include="Resources\Editor\ICON0.PNG" />
 	  <EmbeddedResource Include="Resources\Editor\no_icon0.png" />

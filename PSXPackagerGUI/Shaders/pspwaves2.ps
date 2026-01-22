@@ -1,0 +1,37 @@
+sampler2D inputSampler : register(s0);
+float Time : register(c0);
+
+// ---------- Gradient (branchless) ----------
+
+float gradient(float p)
+{
+    float g = 0.0;
+    g += smoothstep(0.00, 0.86, p) * 0.1;
+    g += smoothstep(0.86, 0.955, p) * 0.3;
+    g += smoothstep(0.955, 0.99, p) * 0.6;
+    g -= smoothstep(0.99, 1.00, p) * 1.0;
+    return saturate(g);
+}
+
+// ---------- Waves ----------
+
+float wave(float2 uv, float2 s, float2 t, float2 f)
+{
+    float2 x = sin((Time * s + t + uv.x) * f) * 0.06;
+    float denom = rcp(0.55 + x.x + x.y);
+    return gradient(uv.y * denom) * 0.27;
+}
+
+float4 main(float2 uv : TEXCOORD) : COLOR
+{
+    float w =
+        wave(float2(uv.x, uv.y - 0.25), float2(0.03, 0.06), float2(0.0, 0.02), float2(8.0, 3.7)) +
+        wave(float2(uv.x, 0.75 - uv.y), float2(0.04, 0.07), float2(0.16, -0.37), float2(6.7, 2.89));
+
+    float3 bg = lerp(
+        float3(0.05, 0.05, 0.3),
+        float3(0.1, 0.65, 0.85),
+        (uv.x + (1.0 - uv.y)) * 0.55);
+
+    return float4(bg + w.xxx, 1.0);
+}
