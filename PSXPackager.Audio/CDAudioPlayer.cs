@@ -1,10 +1,12 @@
 ﻿using NAudio.Wave;
 using PSXPackager.Common.Cue;
+using System;
 
 namespace PSXPackager.Audio
 {
     public class CDAudioPlayerStopped
     {
+        public CueTrack? Track { get; set; }
         public Exception? Exception { get; set; }
     }
 
@@ -78,20 +80,36 @@ namespace PSXPackager.Audio
             cts?.Cancel();
             resetEvent.WaitOne(100);
             cts = new CancellationTokenSource();
+            
             PlayCueTrack(track, cts.Token);
         }
 
         public void PlayCueTrack(CueTrack track, CancellationToken cancellationToken)
         {
             var binPath = track.FileEntry.FileName;
+            bool isPbp = false;
 
-            if (!Path.IsPathFullyQualified(binPath))
+            if (FileAbstraction.TryGetPbpDiscEntryFromUri(binPath, out var discEntry))
             {
-                binPath = Path.Combine(Path.GetDirectoryName(track.FileEntry.CueFile.Path), binPath);
+                isPbp = true;
+            }
+            else
+            {
+                if (!Path.IsPathFullyQualified(binPath))
+                {
+                    binPath = Path.Combine(Path.GetDirectoryName(track.FileEntry.CueFile.Path), binPath);
+                }
             }
 
-            _buffer.ClearBuffer();
-            _waveOutEvent.Play();
+            long GetFileSize()
+            {
+                return isPbp ? discEntry!.IsoSize : new FileInfo(binPath).Length;
+            }
+
+            Stream GetStream()
+            {
+                return isPbp ? discEntry!.GetDiscStream() : File.OpenRead(binPath);
+            }
 
             // Skip pre-gap
             var startIndex = track.Indexes.First(i => i.Number == 1);
@@ -103,21 +121,27 @@ namespace PSXPackager.Audio
                 endSector = track.Next.Indexes.First(i => i.Number == 1).Position.ToSector();
             else
             {
-                var fileSize = FileAbstraction.GetFileSizeFromUri(binPath);
+                var fileSize = GetFileSize();
                 endSector = (int)(fileSize / SectorSize);
             }
 
+            _buffer.ClearBuffer();
+            _waveOutEvent.Play();
+
+            Play(GetStream(), startSector, endSector, cancellationToken);
+        }
+
+        private void Play(Stream stream, int startSector, int endSector, CancellationToken cancellationToken)
+        {
             Task.Run(() =>
             {
-                using var fs = FileAbstraction.GetStreamFromUri(binPath);
-
-                fs.Seek((long)startSector * SectorSize, SeekOrigin.Begin);
+                stream.Seek((long)startSector * SectorSize, SeekOrigin.Begin);
 
                 byte[] sector = new byte[SectorSize];
                 int currentSector = startSector;
 
                 while (currentSector < endSector &&
-                       fs.Read(sector, 0, sector.Length) == sector.Length)
+                       stream.Read(sector, 0, sector.Length) == sector.Length)
                 {
                     while (_buffer.BufferedBytes > _buffer.BufferLength - sector.Length)
                     {
@@ -148,11 +172,8 @@ namespace PSXPackager.Audio
                 }
 
                 Stop();
-                resetEvent.Set();
             });
-
         }
-
 
         public void Dispose()
         {

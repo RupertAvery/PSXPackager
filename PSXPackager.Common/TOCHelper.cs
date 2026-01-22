@@ -69,14 +69,14 @@ namespace PSXPackager.Common
             return position;
         }
 
-        public static CueFile TOCtoCUE(List<TOCEntry> tocEntries, string dataPath)
+        public static CueFile TOCtoCUE(List<TOCEntry> tocEntries, string fileName)
         {
             var cueFile = new CueFile();
 
             var cueFileEntry = new CueFileEntry()
             {
                 CueFile = cueFile,
-                FileName = dataPath,
+                FileName = fileName,
                 Tracks = new List<CueTrack>(),
                 FileType = FileTypes.BINARY
             };

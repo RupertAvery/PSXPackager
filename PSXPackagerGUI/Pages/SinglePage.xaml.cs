@@ -67,6 +67,7 @@ namespace PSXPackagerGUI.Pages
             _gameDb = gameDb;
             _cancellationTokenSource = new CancellationTokenSource();
             _player = new CDAudioPlayer();
+            _player.Stopped += PlayerOnStopped;
 
             InitializeComponent();
 
@@ -207,7 +208,7 @@ namespace PSXPackagerGUI.Pages
                             IsLoadEnabled = true,
                             IsSaveAsEnabled = true,
                             IsEmpty = false,
-                            SourceUrl = $"//pbp/{path}/{i}"
+                            SourceUrl = $"pbp://{path}/disc{i}"
                         };
 
                         disc.RemoveCommand = new RelayCommand((o) => Remove(disc));
@@ -224,36 +225,36 @@ namespace PSXPackagerGUI.Pages
                     Model.Discs = new ObservableCollection<Disc>(discs.Concat(dummyDiscs));
 
 
-                    void LoadResource(ResourceModel model)
+                    void LoadResource(ResourceModel resource)
                     {
-                        if (model.Type == ResourceType.BOOT)
+                        if (resource.Type == ResourceType.BOOT)
                         {
                             if (pbpReader.TryGetBootImage(stream, out var bootStream))
                             {
-                                model.Composite.Clear();
-                                model.Composite.AddLayer(new ImageLayer(ImageProcessing.GetBitmapImage(bootStream), "image", $"//pbp:/{path}#{model.Type}"));
-                                model.RefreshIcon();
-                                model.IsLoadEnabled = true;
-                                model.IsSaveAsEnabled = true;
-                                model.IsRemoveEnabled = true;
-                                model.SourceUrl = $"//pbp:/{path}#{model.Type}";
+                                resource.Composite.Clear();
+                                resource.Composite.AddLayer(new ImageLayer(ImageProcessing.GetBitmapImage(bootStream), "image", $"pbp://{path}#{resource.Type}"));
+                                resource.RefreshIcon();
+                                resource.IsLoadEnabled = true;
+                                resource.IsSaveAsEnabled = true;
+                                resource.IsRemoveEnabled = true;
+                                resource.SourceUrl = $"pbp://{path}#{resource.Type}";
                             }
                         }
                         else
                         {
-                            if (pbpReader.TryGetResourceStream(model.Type, stream, out var resourceStream))
+                            if (pbpReader.TryGetResourceStream(resource.Type, stream, out var resourceStream))
                             {
                                 //using var outStream = new FileStream(@"D:\roms\PSX\Animetic Story Game 1 - Card Captor Sakura (English v1.0)\test2.png", FileMode.Create, FileAccess.Write);
                                 //resourceStream.CopyTo(outStream);
                                 //outStream.Flush();
                                 //resourceStream.Seek(0, SeekOrigin.Begin);
-                                model.Composite.Clear();
-                                model.Composite.AddLayer(new ImageLayer(ImageProcessing.GetBitmapImage(resourceStream), "image", $"//pbp:/{path}#{model.Type}"));
-                                model.RefreshIcon();
-                                model.IsLoadEnabled = true;
-                                model.IsSaveAsEnabled = true;
-                                model.IsRemoveEnabled = true;
-                                model.SourceUrl = $"//pbp:/{path}#{model.Type}";
+                                resource.Composite.Clear();
+                                resource.Composite.AddLayer(new ImageLayer(ImageProcessing.GetBitmapImage(resourceStream), "image", $"pbp://{path}#{resource.Type}"));
+                                resource.RefreshIcon();
+                                resource.IsLoadEnabled = true;
+                                resource.IsSaveAsEnabled = true;
+                                resource.IsRemoveEnabled = true;
+                                resource.SourceUrl = $"pbp://{path}#{resource.Type}";
                             }
                         }
 
@@ -1001,7 +1002,7 @@ namespace PSXPackagerGUI.Pages
         private void SaveImage_OnClick(object sender, RoutedEventArgs e)
         {
             var context = ((MenuItem)sender).DataContext as Disc;
-            var pbpRegex = new Regex("//pbp/(.*\\.pbp)/(\\d)", RegexOptions.IgnoreCase);
+            var pbpRegex = new Regex("pbp://(?<pbp>.*\\.pbp)/disc(?<disc>\\d)", RegexOptions.IgnoreCase);
 
             var game = _gameDb.GetEntryByGameID(context.GameID);
 
@@ -1022,15 +1023,19 @@ namespace PSXPackagerGUI.Pages
 
                 if (match.Success)
                 {
+                    var discIndex = int.Parse(match.Groups["disc"].Value);
+                    var pbpPath = match.Groups["pbp"].Value;
+
                     Task.Run(() =>
                     {
-                        using (var stream = new FileStream(match.Groups[1].Value, FileMode.Open, FileAccess.Read))
+                        using (var stream = new FileStream(pbpPath, FileMode.Open, FileAccess.Read))
                         {
                             var pbpReader = new PbpReader(stream);
+                            var disc = pbpReader.Discs[discIndex];
+
                             using (var output = new FileStream(saveFileDialog.FileName, FileMode.Create,
-                                FileAccess.Write))
+                                       FileAccess.Write))
                             {
-                                var disc = pbpReader.Discs[int.Parse(match.Groups[1].Value)];
                                 Model.Status = "Extracting disc image...";
                                 Model.MaxProgress = disc.IsoSize;
                                 Model.IsBusy = true;
@@ -1225,19 +1230,26 @@ namespace PSXPackagerGUI.Pages
                 _model.SelectedTrack.IsSelected = false;
             }
 
-            _model.SelectedTrack = track;
-            track.IsSelected = true;
-
             switch (track.Status)
             {
                 case TrackStatus.Stopped:
                     _player.PlayCueTrack(track.CueTrack);
+                    _model.SelectedTrack = track;
+                    track.IsSelected = true;
                     track.Status = TrackStatus.Playing;
                     break;
                 case TrackStatus.Playing:
                     _player.Stop();
                     track.Status = TrackStatus.Stopped;
                     break;
+            }
+        }
+
+
+        private void PlayerOnStopped(object? sender, CDAudioPlayerStopped e)
+        {
+            if (e.Track is not null)
+            {
             }
         }
 

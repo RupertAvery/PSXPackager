@@ -13,7 +13,7 @@ namespace PSXPackager.Audio;
 /// PBP containers as if they were standalone files.</remarks>
 public static class FileAbstraction
 {
-    public static bool TryGetPbpDiscEntryFromUri(string uri, out PbpDiscEntry discEntry)
+    public static bool TryGetPbpDiscEntryFromUri(string uri, out PbpDiscEntry? discEntry)
     {
         var match = IsPbpUri(uri);
         if (match.Success)
@@ -33,7 +33,7 @@ public static class FileAbstraction
 
     public static Match IsPbpUri(string uri)
     {
-        var pbpRegex = new Regex("//pbp/(.*\\.pbp)/(\\d)", RegexOptions.IgnoreCase);
+        var pbpRegex = new Regex("pbp://(?<pbp>.*\\.pbp)/disc(?<disc>\\d)", RegexOptions.IgnoreCase);
         var match = pbpRegex.Match(uri);
         return match;
     }
@@ -45,11 +45,11 @@ public static class FileAbstraction
         {
             try
             {
-                return discEntry.IsoSize;
+                return discEntry!.IsoSize;
             }
             finally
             {
-                discEntry.Dispose();
+                discEntry?.Dispose();
             }
         }
         else
