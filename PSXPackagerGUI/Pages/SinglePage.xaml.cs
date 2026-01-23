@@ -98,7 +98,21 @@ namespace PSXPackagerGUI.Pages
             ResetModel();
             _stopwatch = Stopwatch.StartNew();
             CompositionTarget.Rendering += CompositionTargetOnRendering;
-            //Closing += OnClosing;
+
+            timer = new Timer(Callback, null, new TimeSpan(0, 0, 1), new TimeSpan(0, 0, 1));
+            Window.Closed += Window_Closed;
+        }
+
+        private void Window_Closed(object? sender, EventArgs e)
+        {
+            timer?.Dispose();
+        }
+
+        private Timer timer;
+
+        private void Callback(object? state)
+        {
+            _model.CurrentTime = $"{DateTime.Now:M/d h:mm tt}";
         }
 
 

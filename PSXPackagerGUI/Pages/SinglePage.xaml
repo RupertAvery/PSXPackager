@@ -373,6 +373,14 @@
                                     </Image.Style>
                                 </Image>
                             </Border>
+                            <TextBlock FontFamily="pack://application:,,,/Resources/Editor/#FOT-NewRodin Pro DB" FontSize="14" FontWeight="Bold" Foreground="White"
+                                       Text="{Binding CurrentTime}"
+                                       TextAlignment="Right"
+                                       Width="480" Height="272" Margin="0,0,25,0">
+                                <TextBlock.Effect>
+                                    <DropShadowEffect BlurRadius="5" ShadowDepth="2"></DropShadowEffect>
+                                </TextBlock.Effect>
+                            </TextBlock>
                         </Grid>
                         <Grid  Grid.Row="2" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
                             <Label>Drag and drop images onto the resource areas to load into the resource. Right-click to show context menu.</Label>

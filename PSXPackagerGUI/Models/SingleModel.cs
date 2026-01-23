@@ -26,6 +26,7 @@ namespace PSXPackagerGUI.Models
         private bool _showInformation;
         private bool _showBackground;
         private Track? _selectedTrack;
+        private string _currentTime;
 
         public SettingsModel Settings
         {
@@ -89,6 +90,12 @@ namespace PSXPackagerGUI.Models
         {
             get => _selectedTrack;
             set => SetProperty(ref _selectedTrack, value);
+        }
+
+        public string CurrentTime
+        {
+            get => _currentTime;
+            set => SetProperty(ref _currentTime, value);
         }
     }
 }

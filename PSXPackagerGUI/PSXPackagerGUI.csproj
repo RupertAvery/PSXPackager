@@ -19,6 +19,7 @@
 		<None Remove="Resources\Editor\back.png" />
 		<None Remove="Resources\Editor\boot.png" />
 		<None Remove="Resources\Editor\ICON0.PNG" />
+		<None Remove="Resources\Editor\NewRodin Pro DB.otf" />
 		<None Remove="Resources\Editor\no_icon0.png" />
 		<None Remove="Resources\Editor\PIC0.PNG" />
 		<None Remove="Resources\Editor\PIC1.PNG" />
@@ -50,6 +51,9 @@
 
 	<ItemGroup>
 		<Resource Include="Resources\disc.png" />
+		<Resource Include="Resources\Editor\NewRodin Pro DB.otf">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Resource>
 		<Resource Include="Resources\floppy-48x48.png" />
 		<Resource Include="Resources\games-48x48.png" />
 		<Resource Include="Resources\gear-48x48.png" />
@@ -81,9 +85,6 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="Resources\alpha.png">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Resources\Editor\NewRodin Pro DB.otf">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="Resources\overlay.png">

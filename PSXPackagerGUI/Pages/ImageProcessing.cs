@@ -38,7 +38,7 @@ public static class ImageProcessing
         encoder.Save(stream);
     }
 
-    public static BitmapSource Resize(
+    public static ImageSource Resize(
         BitmapSource source,
         int maxWidth,
         int maxHeight)
