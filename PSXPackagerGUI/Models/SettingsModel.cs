@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Windows.Input;
 using Newtonsoft.Json;
 
@@ -18,6 +19,15 @@ namespace PSXPackagerGUI.Models
         private string? _lastDiscImageDirectory;
         private string? _lastResourceDirectory;
         private string? _lastTemplateDirectory;
+        private ConverterModel _converter;
+
+        public SettingsModel()
+        {
+            _converter = new ConverterModel
+            {
+                BinPaths = new ObservableCollection<string>()
+            };
+        }
 
         public string FileNameFormat
         {
@@ -101,6 +111,14 @@ namespace PSXPackagerGUI.Models
         {
             get => _lastTemplateDirectory;
             set => SetProperty(ref _lastTemplateDirectory, value);
+        }
+
+
+        [JsonIgnore]
+        public ConverterModel Converter
+        {
+            get => _converter;
+            set => SetProperty(ref _converter, value);
         }
     }
 }

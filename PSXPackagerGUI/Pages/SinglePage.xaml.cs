@@ -1,4 +1,5 @@
-﻿using Popstation;
+﻿using DiscUtils;
+using Popstation;
 using Popstation.Database;
 using Popstation.Pbp;
 using PSXPackager.Audio;
@@ -952,48 +953,71 @@ namespace PSXPackagerGUI.Pages
                     disc.SourceUrl = imagePath;
                 }
 
-
-                var gameId = GameDB.FindGameId(imagePath);
-
                 GameEntry game = null;
-
-                if (gameId != null)
+                try
                 {
-                    game = _gameDb.GetEntryByGameID(gameId);
-                }
-                else
-                {
-                    MessageBox.Show(Window, $"The GameID could not be detected. Please select the GameID manually",
-                        "PSXPackager",
-                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    var gameId = GameDB.FindGameId(imagePath);
 
-                    var window = new GameListWindow();
-                    window.Owner = Window;
-                    var result = window.ShowDialog();
-
-                    if (result is true && window.SelectedGame is { })
+                    if (gameId != null)
                     {
-                        game = window.SelectedGame;
+                        game = _gameDb.GetEntryByGameID(gameId);
                     }
                     else
                     {
-                        game = new GameEntry
+                        MessageBox.Show(Window, $"The GameID could not be detected. Please select the GameID manually",
+                            "PSXPackager",
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+
+                        var window = new GameListWindow();
+                        window.Owner = Window;
+                        var result = window.ShowDialog();
+
+                        if (result is true && window.SelectedGame is { })
                         {
-                            SerialID = "SCUS-00000",
-                            MainGameID = "SCUS00000",
-                            Title = "Untitled Game",
-                            MainGameTitle = "Untitled Game",
-                            GameID = "SCUS00000",
-                            Region = "NTSC"
+                            game = window.SelectedGame;
+                        }
+                        else
+                        {
+                            game = new GameEntry
+                            {
+                                SerialID = "SCUS-00000",
+                                MainGameID = "SCUS00000",
+                                Title = "Untitled Game",
+                                MainGameTitle = "Untitled Game",
+                                GameID = "SCUS00000",
+                                Region = "NTSC"
+                            };
+                        }
+                    }
+
+                    disc.GameID = game.GameID;
+                    disc.Title = game.Title;
+                    disc.SaveID = game.MainGameID;
+                    disc.SaveTitle = game.MainGameTitle;
+                    disc.Region = game.Region;
+
+                    if (disc.Index == 0)
+                    {
+                        Model.SFOEntries = new ObservableCollection<SFOEntry>()
+                        {
+                            new() { Key = SFOKeys.BOOTABLE, Value = 0x01, IsEditable = false },
+                            new() { Key = SFOKeys.CATEGORY, Value = SFOValues.PS1Category, IsEditable = false  },
+                            new() { Key = SFOKeys.DISC_ID, Value = game.MainGameID, IsEditable = true  },
+                            new() { Key = SFOKeys.DISC_VERSION, Value =  "1.00", IsEditable = true  },
+                            new() { Key = SFOKeys.LICENSE, Value =  SFOValues.License, IsEditable = true  },
+                            new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  SFOValues.ParentalLevel, IsEditable = true },
+                            new() { Key = SFOKeys.PSP_SYSTEM_VER, Value =  SFOValues.PSPSystemVersion, IsEditable = true  },
+                            new() { Key = SFOKeys.REGION, Value =  0x8000, IsEditable = true },
+                            new() { Key = SFOKeys.TITLE, Value = game.MainGameTitle, IsEditable = true  },
                         };
                     }
                 }
-
-                disc.GameID = game.GameID;
-                disc.Title = game.Title;
-                disc.SaveID = game.MainGameID;
-                disc.SaveTitle = game.MainGameTitle;
-                disc.Region = game.Region;
+                catch (InvalidFileSystemException)
+                {
+                    MessageBox.Show(Window, "The disc does not appear to be a valid PlayStation disc",
+                        "PSXPackager",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
 
                 disc.Size = fileSize;
                 disc.IsEmpty = false;
@@ -1001,23 +1025,6 @@ namespace PSXPackagerGUI.Pages
                 disc.IsLoadEnabled = true;
                 disc.IsSaveAsEnabled = false;
                 disc.RemoveCommand = new RelayCommand((o) => Remove(disc));
-
-                if (disc.Index == 0)
-                {
-                    Model.SFOEntries = new ObservableCollection<SFOEntry>()
-                    {
-                        new() { Key = SFOKeys.BOOTABLE, Value = 0x01, IsEditable = false },
-                        new() { Key = SFOKeys.CATEGORY, Value = SFOValues.PS1Category, IsEditable = false  },
-                        new() { Key = SFOKeys.DISC_ID, Value = gameId, IsEditable = true  },
-                        new() { Key = SFOKeys.DISC_VERSION, Value =  "1.00", IsEditable = true  },
-                        new() { Key = SFOKeys.LICENSE, Value =  SFOValues.License, IsEditable = true  },
-                        new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  SFOValues.ParentalLevel, IsEditable = true },
-                        new() { Key = SFOKeys.PSP_SYSTEM_VER, Value =  SFOValues.PSPSystemVersion, IsEditable = true  },
-                        new() { Key = SFOKeys.REGION, Value =  0x8000, IsEditable = true },
-                        new() { Key = SFOKeys.TITLE, Value = disc.SaveTitle, IsEditable = true  },
-                    };
-                }
-
 
                 _model.SelectedDisc = disc;
 

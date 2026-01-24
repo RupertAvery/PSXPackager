@@ -20,7 +20,7 @@ namespace PSXPackagerGUI.Pages
     /// <summary>
     /// Interaction logic for Single.xaml
     /// </summary>
-    public partial class SinglePage : Page, INotifier
+    public partial class SinglePage 
     {
 
         private void LoadResource(ResourceModel resource, string filename, bool isDefault = false)

@@ -70,9 +70,15 @@ namespace Popstation.Database
         static Regex systemCnfEntryRegex = new Regex("(SCUS|SLUS|SLES|SCES|SCED|SLPS|SLPM|SCPS|SLED|SIPS|ESPM|PBPX)[_-](\\d{3})\\.(\\d{2})", RegexOptions.IgnoreCase);
         static Regex bootRegex = new Regex("BOOT\\s*=\\s*cdrom:\\\\?(?:.*?\\\\)?(.*?);1");
 
+        public static bool TryFindGameId(string srcIso, out string gameId)
+        {
+            gameId = FindGameId(srcIso);
+            return gameId != null;
+        }
+
+
         public static string FindGameId(string srcIso)
         {
-
             using (var stream = new FileStream(srcIso, FileMode.Open, FileAccess.Read))
             {
                 var cdReader = new CDReader(stream, false, 2352);
@@ -92,7 +98,7 @@ namespace Popstation.Database
                 foreach (var file in cdReader.GetFiles("\\"))
                 {
                     var filename = file.Substring(1, file.LastIndexOf(";") - 1);
-  
+
                     if (filename != "SYSTEM.CNF") continue;
 
                     using (var datastream = cdReader.OpenFile(file, FileMode.Open))
@@ -111,6 +117,8 @@ namespace Popstation.Database
                     }
                 }
             }
+
+
 
             return null;
         }

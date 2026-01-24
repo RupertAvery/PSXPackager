@@ -8,6 +8,7 @@
       xmlns:controls="clr-namespace:PSXPackagerGUI.Controls"
       xmlns:models="clr-namespace:PSXPackagerGUI.Models"
       xmlns:shaders="clr-namespace:PSXPackagerGUI.Shaders"
+      xmlns:resources="clr-namespace:PSXPackagerGUI.Models.Resource"
       mc:Ignorable="d" 
       d:DataContext="{d:DesignInstance models:SingleModelDesignTime, IsDesignTimeCreatable=True}"
       d:DesignHeight="450" d:DesignWidth="800"
@@ -373,7 +374,7 @@
                                     </Image.Style>
                                 </Image>
                             </Border>
-                            <TextBlock FontFamily="pack://application:,,,/Resources/Editor/#FOT-NewRodin Pro DB" FontSize="14" FontWeight="Bold" Foreground="White"
+                            <TextBlock FontFamily="New Rodin Pro DB" FontSize="14" FontWeight="Bold" Foreground="White"
                                        Text="{Binding CurrentTime}"
                                        TextAlignment="Right"
                                        Width="480" Height="272" Margin="0,0,25,0">

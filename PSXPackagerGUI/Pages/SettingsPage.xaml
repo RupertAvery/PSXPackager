@@ -6,12 +6,14 @@
       xmlns:local="clr-namespace:PSXPackagerGUI.Pages"
       xmlns:models="clr-namespace:PSXPackagerGUI.Models"
       xmlns:controls="clr-namespace:PSXPackagerGUI.Controls"
+      xmlns:converters="clr-namespace:PSXPackagerGUI.Converters"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       d:DataContext="{d:DesignInstance models:SettingsModel, IsDesignTimeCreatable=True}"
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
       Title="Settings">
     <Page.Resources>
+        <converters:ParameterComparisonConverter x:Key="parameterComparison"></converters:ParameterComparisonConverter>
     </Page.Resources>
     <Grid>
         <TabControl  TabStripPlacement="Left">
@@ -168,23 +170,68 @@
                 </Grid>
             </TabItem>
             <TabItem Header="Tools">
-                <Grid Margin="20">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="30"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="30"/>
-                        <RowDefinition Height="30"/>
-                        <RowDefinition/>
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition/>
-                        <ColumnDefinition Width="150"/>
-                    </Grid.ColumnDefinitions>
-                    <Label VerticalContentAlignment="Center">
-                        Merge Multi-track BIN/CUE to Single BIN+CUE
-                    </Label>
-                    <Button x:Name="ConvertMultiToSingleBin" Click="ConvertMultiToSingleBin_OnClick" Grid.Row="0" Grid.Column="1" Margin="2">Browse</Button>
-                    <TextBlock TextWrapping="Wrap"  Grid.Row="1" Grid.Column="0" Margin="0,20,0,0">
+                <ScrollViewer DataContext="{Binding .Converter}">
+                    <Grid MinWidth="600" MaxWidth="900">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="200"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="30"/>
+                        </Grid.RowDefinitions>
+
+                        <Label Grid.Row="0" Grid.Column="1" VerticalContentAlignment="Center" FontSize="14">Multi-Bin Merger</Label>
+
+                        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
+                            <Label VerticalContentAlignment="Center">Files to merge:</Label>
+                            <Button Margin="10,0,0,0" Height="24" Width="120" Click="SelectCUE_Click">Select CUE</Button>
+                            <Label Margin="10,0,0,0" VerticalContentAlignment="Center" HorizontalAlignment="Center">or</Label>
+                            <Button Margin="10,0,0,0" Height="24" Width="120" Click="SelectBins_Click">Select Bins</Button>
+                        </StackPanel>
+
+                        <ListView Grid.Row="3" Grid.Column="1" Margin="0,2,0,2" ItemsSource="{Binding BinPaths}" SelectedItem="{Binding SelectedBin}">
+                        </ListView>
+                        <StackPanel Grid.Row="3" Grid.Column="2">
+                            <Button IsEnabled="{Binding ConvertMode, Converter={StaticResource parameterComparison}, ConverterParameter={x:Static models:ConvertMode.BINS}}" Margin="5,0,5,5" Click="MoveUp_Click">Move up</Button>
+                            <Button IsEnabled="{Binding ConvertMode, Converter={StaticResource parameterComparison}, ConverterParameter={x:Static models:ConvertMode.BINS}}" Margin="5,0,5,5" Click="MoveDown_Click">Move down</Button>
+                        </StackPanel>
+
+                        <Label Grid.Row="4" Grid.Column="0" VerticalContentAlignment="Center" HorizontalAlignment="Right">Output Path</Label>
+                        <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding TargetPath}" Height="24" VerticalContentAlignment="Center"></TextBox>
+                        <Button Margin="5,0,5,0" Grid.Row="4" Grid.Column="2"  Height="24" Click="BrowseTargetPath_Click">Browse</Button>
+                        <Label Grid.Row="5" Grid.Column="0" VerticalContentAlignment="Center" HorizontalAlignment="Right">Output Filename</Label>
+                        <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding TargetFileName}" VerticalContentAlignment="Center" Height="24"></TextBox>
+                        <Label Grid.Row="6" Grid.Column="1" VerticalAlignment="Top">(Do not include the extension .CUE or .BIN)</Label>
+                        <Button Grid.Row="8" Grid.Column="1" Click="Merge_Click" >Merge</Button>
+                    </Grid>
+
+                    <!--<Grid Margin="20" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="150"/>
+                        </Grid.ColumnDefinitions>
+                        <Label VerticalContentAlignment="Center">
+                            Merge Multi-track BIN/CUE to Single BIN+CUE
+                        </Label>
+                        <Button x:Name="ConvertMultiToSingleBin" Click="ConvertMultiToSingleBin_OnClick" Grid.Row="0" Grid.Column="1" Margin="2">Browse</Button>
+                        <TextBlock TextWrapping="Wrap"  Grid.Row="1" Grid.Column="0" Margin="0,20,0,0">
                         This tool allows you to merge multi-track .BINs without a .CUE file into a single .BIN and generate a .CUE file.
                         <LineBreak/> 
                         <LineBreak/> 
@@ -201,12 +248,17 @@
                         <LineBreak/> 
                         <LineBreak/> 
                         <Bold>NOTE:</Bold> If you already have a correct .CUE file, you do not need to manually merge them here. PSXPackager can directly convert a multi-track .CUE with separate .BINs into a PBP.
-                    </TextBlock>
-                    <Button x:Name="OpenSettingsFolderButton" Grid.Row="3" 
-                            Grid.ColumnSpan="2"
-                            Width="150"
-                            Click="OpenSettingsFolderButton_OnClick">Open Settings Folder</Button>
-                </Grid>
+                        </TextBlock>
+
+                    </Grid>-->
+                </ScrollViewer>
+
+            </TabItem>
+            <TabItem Header="Configuration">
+                <Button x:Name="OpenSettingsFolderButton" 
+                        Width="150"
+                        Height="30"
+                        Click="OpenSettingsFolderButton_OnClick">Open Settings Folder</Button>
             </TabItem>
             <TabItem Header="About">
                 <Grid Margin="20">
