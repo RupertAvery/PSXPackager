@@ -109,7 +109,7 @@ namespace Popstation
 
                         if (FileExtensionHelper.IsCue(file))
                         {
-                            var (outfile, srcToc) = ProcessCue(file, options.TempPath);
+                            var (outfile, srcToc) = PreProcessCue(file, options.TempPath);
 
                             result = ConvertIso(originalFile, outfile, srcToc, options, cancellationToken);
                         }
@@ -137,7 +137,7 @@ namespace Popstation
                             {
                                 if (FileExtensionHelper.IsCue(fileEntry))
                                 {
-                                    var (outfile, srcToc) = ProcessCue(Path.Combine(filePath, fileEntry), options.TempPath);
+                                    var (outfile, srcToc) = PreProcessCue(Path.Combine(filePath, fileEntry), options.TempPath);
                                     files.Add(outfile);
                                     tocs.Add(srcToc);
                                 }
@@ -210,16 +210,18 @@ namespace Popstation
             }
         }
 
-        public (string, string) ProcessCue(string cueFilePath, string tempPath)
+        /// <summary>
+        /// Pre-processes a cue sheet. If multiple .bin files are referenced, merges them into a single .bin file and generates a new cue sheet.
+        /// </summary>
+        /// <param name="cueFilePath"></param>
+        /// <param name="tempPath"></param>
+        /// <returns></returns>
+        public (string, string) PreProcessCue(string cueFilePath, string tempPath)
         {
-            var filePath = Path.GetDirectoryName(cueFilePath);
-
             var cueFile = CueFileReader.Read(cueFilePath);
 
-            string srcToc = null;
-            string file = null;
-
-            if (cueFile.FileEntries.Count() > 1)
+            // If there are multiple .bin files, merge them into a single .bin
+            if (cueFile.FileEntries.Count > 1)
             {
                 _notifier?.Notify(PopstationEventEnum.Info, $"Merging .bins...");
 
@@ -236,19 +238,22 @@ namespace Popstation
                 
                 CueFileWriter.Write(mergedCueFile, mergedCueFilePath);
 
-                srcToc = mergedCueFilePath;
-                file = mergedBinFilePath;
-
                 tempFiles.Add(mergedBinFilePath);
                 tempFiles.Add(mergedCueFilePath);
+
+                return (mergedBinFilePath, mergedCueFilePath);
             }
             else
             {
-                srcToc = cueFilePath;
-                file = Path.Combine(filePath, cueFile.FileEntries.First().FileName);
-            }
+                var cueDirectory = Path.GetDirectoryName(cueFilePath);
+                var binFileName = cueFile.FileEntries[0].FileName;
+                if (!Path.IsPathFullyQualified(binFileName))
+                {
+                    binFileName = Path.Combine(cueDirectory, binFileName);
+                }
 
-            return (file, srcToc);
+                return (binFileName, cueFilePath);
+            }
         }
 
 
