@@ -24,39 +24,57 @@ namespace PSXPackagerGUI.Controls
     public partial class ResourceControl : UserControl, INotifyPropertyChanged
     {
         public static readonly DependencyProperty TextProperty =
-            DependencyProperty.Register(nameof(Text), typeof(string),
+            DependencyProperty.Register(nameof(Text),
+                typeof(string),
                 typeof(ResourceControl));
 
         public static readonly DependencyProperty TypeProperty =
-            DependencyProperty.Register(nameof(Type), typeof(ResourceType),
+            DependencyProperty.Register(nameof(Type),
+                typeof(ResourceType),
                 typeof(ResourceControl));
 
         public static readonly RoutedEvent MoreEvent =
-            EventManager.RegisterRoutedEvent(nameof(More), RoutingStrategy.Bubble, typeof(RoutedEventHandler),
+            EventManager.RegisterRoutedEvent(nameof(More),
+                RoutingStrategy.Bubble,
+                typeof(RoutedEventHandler),
                 typeof(ResourceControl));
 
         public static readonly RoutedEvent RemoveEvent =
-            EventManager.RegisterRoutedEvent(nameof(Remove), RoutingStrategy.Bubble, typeof(RoutedEventHandler),
+            EventManager.RegisterRoutedEvent(nameof(Remove),
+                RoutingStrategy.Bubble,
+                typeof(RoutedEventHandler),
                 typeof(ResourceControl));
 
+
         public static readonly DependencyProperty ResourceProperty =
-            DependencyProperty.Register(nameof(Resource), typeof(ResourceModel),
-                typeof(ResourceControl), new PropertyMetadata(null, OnResourceChanged));
+            DependencyProperty.Register(nameof(Resource),
+                typeof(ResourceModel),
+                typeof(ResourceControl),
+                new PropertyMetadata(null, OnResourceChanged));
 
         private static void OnResourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var control = ((ResourceControl)d);
-            control.Resource = (ResourceModel)e.NewValue;
-            control.InvalidateVisual();
-            control.Resource.PropertyChanged += ResourceOnPropertyChanged;
+            var control = (ResourceControl)d;
 
-            void ResourceOnPropertyChanged(object? sender, PropertyChangedEventArgs propertyChangedEventArgs)
-            {
-                if (propertyChangedEventArgs.PropertyName == nameof(ResourceModel.Icon))
-                {
-                    //control.InvalidateVisual();
-                }
-            }
+            // Optional: access old/new values
+            var oldValue = (ResourceModel)e.OldValue;
+            var newValue = (ResourceModel)e.NewValue;
+
+            //var control = ((ResourceControl)d);
+
+            //control.Resource = (ResourceModel)e.NewValue;
+            //control.InvalidateVisual();
+            //control.Resource.PropertyChanged += ResourceOnPropertyChanged;
+
+            control.UpdateSelection();
+
+            //void ResourceOnPropertyChanged(object? sender, PropertyChangedEventArgs propertyChangedEventArgs)
+            //{
+            //    if (propertyChangedEventArgs.PropertyName == nameof(ResourceModel.Icon))
+            //    {
+            //        //control.InvalidateVisual();
+            //    }
+            //}
         }
 
         public ResourceType Type
@@ -80,7 +98,11 @@ namespace PSXPackagerGUI.Controls
         public ResourceModel Resource
         {
             get => (ResourceModel)GetValue(ResourceProperty);
-            set { SetValue(ResourceProperty, value); InvalidateVisual(); }
+            set
+            {
+                SetValue(ResourceProperty, value);
+                OnPropertyChanged();
+            }
         }
 
         public string Text
@@ -132,7 +154,9 @@ namespace PSXPackagerGUI.Controls
         public Layer? SelectedLayer
         {
             get => _selectedLayer;
-            set { _selectedLayer = value;
+            set
+            {
+                _selectedLayer = value;
                 UpdateSelection();
                 OnPropertyChanged();
             }
@@ -147,6 +171,11 @@ namespace PSXPackagerGUI.Controls
 
         private void UpdateSelection()
         {
+            if (Resource?.Composite == null)
+            {
+                return;
+            }
+
             if (SelectedLayer == null)
             {
                 Selection.Visibility = Visibility.Hidden;
@@ -210,7 +239,7 @@ namespace PSXPackagerGUI.Controls
                 var pos = e.GetPosition(image);
                 startX = pos.X;
                 startY = pos.Y;
-                
+
                 resizeMode = false;
                 dragStarted = true;
 
@@ -267,7 +296,7 @@ namespace PSXPackagerGUI.Controls
                 SelectedLayer.Width = Math.Max(SelectedLayer.Width, 4);
                 SelectedLayer.Height = Math.Max(SelectedLayer.Height, 4);
             }
-            else if(dragStarted)
+            else if (dragStarted)
             {
                 SelectedLayer.OffsetX += deltaX;
                 SelectedLayer.OffsetY += deltaY;

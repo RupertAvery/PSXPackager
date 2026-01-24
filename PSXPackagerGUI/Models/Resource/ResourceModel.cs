@@ -14,6 +14,13 @@ namespace PSXPackagerGUI.Models.Resource
         private bool _isLoadEnabled;
         private bool _text;
         private bool _isMoreEnabled;
+        private bool _isIncluded;
+
+        public bool IsIncluded
+        {
+            get => _isIncluded;
+            set => SetProperty(ref _isIncluded, value);
+        }
 
         public ImageComposite? Composite
         {

@@ -113,7 +113,6 @@ namespace PSXPackagerGUI.Models
             set => SetProperty(ref _lastTemplateDirectory, value);
         }
 
-
         [JsonIgnore]
         public ConverterModel Converter
         {

@@ -102,6 +102,7 @@ namespace PSXPackagerGUI.Pages
 
             timer = new Timer(Callback, null, new TimeSpan(0, 0, 1), new TimeSpan(0, 0, 1));
             Window.Closed += Window_Closed;
+
         }
 
         private void Window_Closed(object? sender, EventArgs e)
@@ -176,6 +177,9 @@ namespace PSXPackagerGUI.Pages
             LoadResource(Model.Pic1, GetDefaultResourceFile(Model.Pic1.Type), true);
 
             //LoadResource(Model.Boot, GetDefaultResourceFile(Model.Boot.Type));
+            Model.Icon0.IsIncluded = true;
+            Model.Pic0.IsIncluded = true;
+            Model.Pic1.IsIncluded = true;
 
             Model.IsDirty = false;
             Model.MaxProgress = 100;
@@ -194,6 +198,8 @@ namespace PSXPackagerGUI.Pages
                 new() { Key = SFOKeys.REGION, Value =  0x8000, EntryType = SFOEntryType.NUM, IsEditable = true },
                 new() { Key = SFOKeys.TITLE, Value = "", EntryType = SFOEntryType.STR, IsEditable = true  },
             };
+
+            Model.CurrentResource = Model.Icon0;
         }
 
         public void LoadPbp()
@@ -253,8 +259,10 @@ namespace PSXPackagerGUI.Pages
                     Model.Discs = new ObservableCollection<Disc>(discs.Concat(dummyDiscs));
 
 
-                    void LoadResource(ResourceModel resource)
+                    void TryLoadResource(ResourceModel resource)
                     {
+                        resource.IsIncluded = false;
+
                         if (resource.Type == ResourceType.BOOT)
                         {
                             if (pbpReader.TryGetBootImage(stream, out var bootStream))
@@ -266,6 +274,7 @@ namespace PSXPackagerGUI.Pages
                                 resource.IsSaveAsEnabled = true;
                                 resource.IsRemoveEnabled = true;
                                 resource.SourceUrl = $"pbp://{path}#{resource.Type}";
+                                resource.IsIncluded = true;
                             }
                         }
                         else
@@ -283,6 +292,7 @@ namespace PSXPackagerGUI.Pages
                                 resource.IsSaveAsEnabled = true;
                                 resource.IsRemoveEnabled = true;
                                 resource.SourceUrl = $"pbp://{path}#{resource.Type}";
+                                resource.IsIncluded = true;
                             }
                         }
 
@@ -290,12 +300,12 @@ namespace PSXPackagerGUI.Pages
                     }
 
 
-                    LoadResource(Model.Icon0);
-                    LoadResource(Model.Icon1);
-                    LoadResource(Model.Pic0);
-                    LoadResource(Model.Pic1);
-                    LoadResource(Model.Snd0);
-                    LoadResource(Model.Boot);
+                    TryLoadResource(Model.Icon0);
+                    TryLoadResource(Model.Icon1);
+                    TryLoadResource(Model.Pic0);
+                    TryLoadResource(Model.Pic1);
+                    TryLoadResource(Model.Snd0);
+                    TryLoadResource(Model.Boot);
 
                     Model.SFOEntries = new ObservableCollection<SFOEntry>();
 
@@ -310,7 +320,7 @@ namespace PSXPackagerGUI.Pages
                         });
                     }
 
-
+                    Model.CurrentResource = Model.Icon0;
                     Model.IsNew = false;
                 }
             }
@@ -655,7 +665,7 @@ namespace PSXPackagerGUI.Pages
 
                     foreach (var discInfo in cueFiles)
                     {
-                        var (binfile, cuefile) = processing.ProcessCue(discInfo.SourceIso, Path.GetTempPath());
+                        var (binfile, cuefile) = processing.PreProcessCue(discInfo.SourceIso, Path.GetTempPath());
                         discInfo.SourceIso = binfile;
                         discInfo.SourceToc = cuefile;
                     }
@@ -1287,5 +1297,33 @@ namespace PSXPackagerGUI.Pages
             }
         }
 
+        private void SelectResource_Click(object sender, RoutedEventArgs e)
+        {
+            var resourceId = (string)((Button)sender).Tag;
+
+            switch (resourceId)
+            {
+                case "ICON0":
+                    Model.CurrentResource = Model.Icon0;
+                    break;
+                case "ICON1":
+                    Model.CurrentResource = Model.Icon1;
+                    break;
+                case "PIC0":
+                    Model.CurrentResource = Model.Pic0;
+                    break;
+                case "PIC1":
+                    Model.CurrentResource = Model.Pic1;
+                    break;
+                case "SND0":
+                    Model.CurrentResource = Model.Snd0;
+                    break;
+                case "BOOT":
+                    Model.CurrentResource = Model.Boot;
+                    break;
+            }
+
+            Model.CurrentResourceName = resourceId;
+        }
     }
 }

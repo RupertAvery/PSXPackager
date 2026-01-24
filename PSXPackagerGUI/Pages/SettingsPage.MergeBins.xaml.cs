@@ -31,15 +31,18 @@ namespace PSXPackagerGUI.Pages
 
             var cueFile = CueFileReader.Read(openFileDialog.FileName);
 
+            var basePath = Path.GetDirectoryName(cueFile.Path);
+
             Model.Converter.CueFile = cueFile;
             Model.Converter.ConvertMode = ConvertMode.CUE;
-            Model.Converter.BinPaths = new ObservableCollection<string>(cueFile.FileEntries.Select(d => d.FileName));
+            Model.Converter.BinPaths = new ObservableCollection<string>(cueFile.FileEntries.Select(d => Path.Combine(basePath, d.FileName)));
+            Model.Converter.SetSuggestedPaths();
         }
 
         private void SelectBins_Click(object sender, RoutedEventArgs e)
         {
             var openFileDialog = new Microsoft.Win32.OpenFileDialog();
-            openFileDialog.Filter = "BIN files|*.bin;|All files|*.*";
+            openFileDialog.Filter = "BIN files|*.bin|All files|*.*";
             openFileDialog.Multiselect = true;
             var openResult = openFileDialog.ShowDialog();
 
@@ -60,6 +63,7 @@ namespace PSXPackagerGUI.Pages
 
             Model.Converter.ConvertMode = ConvertMode.BINS;
             Model.Converter.BinPaths = new ObservableCollection<string>(binPaths);
+            Model.Converter.SetSuggestedPaths();
         }
 
         private void BrowseTargetPath_Click(object sender, RoutedEventArgs e)
@@ -77,6 +81,36 @@ namespace PSXPackagerGUI.Pages
 
         private void Merge_Click(object sender, RoutedEventArgs e)
         {
+            var binFilename = Model.Converter.TargetFileName + ".bin";
+            var cueFilename = Model.Converter.TargetFileName + ".cue";
+            var outputBinFilename = Model.Converter.TargetFileName + ".bin";
+            var outputBinPath = Path.Combine(Model.Converter.TargetPath, binFilename);
+            var outputCue = Path.Combine(Model.Converter.TargetPath, cueFilename);
+
+            if (!Directory.Exists(Model.Converter.TargetPath))
+            {
+                var result = MessageBox.Show("The specified target folder does not exist. Do you want to create it?",
+                    "Merge Bins", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.No)
+                {
+                    return;
+                }
+
+                Directory.CreateDirectory(Model.Converter.TargetPath);
+            }
+
+
+            if (File.Exists(outputCue) || File.Exists(outputBinPath))
+            {
+                MessageBox.Show(Window,
+                    $"The target files {cueFilename} and/or {binFilename} already exist at the specified location." +
+                    $"To prevent accidental overwrite, it's recommended you select a different location.", "Merge Bins",
+                    MessageBoxButton.OK, MessageBoxImage.Warning
+                    );
+                return;
+            }
+
             try
             {
                 CueFile cueFile = null;
@@ -126,7 +160,7 @@ namespace PSXPackagerGUI.Pages
                     count++;
                 }
 
-                MessageBoxResult result = MessageBoxResult.Cancel;
+                MessageBoxResult result = MessageBoxResult.OK;
 
                 if (gameIds.Count == 0)
                 {
@@ -152,24 +186,24 @@ namespace PSXPackagerGUI.Pages
                     return;
                 }
 
-        
 
-                var outputBinFilename = Model.Converter.TargetFileName + ".bin";
-                var outputBinPath = Path.Combine(Model.Converter.TargetPath, Model.Converter.TargetFileName + ".bin");
-                var outputCue = Path.Combine(Model.Converter.TargetPath, Model.Converter.TargetFileName + ".cue");
+
 
                 using (var stream = new FileStream(outputBinPath, FileMode.Create, FileAccess.Write))
                 {
                     var curFile = Popstation.Processing.MergeBins(stream, outputBinFilename, cueFile);
                     CueFileWriter.Write(curFile, outputCue);
                 }
+
+                MessageBox.Show($"Files have been merged to {Model.Converter.TargetPath}");
+
             }
             catch (Exception exception)
             {
                 MessageBox.Show(Window, "Error: " + exception.Message, "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
-            
+
         }
 
         private void MoveUp_Click(object sender, RoutedEventArgs e)
