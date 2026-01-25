@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Resource xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Width="80" Height="80">
+<Resource xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ResourceType="ICON0" Width="80" Height="80">
   <ImageLayer X="0" Y="0" Width="80" Height="80" OriginalWidth="80" OriginalHeight="80">
     <SourceUri>overlay.png</SourceUri>
   </ImageLayer>

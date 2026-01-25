@@ -1,4 +1,6 @@
-﻿using Popstation;
+﻿using DiscUtils;
+using DiscUtils.Raw;
+using Popstation;
 using Popstation.Database;
 using Popstation.Pbp;
 using PSXPackager.Audio;
@@ -8,10 +10,12 @@ using PSXPackager.Common.Notification;
 using PSXPackagerGUI.Common;
 using PSXPackagerGUI.Models;
 using PSXPackagerGUI.Models.Resource;
+using PSXPackagerGUI.Shaders;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -20,6 +24,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using SFOEntry = PSXPackagerGUI.Models.SFOEntry;
 
 namespace PSXPackagerGUI.Pages
@@ -67,6 +72,7 @@ namespace PSXPackagerGUI.Pages
             _gameDb = gameDb;
             _cancellationTokenSource = new CancellationTokenSource();
             _player = new CDAudioPlayer();
+            _player.Stopped += PlayerOnStopped;
 
             InitializeComponent();
 
@@ -92,9 +98,34 @@ namespace PSXPackagerGUI.Pages
             _settings.PropertyChanged += SettingsOnPropertyChanged;
 
             ResetModel();
+            _stopwatch = Stopwatch.StartNew();
+            CompositionTarget.Rendering += CompositionTargetOnRendering;
 
-            //Closing += OnClosing;
+            timer = new Timer(Callback, null, new TimeSpan(0, 0, 1), new TimeSpan(0, 0, 1));
+            Window.Closed += Window_Closed;
+
         }
+
+        private void Window_Closed(object? sender, EventArgs e)
+        {
+            timer?.Dispose();
+        }
+
+        private Timer timer;
+
+        private void Callback(object? state)
+        {
+            _model.CurrentTime = $"{DateTime.Now:M/d h:mm tt}";
+        }
+
+
+        private Stopwatch _stopwatch;
+
+        private void CompositionTargetOnRendering(object? sender, EventArgs e)
+        {
+            WavesEffect.Time = _stopwatch.Elapsed.TotalSeconds;
+        }
+
 
         private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
@@ -130,6 +161,15 @@ namespace PSXPackagerGUI.Pages
 
         private void ModelOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
+            switch (e.PropertyName)
+            {
+                case nameof(SingleModel.SaveID):
+                    Model.SFOEntries.FirstOrDefault(d => d.Key == SFOKeys.DISC_ID).Value = Model.SaveID;
+                    break;
+                case nameof(SingleModel.SaveTitle):
+                    Model.SFOEntries.FirstOrDefault(d => d.Key == SFOKeys.TITLE).Value = Model.SaveTitle;
+                    break;
+            }
         }
 
 
@@ -142,11 +182,15 @@ namespace PSXPackagerGUI.Pages
             Model.Snd0.Reset();
             Model.Boot.Reset();
 
-            LoadResource(Model.Icon0, GetDefaultResourceFile(Model.Icon0.Type), true);
-            LoadResource(Model.Pic0, GetDefaultResourceFile(Model.Pic0.Type), true);
-            LoadResource(Model.Pic1, GetDefaultResourceFile(Model.Pic1.Type), true);
+            ResourceHelper.LoadResource(Model.Icon0, GetDefaultResourceFile(Model.Icon0.Type), true);
+            ResourceHelper.LoadResource(Model.Pic1, GetDefaultResourceFile(Model.Pic1.Type), true);
+            ResourceHelper.LoadTemplate(Model.Pic0, GetDefaulTemplateFile(Model.Pic0.Type), true);
+            //ResourceHelper.LoadResource(Model.Pic1, GetDefaultResourceFile(Model.Pic1.Type), true);
 
             //LoadResource(Model.Boot, GetDefaultResourceFile(Model.Boot.Type));
+            Model.Icon0.IsIncluded = true;
+            Model.Pic0.IsIncluded = true;
+            Model.Pic1.IsIncluded = true;
 
             Model.IsDirty = false;
             Model.MaxProgress = 100;
@@ -160,11 +204,14 @@ namespace PSXPackagerGUI.Pages
                 new() { Key = SFOKeys.DISC_ID, Value = "", EntryType = SFOEntryType.STR,IsEditable = true  },
                 new() { Key = SFOKeys.DISC_VERSION, Value =  "1.00", EntryType = SFOEntryType.STR, IsEditable = true  },
                 new() { Key = SFOKeys.LICENSE, Value = SFOValues.License, EntryType = SFOEntryType.STR,IsEditable = true  },
-                new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  SFOValues.ParentalLevel, EntryType = SFOEntryType.NUM, IsEditable = false },
+                new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  SFOValues.ParentalLevel, EntryType = SFOEntryType.NUM, IsEditable = true },
                 new() { Key = SFOKeys.PSP_SYSTEM_VER, Value =  SFOValues.PSPSystemVersion, EntryType = SFOEntryType.STR,IsEditable = true  },
                 new() { Key = SFOKeys.REGION, Value =  0x8000, EntryType = SFOEntryType.NUM, IsEditable = true },
                 new() { Key = SFOKeys.TITLE, Value = "", EntryType = SFOEntryType.STR, IsEditable = true  },
             };
+
+            Model.CurrentResourceName = "ICON0";
+            Model.CurrentResource = Model.Icon0;
         }
 
         public void LoadPbp()
@@ -207,7 +254,7 @@ namespace PSXPackagerGUI.Pages
                             IsLoadEnabled = true,
                             IsSaveAsEnabled = true,
                             IsEmpty = false,
-                            SourceUrl = $"//pbp/{path}/{i}"
+                            SourceUrl = $"pbp://{path}/disc{i}"
                         };
 
                         disc.RemoveCommand = new RelayCommand((o) => Remove(disc));
@@ -224,49 +271,48 @@ namespace PSXPackagerGUI.Pages
                     Model.Discs = new ObservableCollection<Disc>(discs.Concat(dummyDiscs));
 
 
-                    void LoadResource(ResourceModel model)
+                    void TryLoadResource(ResourceModel resource)
                     {
-                        if (model.Type == ResourceType.BOOT)
+                        resource.IsIncluded = false;
+
+                        if (resource.Type == ResourceType.BOOT)
                         {
                             if (pbpReader.TryGetBootImage(stream, out var bootStream))
                             {
-                                model.Composite.Clear();
-                                model.Composite.AddLayer(new ImageLayer(ImageProcessing.GetBitmapImage(bootStream), "image", $"//pbp:/{path}#{model.Type}"));
-                                model.RefreshIcon();
-                                model.IsLoadEnabled = true;
-                                model.IsSaveAsEnabled = true;
-                                model.IsRemoveEnabled = true;
-                                model.SourceUrl = $"//pbp:/{path}#{model.Type}";
+                                resource.Composite.Clear();
+                                resource.Composite.AddLayer(new ImageLayer(ImageProcessing.GetBitmapImage(bootStream), "image", $"pbp://{path}#{resource.Type}"));
+                                resource.RefreshIcon();
+                                resource.SourceUrl = $"pbp://{path}#{resource.Type}";
+                                resource.IsIncluded = true;
+                                resource.HasResource = true;
                             }
                         }
                         else
                         {
-                            if (pbpReader.TryGetResourceStream(model.Type, stream, out var resourceStream))
+                            if (pbpReader.TryGetResourceStream(resource.Type, stream, out var resourceStream))
                             {
                                 //using var outStream = new FileStream(@"D:\roms\PSX\Animetic Story Game 1 - Card Captor Sakura (English v1.0)\test2.png", FileMode.Create, FileAccess.Write);
                                 //resourceStream.CopyTo(outStream);
                                 //outStream.Flush();
                                 //resourceStream.Seek(0, SeekOrigin.Begin);
-                                model.Composite.Clear();
-                                model.Composite.AddLayer(new ImageLayer(ImageProcessing.GetBitmapImage(resourceStream), "image", $"//pbp:/{path}#{model.Type}"));
-                                model.RefreshIcon();
-                                model.IsLoadEnabled = true;
-                                model.IsSaveAsEnabled = true;
-                                model.IsRemoveEnabled = true;
-                                model.SourceUrl = $"//pbp:/{path}#{model.Type}";
+                                resource.Composite.Clear();
+                                resource.Composite.AddLayer(new ImageLayer(ImageProcessing.GetBitmapImage(resourceStream), "image", $"pbp://{path}#{resource.Type}"));
+                                resource.RefreshIcon();
+                                resource.SourceUrl = $"pbp://{path}#{resource.Type}";
+                                resource.IsIncluded = true;
+                                resource.HasResource = true;
                             }
                         }
 
 
                     }
 
-
-                    LoadResource(Model.Icon0);
-                    LoadResource(Model.Icon1);
-                    LoadResource(Model.Pic0);
-                    LoadResource(Model.Pic1);
-                    LoadResource(Model.Snd0);
-                    LoadResource(Model.Boot);
+                    TryLoadResource(Model.Icon0);
+                    TryLoadResource(Model.Icon1);
+                    TryLoadResource(Model.Pic0);
+                    TryLoadResource(Model.Pic1);
+                    TryLoadResource(Model.Snd0);
+                    TryLoadResource(Model.Boot);
 
                     Model.SFOEntries = new ObservableCollection<SFOEntry>();
 
@@ -281,7 +327,7 @@ namespace PSXPackagerGUI.Pages
                         });
                     }
 
-
+                    Model.CurrentResource = Model.Icon0;
                     Model.IsNew = false;
                 }
             }
@@ -425,7 +471,7 @@ namespace PSXPackagerGUI.Pages
 
         private Resource GetResourceOrEmpty(ResourceModel resource)
         {
-            if (resource.Stream != null)
+            if (resource is { IsIncluded: true, HasResource: true })
             {
                 return new Resource(resource.Type, resource.Stream, resource.Size);
             }
@@ -441,9 +487,15 @@ namespace PSXPackagerGUI.Pages
         }
 
 
+        string GetDefaulTemplateFile(ResourceType type)
+        {
+            return Path.Combine(PSXPackager.Common.ApplicationInfo.AppPath, "Templates", $"{type}.xml");
+        }
+
+
         private Resource GetResourceOrDefault(ResourceModel resource)
         {
-            if (resource.Stream != null)
+            if (resource is { Stream: not null, IsIncluded: true, HasResource: true })
             {
                 return new Resource(resource.Type, resource.Stream, resource.Size);
             }
@@ -457,12 +509,9 @@ namespace PSXPackagerGUI.Pages
 
                 var info = new FileInfo(fileName);
 
-                using var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+                var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
 
-                var buffer = new byte[info.Length];
-                stream.Read(buffer, 0, (int)info.Length);
-
-                return new Resource(type, buffer, (uint)info.Length);
+                return new Resource(type, stream, (uint)info.Length);
             }
 
             return Resource.Empty(resource.Type);
@@ -478,20 +527,7 @@ namespace PSXPackagerGUI.Pages
             set => _model = value;
         }
 
-        Regex gameIDregex = new Regex("(SCUS|SLUS|SLES|SCES|SCED|SLPS|SLPM|SCPS|SLED|SLPS|SIPS|ESPM|PBPX)(\\d{5})");
-
-        private void ValidateDisc(Disc disc)
-        {
-            if (!gameIDregex.IsMatch(disc.GameID))
-            {
-                MessageBox.Show(Window, "", "Validation Error");
-            }
-        }
-
-        private void Validate()
-        {
-
-        }
+        Regex gameIDregex = new Regex("(SCUS|SLUS|SLES|SCES|SCED|SLPS|SLPM|SCPS|SLED|SLPS|SIPS|ESPM|PBPX)(\\d{5})", RegexOptions.IgnoreCase);
 
         public void Save(bool pspMode = false)
         {
@@ -509,7 +545,24 @@ namespace PSXPackagerGUI.Pages
                 return;
             }
 
-            var discs = Model.Discs.Where(d => d.SourceUrl != null).OrderBy(d => d.Index).ToList();
+            var discs = Model.Discs.Where(d => !d.IsEmpty).OrderBy(d => d.Index).ToList();
+
+            foreach (var disc in discs)
+            {
+                if (!gameIDregex.IsMatch(disc.GameID))
+                {
+                    MessageBox.Show(Window, $"The GameID {disc.GameID} is not valid.", "PSXPackager",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+            }
+            
+            if (!gameIDregex.IsMatch(Model.SaveID))
+            {
+                MessageBox.Show(Window, $"The SaveID {Model.SaveID} is not valid.", "PSXPackager",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
 
             if (discs.Count == 0)
             {
@@ -590,16 +643,21 @@ namespace PSXPackagerGUI.Pages
                     OutputPath = Path.GetDirectoryName(filename),
                     OriginalFilename = Path.GetFileName(filename),
                     DiscInfos = discs.Select(GetDiscInfo).ToList(),
+                    
                     DataPsp = GetResourceOrDefault(new ResourceModel() { Type = ResourceType.DATA }),
+                    
                     Icon0 = GetResourceOrDefault(Model.Icon0),
-                    Icon1 = GetResourceOrEmpty(Model.Icon1),
-                    Pic0 = GetResourceOrDefault(Model.Pic0),
                     Pic1 = GetResourceOrDefault(Model.Pic1),
-                    Snd0 = GetResourceOrEmpty(Model.Snd0),
+                    Pic0 = GetResourceOrDefault(Model.Pic0),
                     Boot = GetResourceOrEmpty(Model.Boot),
-                    MainGameTitle = disc1.SaveTitle,
-                    MainGameID = disc1.SaveID,
+
+                    Snd0 = GetResourceOrEmpty(Model.Snd0),
+                    Icon1 = GetResourceOrEmpty(Model.Icon1),
+
+                    MainGameID = Model.SaveID,
+                    MainGameTitle = Model.SaveTitle,
                     MainGameRegion = disc1.Region,
+
                     BasePbp = Path.Combine(appPath, "Resources", "BASE.PBP"),
                     CompressionLevel = _settings.CompressionLevel,
                     //CheckIfFileExists = processOptions.CheckIfFileExists,
@@ -626,7 +684,7 @@ namespace PSXPackagerGUI.Pages
 
                     foreach (var discInfo in cueFiles)
                     {
-                        var (binfile, cuefile) = processing.ProcessCue(discInfo.SourceIso, Path.GetTempPath());
+                        var (binfile, cuefile) = processing.PreProcessCue(discInfo.SourceIso, Path.GetTempPath());
                         discInfo.SourceIso = binfile;
                         discInfo.SourceToc = cuefile;
                     }
@@ -924,48 +982,71 @@ namespace PSXPackagerGUI.Pages
                     disc.SourceUrl = imagePath;
                 }
 
-
-                var gameId = GameDB.FindGameId(imagePath);
-
                 GameEntry game = null;
-
-                if (gameId != null)
+                try
                 {
-                    game = _gameDb.GetEntryByGameID(gameId);
-                }
-                else
-                {
-                    MessageBox.Show(Window, $"The GameID could not be detected. Please select the GameID manually",
-                        "PSXPackager",
-                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    var gameId = GameDB.FindGameId(imagePath);
 
-                    var window = new GameListWindow();
-                    window.Owner = Window;
-                    var result = window.ShowDialog();
-
-                    if (result is true && window.SelectedGame is { })
+                    if (gameId != null)
                     {
-                        game = window.SelectedGame;
+                        game = _gameDb.GetEntryByGameID(gameId);
                     }
                     else
                     {
-                        game = new GameEntry
+                        MessageBox.Show(Window, $"The GameID could not be detected. Please select the GameID manually",
+                            "PSXPackager",
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+
+                        var window = new GameListWindow();
+                        window.Owner = Window;
+                        var result = window.ShowDialog();
+
+                        if (result is true && window.SelectedGame is { })
                         {
-                            SerialID = "SCUS-00000",
-                            MainGameID = "SCUS00000",
-                            Title = "Untitled Game",
-                            MainGameTitle = "Untitled Game",
-                            GameID = "SCUS00000",
-                            Region = "NTSC"
+                            game = window.SelectedGame;
+                        }
+                        else
+                        {
+                            game = new GameEntry
+                            {
+                                SerialID = "SCUS-00000",
+                                MainGameID = "SCUS00000",
+                                Title = "Untitled Game",
+                                MainGameTitle = "Untitled Game",
+                                GameID = "SCUS00000",
+                                Region = "NTSC"
+                            };
+                        }
+                    }
+
+                    disc.GameID = game.GameID;
+                    disc.Title = game.Title;
+                    Model.SaveID = game.MainGameID;
+                    Model.SaveTitle = game.MainGameTitle;
+                    disc.Region = game.Region;
+
+                    if (disc.Index == 0)
+                    {
+                        Model.SFOEntries = new ObservableCollection<SFOEntry>()
+                        {
+                            new() { Key = SFOKeys.BOOTABLE, Value = 0x01, IsEditable = false },
+                            new() { Key = SFOKeys.CATEGORY, Value = SFOValues.PS1Category, IsEditable = false  },
+                            new() { Key = SFOKeys.DISC_ID, Value = game.MainGameID, IsEditable = true  },
+                            new() { Key = SFOKeys.DISC_VERSION, Value =  "1.00", IsEditable = true  },
+                            new() { Key = SFOKeys.LICENSE, Value =  SFOValues.License, IsEditable = true  },
+                            new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  SFOValues.ParentalLevel, IsEditable = true },
+                            new() { Key = SFOKeys.PSP_SYSTEM_VER, Value =  SFOValues.PSPSystemVersion, IsEditable = true  },
+                            new() { Key = SFOKeys.REGION, Value =  0x8000, IsEditable = true },
+                            new() { Key = SFOKeys.TITLE, Value = game.MainGameTitle, IsEditable = true  },
                         };
                     }
                 }
-
-                disc.GameID = game.GameID;
-                disc.Title = game.Title;
-                disc.SaveID = game.MainGameID;
-                disc.SaveTitle = game.MainGameTitle;
-                disc.Region = game.Region;
+                catch (InvalidFileSystemException)
+                {
+                    MessageBox.Show(Window, "The disc does not appear to be a valid PlayStation disc",
+                        "PSXPackager",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
 
                 disc.Size = fileSize;
                 disc.IsEmpty = false;
@@ -973,23 +1054,6 @@ namespace PSXPackagerGUI.Pages
                 disc.IsLoadEnabled = true;
                 disc.IsSaveAsEnabled = false;
                 disc.RemoveCommand = new RelayCommand((o) => Remove(disc));
-
-                if (disc.Index == 0)
-                {
-                    Model.SFOEntries = new ObservableCollection<SFOEntry>()
-                    {
-                        new() { Key = SFOKeys.BOOTABLE, Value = 0x01, IsEditable = false },
-                        new() { Key = SFOKeys.CATEGORY, Value = SFOValues.PS1Category, IsEditable = false  },
-                        new() { Key = SFOKeys.DISC_ID, Value = gameId, IsEditable = true  },
-                        new() { Key = SFOKeys.DISC_VERSION, Value =  "1.00", IsEditable = true  },
-                        new() { Key = SFOKeys.LICENSE, Value =  SFOValues.License, IsEditable = true  },
-                        new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  SFOValues.ParentalLevel, IsEditable = true },
-                        new() { Key = SFOKeys.PSP_SYSTEM_VER, Value =  SFOValues.PSPSystemVersion, IsEditable = true  },
-                        new() { Key = SFOKeys.REGION, Value =  0x8000, IsEditable = true },
-                        new() { Key = SFOKeys.TITLE, Value = disc.SaveTitle, IsEditable = true  },
-                    };
-                }
-
 
                 _model.SelectedDisc = disc;
 
@@ -1001,7 +1065,7 @@ namespace PSXPackagerGUI.Pages
         private void SaveImage_OnClick(object sender, RoutedEventArgs e)
         {
             var context = ((MenuItem)sender).DataContext as Disc;
-            var pbpRegex = new Regex("//pbp/(.*\\.pbp)/(\\d)", RegexOptions.IgnoreCase);
+            var pbpRegex = new Regex("pbp://(?<pbp>.*\\.pbp)/disc(?<disc>\\d)", RegexOptions.IgnoreCase);
 
             var game = _gameDb.GetEntryByGameID(context.GameID);
 
@@ -1022,15 +1086,19 @@ namespace PSXPackagerGUI.Pages
 
                 if (match.Success)
                 {
+                    var discIndex = int.Parse(match.Groups["disc"].Value);
+                    var pbpPath = match.Groups["pbp"].Value;
+
                     Task.Run(() =>
                     {
-                        using (var stream = new FileStream(match.Groups[1].Value, FileMode.Open, FileAccess.Read))
+                        using (var stream = new FileStream(pbpPath, FileMode.Open, FileAccess.Read))
                         {
                             var pbpReader = new PbpReader(stream);
+                            var disc = pbpReader.Discs[discIndex];
+
                             using (var output = new FileStream(saveFileDialog.FileName, FileMode.Create,
-                                FileAccess.Write))
+                                       FileAccess.Write))
                             {
-                                var disc = pbpReader.Discs[int.Parse(match.Groups[1].Value)];
                                 Model.Status = "Extracting disc image...";
                                 Model.MaxProgress = disc.IsoSize;
                                 Model.IsBusy = true;
@@ -1188,7 +1256,7 @@ namespace PSXPackagerGUI.Pages
                 var result = window.ShowDialog();
                 if (result is true)
                 {
-                    _model.SelectedDisc.GameID = window.SelectedGame.SerialID;
+                    _model.SelectedDisc.GameID = window.SelectedGame.GameID;
                     _model.SelectedDisc.Title = window.SelectedGame.Title;
                 }
             }
@@ -1225,13 +1293,12 @@ namespace PSXPackagerGUI.Pages
                 _model.SelectedTrack.IsSelected = false;
             }
 
-            _model.SelectedTrack = track;
-            track.IsSelected = true;
-
             switch (track.Status)
             {
                 case TrackStatus.Stopped:
                     _player.PlayCueTrack(track.CueTrack);
+                    _model.SelectedTrack = track;
+                    track.IsSelected = true;
                     track.Status = TrackStatus.Playing;
                     break;
                 case TrackStatus.Playing:
@@ -1241,5 +1308,56 @@ namespace PSXPackagerGUI.Pages
             }
         }
 
+
+        private void PlayerOnStopped(object? sender, CDAudioPlayerStopped e)
+        {
+            if (e.Track is not null)
+            {
+            }
+        }
+
+        private void SelectResource_Click(object sender, RoutedEventArgs e)
+        {
+            var resourceId = (string)((Control)sender).Tag;
+
+            switch (resourceId)
+            {
+                case "ICON0":
+                    Model.CurrentResource = Model.Icon0;
+                    break;
+                case "ICON1":
+                    Model.CurrentResource = Model.Icon1;
+                    break;
+                case "PIC0":
+                    Model.CurrentResource = Model.Pic0;
+                    break;
+                case "PIC1":
+                    Model.CurrentResource = Model.Pic1;
+                    break;
+                case "SND0":
+                    Model.CurrentResource = Model.Snd0;
+                    break;
+                case "BOOT":
+                    Model.CurrentResource = Model.Boot;
+                    break;
+            }
+
+            Model.CurrentResourceName = resourceId;
+        }
+
+        private void SelectSaveID_Click(object sender, RoutedEventArgs e)
+        {
+            if (_model.SelectedDisc is { IsEmpty: false })
+            {
+                var window = new GameListWindow();
+                window.Owner = Window;
+                var result = window.ShowDialog();
+                if (result is true)
+                {
+                    _model.SaveID = window.SelectedGame.MainGameID;
+                    _model.SaveTitle = window.SelectedGame.MainGameTitle;
+                }
+            }
+        }
     }
 }

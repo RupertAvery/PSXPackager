@@ -19,6 +19,7 @@
 		<None Remove="Resources\Editor\back.png" />
 		<None Remove="Resources\Editor\boot.png" />
 		<None Remove="Resources\Editor\ICON0.PNG" />
+		<None Remove="Resources\Editor\NewRodin Pro DB.otf" />
 		<None Remove="Resources\Editor\no_icon0.png" />
 		<None Remove="Resources\Editor\PIC0.PNG" />
 		<None Remove="Resources\Editor\PIC1.PNG" />
@@ -36,6 +37,7 @@
 		<None Remove="Resources\search-48x48.png" />
 		<None Remove="Resources\start-48x48.png" />
 		<None Remove="Resources\stop-48x48.png" />
+		<None Remove="Shaders\pspwaves.ps.cso" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -49,6 +51,9 @@
 
 	<ItemGroup>
 		<Resource Include="Resources\disc.png" />
+		<Resource Include="Resources\Editor\NewRodin Pro DB.otf">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Resource>
 		<Resource Include="Resources\floppy-48x48.png" />
 		<Resource Include="Resources\games-48x48.png" />
 		<Resource Include="Resources\gear-48x48.png" />
@@ -67,6 +72,7 @@
 
 	<ItemGroup>
 	  <Resource Include="Resources\Editor\back.png" />
+	  <Resource Include="Shaders\pspwaves.ps.cso" />
 	  <EmbeddedResource Include="Resources\Editor\boot.png" />
 	  <EmbeddedResource Include="Resources\Editor\ICON0.PNG" />
 	  <EmbeddedResource Include="Resources\Editor\no_icon0.png" />
@@ -81,22 +87,22 @@
 		<None Update="Resources\alpha.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
-		<None Update="Resources\Editor\NewRodin Pro DB.otf">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
 		<None Update="Resources\overlay.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="Resources\overlay_icon.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+		<None Update="Resources\PIC1.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 		<None Update="Templates\E.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
-		<None Update="Templates\Icon.xml">
+		<None Update="Templates\ICON0.xml">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
-		<None Update="Templates\Information Overlay.xml">
+		<None Update="Templates\PIC0.xml">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="Templates\M.png">

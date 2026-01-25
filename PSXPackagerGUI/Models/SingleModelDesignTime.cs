@@ -35,4 +35,5 @@ public class SingleModelDesignTime : SingleModel
 
         SelectedDisc = Discs[0];
     }
+
 }

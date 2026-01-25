@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using Popstation.Iso;
 using Popstation.Pbp;
+using SharpCompress.Compressors.Xz;
 
 namespace Popstation
 {
@@ -161,6 +163,17 @@ namespace Popstation
                 stream.Write(tempBuffer, 0, sizeof(int));
                 p += 1;
             }
+        }
+
+        public static void WriteResource(this Stream stream, Resource resource)
+        {
+            //if (resource.Buffer != null)
+            //{
+            //    stream.Write(resource.Buffer, 0, (int)resource.Size);
+            //    return;
+            //}
+            resource.Stream.Seek(0, SeekOrigin.Begin);
+            resource.Stream.CopyTo(stream);
         }
 
         public static void WriteSFO(this Stream stream, SFOData sfo)

@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Threading.Tasks;
 using Popstation.Pbp;
 
 namespace Popstation
@@ -6,11 +8,9 @@ namespace Popstation
     /// <summary>
     /// A container for a PNG, PMF or AT3
     /// </summary>
-    public class Resource
+    public class Resource : IDisposable
     {
-        //private readonly string _file;
-        private byte[] _buffer;
-        private Stream _stream;
+        public Stream Stream { get; }
 
         /// <summary>
         /// The type of data that this <see cref="Resource"/> contains
@@ -30,7 +30,7 @@ namespace Popstation
         public Resource(ResourceType resourceType, Stream stream, uint size)
         {
             ResourceType = resourceType;
-            _stream = stream;
+            Stream = stream;
             Size = size;
             Exists = true;
         }
@@ -38,7 +38,7 @@ namespace Popstation
         public Resource(ResourceType resourceType, byte[] buffer, uint size)
         {
             ResourceType = resourceType;
-            _buffer = buffer;
+            Stream = new MemoryStream(buffer);
             Size = size;
             Exists = true;
         }
@@ -58,22 +58,26 @@ namespace Popstation
             return new Resource(resourceType);
         }
 
-        /// <summary>
-        /// Writes the contents of this <see cref="Resource"/> to the specified Stream
-        /// </summary>
-        /// <param name="stream"></param>
-        public void Write(Stream stream)
-        {
-            if (_buffer != null)
-            {
-                stream.Write(_buffer, 0, (int)Size);
-                return;
-            }
+        ///// <summary>
+        ///// Writes the contents of this <see cref="Resource"/> to the specified Stream
+        ///// </summary>
+        ///// <param name="stream"></param>
+        //public void Write(Stream stream)
+        //{
+        //    if (Buffer != null)
+        //    {
+        //        stream.Write(Buffer, 0, (int)Size);
+        //        return;
+        //    }
 
-            var buffer = new byte[Size];
-            _stream.Seek(0, SeekOrigin.Begin);
-            _stream.Read(buffer, 0, (int)Size);
-            stream.Write(buffer, 0, (int)Size);
+        //    Stream.Seek(0, SeekOrigin.Begin);
+        //    Stream.CopyTo(stream);
+        //}
+
+
+        public void Dispose()
+        {
+            Stream?.Dispose();
         }
 
     }

@@ -6,7 +6,6 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Color = System.Windows.Media.Color;
-using Pen = System.Windows.Media.Pen;
 using Point = System.Windows.Point;
 
 namespace PSXPackagerGUI.Models.Resource;
@@ -15,11 +14,9 @@ public class ImageComposite : BaseNotifyModel
 {
     private BitmapSource? _alphaLayerMask;
     private bool _hasLayers;
-    private Layer? _selectedLayer;
 
     private ObservableCollection<Layer> _layers;
     private ImageSource _compositeBitmap;
-    private BitmapSource _selectionBitmap;
 
     public int Width { get; set; }
     public int Height { get; set; }
@@ -30,22 +27,10 @@ public class ImageComposite : BaseNotifyModel
         set => SetProperty(ref _layers, value);
     }
 
-    public Layer? SelectedLayer
-    {
-        get => _selectedLayer;
-        set => SetProperty(ref _selectedLayer, value);
-    }
-
     public ImageSource CompositeBitmap
     {
         get => _compositeBitmap;
         set => SetProperty(ref _compositeBitmap, value);
-    }
-
-    public BitmapSource SelectionBitmap
-    {
-        get => _selectionBitmap;
-        set => SetProperty(ref _selectionBitmap, value);
     }
 
     public bool HasLayers
@@ -88,49 +73,11 @@ public class ImageComposite : BaseNotifyModel
     public void Render()
     {
         RenderLayers();
-        RenderSelection();
-    }
-
-    public void RenderSelection()
-    {
-        var visual = new DrawingVisual();
-
-        using (var dc = visual.RenderOpen())
-        {
-            var layer = SelectedLayer;
-
-            if (layer != null)
-            {
-                var cornerBrush = new SolidColorBrush(Color.FromRgb(192, 192, 192));
-                var pen = new Pen(cornerBrush, 1);
-
-                dc.DrawRectangle(null, pen, new Rect(layer.OffsetX - 2, layer.OffsetY - 2, 4, 4));
-                dc.DrawRectangle(null, pen, new Rect(layer.OffsetX + layer.Width - 2, layer.OffsetY - 2, 4, 4));
-                dc.DrawRectangle(null, pen, new Rect(layer.OffsetX + layer.Width - 2, layer.OffsetY + layer.Height - 2, 4, 4));
-                dc.DrawRectangle(null, pen, new Rect(layer.OffsetX - 2, layer.OffsetY + layer.Height - 2, 4, 4));
-            }
-        }
-
-        var rtb = new RenderTargetBitmap(
-        (int)Width,
-        (int)Height,
-        96,
-        96,
-        PixelFormats.Pbgra32);
-
-        rtb.Render(visual);
-        rtb.Freeze();
-
-        SelectionBitmap = rtb;
-
     }
 
 
     public void RenderLayers()
     {
-        if (Layers.Count == 0)
-            return;
-
         var visual = new DrawingVisual();
 
 

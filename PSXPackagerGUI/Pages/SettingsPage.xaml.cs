@@ -51,6 +51,8 @@ namespace PSXPackagerGUI.Pages
 
             Model = settings;
 
+            ServiceLocator.Settings = Model;
+
             var version = typeof(SettingsPage).Assembly.GetName().Version;
 
             Model.Version = $"PSXPackagerGUI {version.Major}.{version.Minor}.{version.Build}";
@@ -145,132 +147,6 @@ namespace PSXPackagerGUI.Pages
             _configuration.Save(Model);
         }
 
-        private void ConvertMultiToSingleBin_OnClick(object sender, RoutedEventArgs e)
-        {
-            var openFileDialog = new Microsoft.Win32.OpenFileDialog();
-            openFileDialog.Filter = "Supported files|*.bin;*.cue|All files|*.*";
-            openFileDialog.Multiselect = true;
-            var openResult = openFileDialog.ShowDialog();
-
-            if (openResult is not true)
-            {
-                return;
-            }
-
-            var saveFileDialog = new Microsoft.Win32.SaveFileDialog();
-            saveFileDialog.Filter = "Supported files|*.bin;";
-            saveFileDialog.DefaultExt = ".bin";
-            saveFileDialog.AddExtension = true;
-            var saveResult = saveFileDialog.ShowDialog();
-
-            if (saveResult is not true)
-            {
-                return;
-            }
-
-            bool generatedCue = false;
-            string tempFile = "";
-
-            var trackRegex = new Regex("Track (\\d+)");
-
-            if (openFileDialog.FileNames.Length > 1)
-            {
-                if (!openFileDialog.FileNames.All(f =>
-                {
-                    var match = trackRegex.Match(f);
-                    return Path.GetExtension(f).ToLower() == ".bin"
-                           && match.Success
-                           && int.TryParse(match.Groups[1].Value, out var dummy);
-                }))
-                {
-                    MessageBox.Show(Window, "Please multi-select only .bins ending in (Track #)",
-                        "PSXPackager",
-                        MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
-
-                var cueFile = new CueFile();
-
-                var index = 1;
-                foreach (var fileName in openFileDialog.FileNames.OrderBy(f => int.Parse(trackRegex.Match(f).Groups[1].Value)))
-                {
-                    cueFile.FileEntries.Add(new CueFileEntry()
-                    {
-                        FileName = fileName,
-                        FileType = "BINARY",
-                        Tracks = index == 1
-                            ? new List<CueTrack>()
-                            {
-                                new CueTrack()
-                                {
-                                    DataType = CueTrackType.Data,
-                                    Number = index,
-                                    Indexes = new List<CueIndex>()
-                                        {new CueIndex() {Number = 1, Position = new IndexPosition(0, 0, 0)}}
-                                }
-                            }
-                            : new List<CueTrack>()
-                            {
-                                new CueTrack()
-                                {
-                                    DataType = CueTrackType.Audio,
-                                    Number = index,
-                                    Indexes = new List<CueIndex>()
-                                    {
-                                        new CueIndex() {Number = 0, Position = new IndexPosition(0, 0, 0)},
-                                        new CueIndex() {Number = 1, Position = new IndexPosition(0, 2, 0)}
-                                    }
-                                }
-                            }
-                    });
-                    index++;
-                }
-
-                tempFile = Path.GetTempFileName() + ".cue";
-
-                CueFileWriter.Write(cueFile, tempFile);
-
-                generatedCue = true;
-            }
-            else if(Path.GetExtension(openFileDialog.FileName).ToLower() == ".cue")
-            {
-                tempFile = openFileDialog.FileName;
-            }
-            else
-            {
-                MessageBox.Show(Window, "Please select the CUE file, or if you do not have a CUE file, multi-select all the .bins ending in (Track #)",
-                    "PSXPackager",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-
-            var folder = Path.GetDirectoryName(Path.GetFullPath(saveFileDialog.FileName));
-            var filename = Path.GetFileName(saveFileDialog.FileName);
-            var processing = new Popstation.Processing(null, null, null);
-            var (binfile, cuefile) = processing.ProcessCue(tempFile, Path.GetTempPath());
-
-            var cueFileName = Path.GetFileNameWithoutExtension(filename) + ".cue";
-            var outputPath = Path.Combine(folder, saveFileDialog.FileName);
-
-            if (File.Exists(outputPath))
-            {
-                File.Delete(outputPath);
-            }
-
-            File.Move(binfile, outputPath);
-
-            if (generatedCue)
-            {
-                var updatedCueFile = CueFileReader.Read(cuefile);
-                var fileEntry = updatedCueFile.FileEntries.First();
-                fileEntry.FileName = filename;
-                CueFileWriter.Write(updatedCueFile, Path.Combine(folder, cueFileName));
-            }
-
-            MessageBox.Show(Window, $"Merged .bins to {outputPath}", "PSXPackager",
-                MessageBoxButton.OK, MessageBoxImage.Information);
-
-        }
-
         private void PSPDefault_OnClick(object sender, RoutedEventArgs e)
         {
             Model.FileNameFormat = "%GAMEID%\\EBOOT";
@@ -291,5 +167,7 @@ namespace PSXPackagerGUI.Pages
 
             Process.Start(startInfo);
         }
+
+       
     }
 }

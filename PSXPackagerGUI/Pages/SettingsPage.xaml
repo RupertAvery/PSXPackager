@@ -6,15 +6,20 @@
       xmlns:local="clr-namespace:PSXPackagerGUI.Pages"
       xmlns:models="clr-namespace:PSXPackagerGUI.Models"
       xmlns:controls="clr-namespace:PSXPackagerGUI.Controls"
+      xmlns:converters="clr-namespace:PSXPackagerGUI.Converters"
       mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
+      d:DesignHeight="450" d:DesignWidth="900"
       d:DataContext="{d:DesignInstance models:SettingsModel, IsDesignTimeCreatable=True}"
       Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
       Title="Settings">
     <Page.Resources>
+        <Style x:Key="TabContent" TargetType="Grid">
+            <Setter Property="Width" Value="700"></Setter>
+            <Setter Property="Margin" Value="20,20,20,20"></Setter>
+        </Style>
     </Page.Resources>
     <Grid>
-        <TabControl  TabStripPlacement="Left">
+        <TabControl TabStripPlacement="Left">
             <TabControl.ItemContainerStyle>
                 <Style TargetType="TabItem">
                     <Setter Property="Height">
@@ -23,7 +28,7 @@
                 </Style>
             </TabControl.ItemContainerStyle>
             <TabItem Header="Compression">
-                <Grid Margin="20,20,20,20">
+                <Grid Style="{StaticResource TabContent}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"></ColumnDefinition>
                         <ColumnDefinition Width="Auto"></ColumnDefinition>
@@ -47,13 +52,13 @@
                             NOTE:<LineBreak/>
                             <LineBreak/>
                             Compression level 9 usually offers only slightly better compression (hundreds of Kbs to a few MBs smaller) compared to level 5 when it comes to single-disc games, 
-                            and can take a bit longer to compress. However, this may vary from game to game. Compression level usually has no noticeable effect on loading times on a PSP.
+                            and can take a bit longer to compress. However, this may vary from game to game. Compression level usually has no dramatic noticeable effect on loading times on a PSP.
                         </TextBlock>
                     </Grid>
                 </Grid>
             </TabItem>
             <TabItem Header="Filename Format">
-                <Grid Margin="20,20,20,20">
+                <Grid Style="{StaticResource TabContent}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="30"/>
                         <RowDefinition Height="30"/>
@@ -61,10 +66,10 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="120"/>
+                        <ColumnDefinition Width="100"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Label Grid.Row="0" Grid.Column="0">Filename Format:</Label>
+                    <Label Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left">Filename Format:</Label>
                     <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding FileNameFormat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center"
                              ToolTip="When batch processing, this will be the format of the output PBP filename. Paths are allowed."
                              ></TextBox>
@@ -101,13 +106,17 @@
                 </Grid>
             </TabItem>
             <TabItem Header="Resources">
-                <Grid Margin="20,20,20,20">
+                <Grid Style="{StaticResource TabContent}">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="30"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
-                        <CheckBox VerticalAlignment="Center" Grid.Column="0" IsChecked="{Binding UseCustomResources}">Use custom resources when batch creating PBPs</CheckBox>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <CheckBox VerticalAlignment="Center" Grid.Column="1" IsChecked="{Binding UseCustomResources}">Use custom resources when batch creating PBPs</CheckBox>
                     </Grid>
                     <Grid>
                         <Grid.RowDefinitions>
@@ -118,18 +127,18 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="120"/>
-                            <ColumnDefinition/>
                             <ColumnDefinition Width="100"/>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="120"/>
                         </Grid.ColumnDefinitions>
-                        <Label Grid.Column="0" Grid.Row="1">Source Path:</Label>
+                        <Label Grid.Column="0" Grid.Row="1" HorizontalAlignment="Right">Source Path:</Label>
                         <TextBox IsEnabled="{Binding UseCustomResources}" Grid.Column="1" Grid.Row="1" Margin="2,2,2,2" VerticalContentAlignment="Center" Text="{Binding CustomResourcesPath}">
                             <TextBox.ToolTip>
                                 The location to start searching for resources. Leave empty to use the same path as the input file.
                             </TextBox.ToolTip>
                         </TextBox>
                         <Button IsEnabled="{Binding UseCustomResources}" Grid.Column="2" Grid.Row="1" Margin="2,2,2,2" Command="{Binding BrowseCustomResourcePath}">Browse</Button>
-                        <Label Grid.Column="0" Grid.Row="2">Match Path:</Label>
+                        <Label Grid.Column="0" Grid.Row="2" HorizontalAlignment="Right">Match Path:</Label>
                         <TextBox IsEnabled="{Binding UseCustomResources}" Grid.Column="1" Grid.Row="2" Margin="2,2,2,2" VerticalContentAlignment="Center" Text="{Binding CustomResourcesFormat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                             <TextBox.ToolTip>
                                 The match path will be appended to the source path to produce the final path that will be used to load a specified resource.
@@ -168,23 +177,116 @@
                 </Grid>
             </TabItem>
             <TabItem Header="Tools">
-                <Grid Margin="20">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="30"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="30"/>
-                        <RowDefinition Height="30"/>
-                        <RowDefinition/>
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition/>
-                        <ColumnDefinition Width="150"/>
-                    </Grid.ColumnDefinitions>
-                    <Label VerticalContentAlignment="Center">
-                        Merge Multi-track BIN/CUE to Single BIN+CUE
-                    </Label>
-                    <Button x:Name="ConvertMultiToSingleBin" Click="ConvertMultiToSingleBin_OnClick" Grid.Row="0" Grid.Column="1" Margin="2">Browse</Button>
-                    <TextBlock TextWrapping="Wrap"  Grid.Row="1" Grid.Column="0" Margin="0,20,0,0">
+                <ScrollViewer DataContext="{Binding .Converter}">
+                    <Grid Style="{StaticResource TabContent}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="200"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="10"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="400"/>
+                        </Grid.RowDefinitions>
+
+                        <Label Grid.Row="0" Grid.Column="1" VerticalContentAlignment="Center" FontSize="14">Multi-Bin Merger</Label>
+
+                        <TextBlock Grid.Row="1" Grid.Column="1" TextWrapping="Wrap" Margin="5,0,5,20">
+                            This tool allows you to merge multi-track .BINs without a .CUE file into a single .BIN and generate a .CUE file.
+                            <LineBreak/> 
+                            <LineBreak/> 
+                            <Bold>If you already have a correct .CUE file, you do not need to manually merge them here. PSXPackager can directly convert a multi-track .CUE with separate .BINs into a PBP</Bold> .
+                            <LineBreak/> 
+                            <LineBreak/> 
+                            To use this tool, select ALL .bin files that have (Track #) in the filename. Make sure the order is correct. Do not include files from other discs or games.
+                        </TextBlock>
+
+                        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
+                            <Label VerticalContentAlignment="Center">Files to merge:</Label>
+                            <Button Margin="10,0,0,0" Height="24" Width="120" Click="SelectCUE_Click" Visibility="Collapsed">Select CUE</Button>
+                            <Label Margin="10,0,0,0" VerticalContentAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed">or</Label>
+                            <Button Margin="10,0,0,0" Height="24" Width="120" Click="SelectBins_Click">Select Bins</Button>
+                        </StackPanel>
+
+                        <ListView Grid.Row="3" Grid.Column="1" Margin="0,2,0,2" ItemsSource="{Binding BinPaths}" SelectedIndex="{Binding SelectedIndex}">
+                        </ListView>
+                        <StackPanel Grid.Row="3" Grid.Column="2">
+                            <Button IsEnabled="{Binding IsMoveEnabled}" Margin="5,0,5,5" Click="MoveUp_Click">Move up</Button>
+                            <Button IsEnabled="{Binding IsMoveEnabled}" Margin="5,0,5,5" Click="MoveDown_Click">Move down</Button>
+                        </StackPanel>
+
+                        <Label Grid.Row="4" Grid.Column="0" VerticalContentAlignment="Center" HorizontalAlignment="Right">Output Path</Label>
+                        <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding TargetPath}" Height="24" VerticalContentAlignment="Center"></TextBox>
+                        <Button Margin="5,0,5,0" Grid.Row="4" Grid.Column="2"  Height="24" Click="BrowseTargetPath_Click">Browse</Button>
+                        <Label Grid.Row="5" Grid.Column="0" VerticalContentAlignment="Center" HorizontalAlignment="Right">Output Filename</Label>
+                        <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding TargetFileName}" VerticalContentAlignment="Center" Height="24"></TextBox>
+                        <TextBlock Grid.Row="6" Grid.Column="1" TextWrapping="Wrap" Margin="5,5,5,5">
+                            Do not include the extension .CUE or .BIN
+                            <LineBreak/>
+                            <LineBreak/>
+                            Decide on the filename now as it will be written into the CUE file. If you change the name of the BIN later, 
+                            you will have to edit the CUE file as well.
+                        </TextBlock>
+
+                        <Button Grid.Row="8" Grid.Column="1" Click="Merge_Click" IsEnabled="{Binding IsMergeEnabled}" Width="200">Merge</Button>
+
+                        <TextBlock Grid.Row="9" Grid.Column="1" TextWrapping="Wrap" Margin="5,0,5,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ConvertMode}" Value="{x:Static models:ConvertMode.BINS}">
+                                            <Setter Property="Visibility" Value="Visible"></Setter>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                            <LineBreak/> 
+                            <LineBreak/> 
+                            <Bold>NOTE:</Bold>This will create a .CUE file with TRACK 01 set to MODE2/2352
+                            and the rest of the tracks as AUDIO tracks with a pre-gap of 02:00. This should work for almost all games except for a few
+                            listed below according to redump.org that have unique INDEX listings.
+                            <LineBreak/>
+                            <LineBreak/>
+                            * Angelique Special (Japan)
+                            <LineBreak/>
+                            * Doraemon 2 - SOS! Otogi no Kuni (Japan)
+                            <LineBreak/>
+                            * Goal Storm (Europe)
+                            <LineBreak/>
+                            * Goal Storm (USA)
+                            <LineBreak/>
+                            * Slam Dragon (Japan)
+                            <LineBreak/>
+                            * World Soccer Winning Eleven (Japan)
+                        </TextBlock>
+                    </Grid>
+
+                    <!--<Grid Margin="20" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="150"/>
+                        </Grid.ColumnDefinitions>
+                        <Label VerticalContentAlignment="Center">
+                            Merge Multi-track BIN/CUE to Single BIN+CUE
+                        </Label>
+                        <Button x:Name="ConvertMultiToSingleBin" Click="ConvertMultiToSingleBin_OnClick" Grid.Row="0" Grid.Column="1" Margin="2">Browse</Button>
+                        <TextBlock TextWrapping="Wrap"  Grid.Row="1" Grid.Column="0" Margin="0,20,0,0">
                         This tool allows you to merge multi-track .BINs without a .CUE file into a single .BIN and generate a .CUE file.
                         <LineBreak/> 
                         <LineBreak/> 
@@ -201,15 +303,22 @@
                         <LineBreak/> 
                         <LineBreak/> 
                         <Bold>NOTE:</Bold> If you already have a correct .CUE file, you do not need to manually merge them here. PSXPackager can directly convert a multi-track .CUE with separate .BINs into a PBP.
-                    </TextBlock>
-                    <Button x:Name="OpenSettingsFolderButton" Grid.Row="3" 
-                            Grid.ColumnSpan="2"
+                        </TextBlock>
+
+                    </Grid>-->
+                </ScrollViewer>
+
+            </TabItem>
+            <TabItem Header="Configuration">
+                <Grid Style="{StaticResource TabContent}">
+                    <Button x:Name="OpenSettingsFolderButton" 
                             Width="150"
+                            Height="30"
                             Click="OpenSettingsFolderButton_OnClick">Open Settings Folder</Button>
                 </Grid>
             </TabItem>
             <TabItem Header="About">
-                <Grid Margin="20">
+                <Grid Style="{StaticResource TabContent}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="42"/>
                         <RowDefinition Height="20"/>
@@ -237,20 +346,6 @@
 
                         <LineBreak/>
                         <LineBreak/>
-                        Programmers like to relax, too!
-                        <LineBreak/>                                    
-
-                        <Hyperlink NavigateUri="https://www.paypal.me/rupertavery/5.00?locale.x=en_US"
-                                   controls:HyperlinkExtensions.IsExternal="true"
-                        >Buy me a nice beer</Hyperlink>
-                        <LineBreak/>
-                        <Hyperlink NavigateUri="https://www.paypal.me/rupertavery/2.50?locale.x=en_US"
-                                   controls:HyperlinkExtensions.IsExternal="true"
-                        >Buy me a good beer</Hyperlink>
-                        <LineBreak/>
-                        <Hyperlink NavigateUri="https://www.paypal.me/rupertavery/1.50?locale.x=en_US"
-                                   controls:HyperlinkExtensions.IsExternal="true"
-                        >Buy me a decent beer</Hyperlink>
                     </TextBlock>
 
                 </Grid>

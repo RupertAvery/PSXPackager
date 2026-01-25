@@ -3,9 +3,13 @@ using System.IO;
 
 namespace Popstation.Pbp;
 
+/// <summary>
+/// Exposes a possibly compressed disc image embedded in an EBOOT as a decompressed stream
+/// </summary>
 public class PbpDiscStream : Stream
 {
-    private readonly PbpDiscEntry _reader;
+    private readonly bool _dispose;
+    private readonly PbpDiscEntry _pbpDiscEntry;
 
     private readonly byte[] _buffer =
         new byte[16 * PbpReader.ISO_BLOCK_SIZE];
@@ -16,14 +20,30 @@ public class PbpDiscStream : Stream
     private long _position;
     private int _blockIndex;
 
-    public PbpDiscStream(PbpDiscEntry reader)
+    /// <summary>
+    /// Creates a new <see cref="PbpDiscStream"/> from a <see cref="PbpDiscEntry"/>
+    /// </summary>
+    /// <param name="pbpDiscEntry">The <see cref="PbpDiscEntry"/> that contains the disc image</param>
+    public PbpDiscStream(PbpDiscEntry pbpDiscEntry)
     {
-        _reader = reader;
+        _pbpDiscEntry = pbpDiscEntry;
     }
+
+
+    /// <summary>
+    /// Creates a new <see cref="PbpDiscStream"/> from a <see cref="PbpDiscEntry"/>
+    /// </summary>
+    /// <param name="pbpDiscEntry">The <see cref="PbpDiscEntry"/> that contains the disc image</param>
+    /// <param name="dispose">Specifies whether the pbpDiscEntry should be disposed when dispose is called on this stream</param>
+    public PbpDiscStream(PbpDiscEntry pbpDiscEntry, bool dispose) : this(pbpDiscEntry)
+    {
+        _dispose = dispose;
+    }
+
 
     public override int Read(byte[] buffer, int offset, int count)
     {
-        if (_position >= _reader.IsoSize)
+        if (_position >= _pbpDiscEntry.IsoSize)
             return 0; // EOF
 
         int totalRead = 0;
@@ -33,7 +53,7 @@ public class PbpDiscStream : Stream
             // If buffer empty, refill
             if (_bufPos >= _bufLen)
             {
-                _bufLen = (int)_reader.ReadBlock(_blockIndex++, _buffer);
+                _bufLen = (int)_pbpDiscEntry.ReadBlock(_blockIndex++, _buffer);
                 _bufPos = 0;
 
                 if (_bufLen == 0)
@@ -43,9 +63,9 @@ public class PbpDiscStream : Stream
             int available = _bufLen - _bufPos;
             int toCopy = Math.Min(available, count);
 
-            if (_position + toCopy > _reader.IsoSize)
+            if (_position + toCopy > _pbpDiscEntry.IsoSize)
             {
-                toCopy = (int)(_reader.IsoSize - _position);
+                toCopy = (int)(_pbpDiscEntry.IsoSize - _position);
             }
 
             Array.Copy(_buffer, _bufPos, buffer, offset, toCopy);
@@ -57,7 +77,7 @@ public class PbpDiscStream : Stream
             totalRead += toCopy;
             _position += toCopy;
 
-            if (_position >= _reader.IsoSize)
+            if (_position >= _pbpDiscEntry.IsoSize)
                 break;
         }
 
@@ -70,11 +90,11 @@ public class PbpDiscStream : Stream
         {
             SeekOrigin.Begin => offset,
             SeekOrigin.Current => _position + offset,
-            SeekOrigin.End => _reader.IsoSize + offset,
+            SeekOrigin.End => _pbpDiscEntry.IsoSize + offset,
             _ => throw new ArgumentOutOfRangeException()
         };
 
-        if (newPos < 0 || newPos > _reader.IsoSize)
+        if (newPos < 0 || newPos > _pbpDiscEntry.IsoSize)
             throw new IOException("Seek out of range");
 
         _position = newPos;
@@ -90,7 +110,7 @@ public class PbpDiscStream : Stream
     public override bool CanSeek => true;
     public override bool CanWrite => false;
 
-    public override long Length => _reader.IsoSize;
+    public override long Length => _pbpDiscEntry.IsoSize;
 
     public override long Position
     {
@@ -104,6 +124,10 @@ public class PbpDiscStream : Stream
 
     protected override void Dispose(bool disposing)
     {
+        if (_dispose)
+        {
+            _pbpDiscEntry.Dispose();
+        }
         base.Dispose(disposing);
     }
 }

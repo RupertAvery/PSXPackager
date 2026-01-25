@@ -1,0 +1,26 @@
+sampler2D inputSampler : register(s0);
+float Time : register(c0);
+
+float gradient(float p)
+{
+    // Ultra-cheap ramp
+    return saturate((p - 0.85) * 6.0);
+}
+
+float wave(float2 uv)
+{
+    float x = sin((uv.x + Time * 0.04) * 7.0) * 0.06;
+    return gradient(uv.y / (0.55 + x)) * 0.3;
+}
+
+float4 main(float2 uv : TEXCOORD) : COLOR
+{
+    float w = wave(uv);
+
+    float3 bg = lerp(
+        float3(0.05, 0.05, 0.3),
+        float3(0.1, 0.65, 0.85),
+        (uv.x + (1 - uv.y)) * 0.55);
+
+    return float4(bg + w.xxx, 1.0);
+}

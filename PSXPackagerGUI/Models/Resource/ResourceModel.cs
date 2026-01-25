@@ -9,11 +9,14 @@ namespace PSXPackagerGUI.Models.Resource
         private Stream? _stream;
         private ImageComposite? _composite;
         private ImageSource? _icon;
-        private bool _isRemoveEnabled;
-        private bool _isSaveAsEnabled;
-        private bool _isLoadEnabled;
         private bool _text;
-        private bool _isMoreEnabled;
+        private bool _isIncluded;
+
+        public bool IsIncluded
+        {
+            get => _isIncluded;
+            set => SetProperty(ref _isIncluded, value);
+        }
 
         public ImageComposite? Composite
         {
@@ -23,7 +26,6 @@ namespace PSXPackagerGUI.Models.Resource
 
         public ResourceModel()
         {
-            IsLoadEnabled = true;
         }
 
         public static ResourceModel OtherResource(ResourceType type)
@@ -56,11 +58,10 @@ namespace PSXPackagerGUI.Models.Resource
         {
             Composite?.Clear();
             Icon = null;
-            IsLoadEnabled = true;
-            IsSaveAsEnabled = false;
-            IsRemoveEnabled = false;
             SourceUrl = null;
             Stream?.Dispose();
+            IsIncluded = false;
+            HasResource = false;
         }
 
         public ResourceType Type { get; set; }
@@ -69,30 +70,6 @@ namespace PSXPackagerGUI.Models.Resource
         {
             get => _icon;
             set => SetProperty(ref _icon, value);
-        }
-
-        public bool IsLoadEnabled
-        {
-            get => _isLoadEnabled;
-            set => SetProperty(ref _isLoadEnabled, value);
-        }
-
-        public bool IsSaveAsEnabled
-        {
-            get => _isSaveAsEnabled;
-            set => SetProperty(ref _isSaveAsEnabled, value);
-        }
-
-        public bool IsMoreEnabled
-        {
-            get => _isMoreEnabled;
-            set => SetProperty(ref _isMoreEnabled, value);
-        }
-
-        public bool IsRemoveEnabled
-        {
-            get => _isRemoveEnabled;
-            set => SetProperty(ref _isRemoveEnabled, value);
         }
 
         public bool Text
@@ -126,6 +103,7 @@ namespace PSXPackagerGUI.Models.Resource
 
         public uint Size { get; private set; }
         public bool IsTemplateEnabled { get; set; }
+        public bool HasResource { get; set; }
 
         public void Clear()
         {
@@ -133,7 +111,6 @@ namespace PSXPackagerGUI.Models.Resource
             Stream = null;
             Size = 0;
             SourceUrl = null;
-            IsSaveAsEnabled = false;
             Icon = null;
         }
 

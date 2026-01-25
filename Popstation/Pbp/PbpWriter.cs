@@ -37,76 +37,89 @@ namespace Popstation.Pbp
 
         public void Write(Stream outputStream, CancellationToken cancellationToken)
         {
-            EnsureRequiredResourcesExist();
-
-            ProcessTOCs();
-
-            var sfo = convertInfo.SFOEntries is { Count: > 0 }
-                ? BuildSFO(convertInfo.SFOEntries)
-                : BuildDefaultSFO();
-
-            var header = BuildHeader(sfo);
-
-            var psarOffset = header[9];
-
-            outputStream.Write(header, 0, 0x28);
-
-            Notify?.Invoke(PopstationEventEnum.WriteSfo, null);
-            outputStream.WriteSFO(sfo);
-
-            Notify?.Invoke(PopstationEventEnum.WriteIcon0Png, null);
-            convertInfo.Icon0.Write(outputStream);
-
-            if (convertInfo.Icon1.Exists)
+            try
             {
-                Notify?.Invoke(PopstationEventEnum.WriteIcon1Pmf, null);
-                convertInfo.Icon1.Write(outputStream);
-            }
+                EnsureRequiredResourcesExist();
 
-            Notify?.Invoke(PopstationEventEnum.WritePic0Png, null);
-            convertInfo.Pic0.Write(outputStream);
+                ProcessTOCs();
 
-            Notify?.Invoke(PopstationEventEnum.WritePic1Png, null);
-            convertInfo.Pic1.Write(outputStream);
+                var sfo = convertInfo.SFOEntries is { Count: > 0 }
+                    ? BuildSFO(convertInfo.SFOEntries)
+                    : BuildDefaultSFO();
 
-            if (convertInfo.Snd0.Exists)
-            {
-                Notify?.Invoke(PopstationEventEnum.WriteSnd0At3, null);
-                convertInfo.Snd0.Write(outputStream);
-            }
+                var header = BuildHeader(sfo);
 
-            Notify?.Invoke(PopstationEventEnum.WriteDataPsp, null);
-            convertInfo.DataPsp.Write(outputStream);
+                var psarOffset = header[9];
 
-            var offset = (uint)outputStream.Position;
+                outputStream.Write(header, 0, 0x28);
 
-            // fill with NULL
-            for (var i = 0; i < psarOffset - offset; i++)
-            {
-                outputStream.WriteByte(0);
-            }
+                Notify?.Invoke(PopstationEventEnum.WriteSfo, null);
+                outputStream.WriteSFO(sfo);
 
-            uint totSize = 0;
+                Notify?.Invoke(PopstationEventEnum.WriteIcon0Png, null);
+                outputStream.WriteResource(convertInfo.Icon0);
 
-            foreach (var disc in convertInfo.DiscInfos)
-            {
-                if (File.Exists(disc.SourceIso))
+                if (convertInfo.Icon1.Exists)
                 {
-                    var t = new FileInfo(disc.SourceIso);
-                    var isosize = (uint)t.Length;
-                    disc.IsoSize = isosize;
-                    totSize += isosize;
+                    Notify?.Invoke(PopstationEventEnum.WriteIcon1Pmf, null);
+                    outputStream.WriteResource(convertInfo.Icon1);
                 }
+
+                Notify?.Invoke(PopstationEventEnum.WritePic0Png, null);
+                outputStream.WriteResource(convertInfo.Pic0);
+
+                Notify?.Invoke(PopstationEventEnum.WritePic1Png, null);
+                outputStream.WriteResource(convertInfo.Pic1);
+
+                if (convertInfo.Snd0.Exists)
+                {
+                    Notify?.Invoke(PopstationEventEnum.WriteSnd0At3, null);
+                    outputStream.WriteResource(convertInfo.Snd0);
+                }
+
+                Notify?.Invoke(PopstationEventEnum.WriteDataPsp, null);
+                outputStream.WriteResource(convertInfo.DataPsp);
+
+                var offset = (uint)outputStream.Position;
+
+                // fill with NULL
+                for (var i = 0; i < psarOffset - offset; i++)
+                {
+                    outputStream.WriteByte(0);
+                }
+
+                uint totSize = 0;
+
+                foreach (var disc in convertInfo.DiscInfos)
+                {
+                    if (File.Exists(disc.SourceIso))
+                    {
+                        var t = new FileInfo(disc.SourceIso);
+                        var isosize = (uint)t.Length;
+                        disc.IsoSize = isosize;
+                        totSize += isosize;
+                    }
+                }
+
+                WritePSAR(outputStream, psarOffset, cancellationToken);
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                WriteSTARTDAT(outputStream);
             }
-
-            WritePSAR(outputStream, psarOffset, cancellationToken);
-
-            if (cancellationToken.IsCancellationRequested)
+            finally
             {
-                return;
+                convertInfo.Icon0.Dispose();
+                convertInfo.Pic1.Dispose();
+                convertInfo.Pic0.Dispose();
+                convertInfo.Boot.Dispose();
+                convertInfo.Snd0.Dispose();
+                convertInfo.Icon1.Dispose();
+                convertInfo.DataPsp.Dispose();
             }
-
-            WriteSTARTDAT(outputStream);
         }
 
         public abstract void WritePSAR(Stream outputStream, uint psarOffset, CancellationToken cancellationToken);
@@ -195,7 +208,7 @@ namespace Popstation.Pbp
                 else
                 {
                     Notify?.Invoke(PopstationEventEnum.WriteBootPng, null);
-                    convertInfo.Boot.Write(outputStream);
+                    outputStream.WriteResource(convertInfo.Boot);
 
                     // Skip boot.png in basePbp
                     basePbp.Read(buffer, 0, (int)header[1]);
@@ -572,7 +585,7 @@ namespace Popstation.Pbp
                     convertInfo.Icon0 = new Resource(ResourceType.ICON0, icon0_buffer, icon0_size);
                 }
 
-                if (convertInfo.DataPsp == null || !convertInfo.DataPsp.Exists)
+                if (convertInfo.DataPsp is not { Exists: true })
                 {
                     uint[] psp_header = new uint[12];
                     // Go to the offset for DATA.PSAR

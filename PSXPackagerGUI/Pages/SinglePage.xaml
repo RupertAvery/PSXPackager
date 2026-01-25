@@ -7,6 +7,8 @@
       xmlns:converters="clr-namespace:PSXPackagerGUI.Converters"
       xmlns:controls="clr-namespace:PSXPackagerGUI.Controls"
       xmlns:models="clr-namespace:PSXPackagerGUI.Models"
+      xmlns:shaders="clr-namespace:PSXPackagerGUI.Shaders"
+      xmlns:resources="clr-namespace:PSXPackagerGUI.Models.Resource"
       mc:Ignorable="d" 
       d:DataContext="{d:DesignInstance models:SingleModelDesignTime, IsDesignTimeCreatable=True}"
       d:DesignHeight="450" d:DesignWidth="800"
@@ -20,14 +22,6 @@
         <ContextMenu x:Key="DiscButtonContextMenu">
             <MenuItem Header="Load Disc Image" x:Name="LoadISO" Click="LoadISO_OnClick" />
             <MenuItem Header="Save As..." x:Name="SaveImage" Click="SaveImage_OnClick" />
-        </ContextMenu>
-        <ContextMenu x:Key="ResourceButtonContextMenu">
-            <MenuItem Header="Revert to Default" x:Name="ResetResource" Click="ResetResource_OnClick" />
-            <MenuItem Header="Load Resource" x:Name="LoadResource" Click="LoadResource_OnClick" />
-            <MenuItem Header="Save As..." x:Name="SaveResource" Click="SaveResource_OnClick" />
-            <Separator x:Name="TemplateSeparator"/>
-            <MenuItem Header="Load From Template" x:Name="LoadFromTemplate" Click="LoadFromTemplate_OnClick" />
-            <MenuItem Header="Save As Template" x:Name="SaveAsTemplate" Click="SaveAsTemplate_OnClick" />
         </ContextMenu>
     </Page.Resources>
     <Grid>
@@ -97,7 +91,7 @@
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
-                    <TabControl Grid.Row="1">
+                    <TabControl Grid.Row="1" Margin="0,5,0,0">
                         <TabItem Header="Disc Metadata">
                             <Grid Margin="5,5,5,5" VerticalAlignment="Top">
                                 <Grid.ColumnDefinitions>
@@ -119,8 +113,9 @@
                                 <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="0" Text="{Binding SelectedDisc.GameID}" MaxLength="9"></TextBox>
                                 <Button Grid.Column="2" Click="SelectGameID_Click">...</Button>
                                 <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="1" Text="{Binding SelectedDisc.Title}" MaxLength="128"></TextBox>
-                                <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="2" Text="{Binding SelectedDisc.SaveID}" MaxLength="9"></TextBox>
-                                <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="3" Text="{Binding SelectedDisc.SaveTitle}" MaxLength="128"></TextBox>
+                                <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="2" Text="{Binding SaveID, UpdateSourceTrigger=PropertyChanged}" MaxLength="9"></TextBox>
+                                <Button Grid.Column="2" Grid.Row="2" Click="SelectSaveID_Click">...</Button>
+                                <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="3" Text="{Binding SaveTitle}" MaxLength="128"></TextBox>
 
                             </Grid>
                         </TabItem>
@@ -216,21 +211,94 @@
 
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="30"/>
-                                    <RowDefinition Height="200"/>
-                                    <RowDefinition Height="360"/>
+                                    <RowDefinition Height="*"/>
+                                    <!--<RowDefinition Height="360"/>
                                     <RowDefinition Height="300"/>
                                     <RowDefinition Height="360"/>
                                     <RowDefinition Height="100"/>
-                                    <RowDefinition Height="200"/>
+                                    <RowDefinition Height="200"/>-->
                                 </Grid.RowDefinitions>
 
-                                <CheckBox Grid.Row="0" VerticalAlignment="Center" IsChecked="{Binding Settings.GenerateIconFrame}">Generate Icon Frame</CheckBox>
-                                <controls:ResourceControl AllowDrop="True" Resource="{Binding Icon0}" Grid.Row="1" Text="Icon Image (ICON0.PNG) 80x80" Drop="Icon0_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
-                                <controls:ResourceControl AllowDrop="True" Resource="{Binding Pic1}" Grid.Row="2" Text="Background Image (PIC1.PNG) 480x272"  Drop="Pic1_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
-                                <controls:ResourceControl AllowDrop="True" Resource="{Binding Pic0}" Grid.Row="3" Text="Information Overlay (PIC0.PNG) 310x180" Drop="Pic0_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
-                                <controls:ResourceControl AllowDrop="True" Resource="{Binding Boot}" Grid.Row="4" Text="Boot Image (BOOT.PNG) 480x272" Drop="Boot_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
-                                <controls:ResourceControl AllowDrop="True" Resource="{Binding Snd0}" Grid.Row="5" Text="Background Music (SND0.AT3)" Drop="Snd0_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
-                                <controls:ResourceControl AllowDrop="True" Resource="{Binding Icon1}" Grid.Row="6" Text="Animated Icon (ICON1.PMF)"  Drop="Icon1_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                                <StackPanel Margin="5,0,5,0" HorizontalAlignment="Left" Orientation="Horizontal">
+                                    <controls:ResourceButton Height="30" Width="100" Label="Icon" IsChecked="{Binding Icon0.IsIncluded}" Click="SelectResource_Click" Tag="ICON0" IsFixed="True">
+                                        <controls:ResourceButton.Style>
+                                            <Style TargetType="controls:ResourceButton">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding CurrentResourceName}" Value="ICON0">
+                                                        <Setter Property="IsActive" Value="True"></Setter>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </controls:ResourceButton.Style>
+                                    </controls:ResourceButton>
+                                    <controls:ResourceButton Height="30" Width="100" Margin="5,0,0,0" Label="Background" IsChecked="{Binding Pic1.IsIncluded}" Click="SelectResource_Click" Tag="PIC1">
+                                        <controls:ResourceButton.Style>
+                                            <Style TargetType="controls:ResourceButton">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding CurrentResourceName}" Value="PIC1">
+                                                        <Setter Property="IsActive" Value="True"></Setter>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </controls:ResourceButton.Style>
+                                    </controls:ResourceButton>
+                                    <controls:ResourceButton Height="30" Width="100" Margin="5,0,0,0" Label="Information" IsChecked="{Binding Pic0.IsIncluded}" Click="SelectResource_Click" Tag="PIC0">
+                                        <controls:ResourceButton.Style>
+                                            <Style TargetType="controls:ResourceButton">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding CurrentResourceName}" Value="PIC0">
+                                                        <Setter Property="IsActive" Value="True"></Setter>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </controls:ResourceButton.Style>
+                                    </controls:ResourceButton>
+                                    <controls:ResourceButton Height="30" Width="100" Margin="5,0,0,0" Label="Boot" IsChecked="{Binding Boot.IsIncluded}" Click="SelectResource_Click" Tag="BOOT">
+                                        <controls:ResourceButton.Style>
+                                            <Style TargetType="controls:ResourceButton">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding CurrentResourceName}" Value="BOOT">
+                                                        <Setter Property="IsActive" Value="True"></Setter>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </controls:ResourceButton.Style>
+                                    </controls:ResourceButton>
+                                    <controls:ResourceButton Height="30" Width="100" Margin="5,0,0,0" Label="Music" IsChecked="{Binding Snd0.IsIncluded}" Click="SelectResource_Click" Tag="SND0">
+                                        <controls:ResourceButton.Style>
+                                            <Style TargetType="controls:ResourceButton">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding CurrentResourceName}" Value="SND0">
+                                                        <Setter Property="IsActive" Value="True"></Setter>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </controls:ResourceButton.Style>
+                                    </controls:ResourceButton>
+                                    <controls:ResourceButton Height="30" Width="100" Margin="5,0,0,0" Label="Animation" IsChecked="{Binding Icon1.IsIncluded}" Click="SelectResource_Click" Tag="ICON1">
+                                        <controls:ResourceButton.Style>
+                                            <Style TargetType="controls:ResourceButton">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding CurrentResourceName}" Value="ICON1">
+                                                        <Setter Property="IsActive" Value="True"></Setter>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </controls:ResourceButton.Style>
+                                    </controls:ResourceButton>
+                                </StackPanel>
+
+                                <Grid Grid.Row="1">
+                                    <controls:ResourceControl Margin="5,5,0,0" AllowDrop="True" Resource="{Binding CurrentResource, Mode=OneWay}"></controls:ResourceControl>
+                                </Grid>
+                                <!--
+                                <CheckBox Grid.Row="1" VerticalAlignment="Center" IsChecked="{Binding Settings.GenerateIconFrame}">Generate Icon Frame</CheckBox>
+                                <controls:ResourceControl AllowDrop="True" Resource="{Binding Icon0}" Grid.Row="2" Text="Icon Image (ICON0.PNG) 80x80" Drop="Icon0_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                                <controls:ResourceControl AllowDrop="True" Resource="{Binding Pic1}" Grid.Row="3" Text="Background Image (PIC1.PNG) 480x272"  Drop="Pic1_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                                <controls:ResourceControl AllowDrop="True" Resource="{Binding Pic0}" Grid.Row="4" Text="Information Overlay (PIC0.PNG) 310x180" Drop="Pic0_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                                <controls:ResourceControl AllowDrop="True" Resource="{Binding Boot}" Grid.Row="5" Text="Boot Image (BOOT.PNG) 480x272" Drop="Boot_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                                <controls:ResourceControl AllowDrop="True" Resource="{Binding Snd0}" Grid.Row="6" Text="Background Music (SND0.AT3)" Drop="Snd0_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>
+                                <controls:ResourceControl AllowDrop="True" Resource="{Binding Icon1}" Grid.Row="7" Text="Animated Icon (ICON1.PMF)"  Drop="Icon1_OnDrop" More="Resource_OnMore" Remove="Resource_OnRemove"></controls:ResourceControl>-->
 
                             </Grid>
                         </ScrollViewer>
@@ -256,8 +324,12 @@
                             </StackPanel>
                         </Grid>
                         <Grid Grid.Row="1" Background="{DynamicResource {x:Static SystemColors.WindowFrameBrushKey}}">
-                            <Image Source="Pack://Application:,,,/Resources/Editor/back.png" Width="480" Height="272" ></Image>
-                            <Image Tag="{Binding Pic1}" AllowDrop="True" Drop="Pic1_OnDrop" Visibility="{Binding ShowBackground, Converter={StaticResource VisibilityConverter}}" Source="{Binding Pic1.Icon}" Width="480" Height="272">
+                            <Image Source="Pack://Application:,,,/Resources/Editor/back.png" Width="480" Height="272" Stretch="Fill" >
+                                <Image.Effect>
+                                    <shaders:WavesEffect x:Name="WavesEffect"/>
+                                </Image.Effect>
+                            </Image>
+                            <Image Tag="{Binding Pic1}" AllowDrop="True" Drop="Pic1_OnDrop" Source="{Binding Pic1.Icon}" Width="480" Height="272">
                                 <Image.ContextMenu>
                                     <ContextMenu DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
                                         <MenuItem Header="Load Background" Click="LoadResource_OnClick"></MenuItem>
@@ -265,8 +337,35 @@
                                         <MenuItem IsEnabled="{Binding IsSaveAsEnabled}" Header="Save Background As..." Click="SaveResource_OnClick"></MenuItem>
                                     </ContextMenu>
                                 </Image.ContextMenu>
+
+                                <Image.Style>
+                                    <Style TargetType="Image">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ShowBackground}" Value="True">
+                                                <DataTrigger.EnterActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                             To="1"
+                                                                             Duration="0:0:0.5"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </DataTrigger.EnterActions>
+                                                <DataTrigger.ExitActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                             To="0"
+                                                                             Duration="0:0:0.5"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </DataTrigger.ExitActions>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Image.Style>
                             </Image>
-                            <Image Tag="{Binding Pic0}" AllowDrop="True" Drop="Pic0_OnDrop" Visibility="{Binding ShowInformation, Converter={StaticResource VisibilityConverter}}" Source="{Binding Pic0.Icon}" Width="310" Height="180" Margin="160,84,0,0">
+                            <Image Tag="{Binding Pic0}" AllowDrop="True" Drop="Pic0_OnDrop" Source="{Binding Pic0.Icon}" Width="310" Height="180" Margin="160,84,0,0">
                                 <Image.ContextMenu>
                                     <ContextMenu DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
                                         <MenuItem Header="Load Information" Click="LoadResource_OnClick"></MenuItem>
@@ -274,8 +373,34 @@
                                         <MenuItem IsEnabled="{Binding IsSaveAsEnabled}" Header="Save Information As..." Click="SaveResource_OnClick"></MenuItem>
                                     </ContextMenu>
                                 </Image.ContextMenu>
+                                <Image.Style>
+                                    <Style TargetType="Image">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ShowInformation}" Value="True">
+                                                <DataTrigger.EnterActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                             To="1"
+                                                                             Duration="0:0:0.5"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </DataTrigger.EnterActions>
+                                                <DataTrigger.ExitActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                             To="0"
+                                                                             Duration="0:0:0.5"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </DataTrigger.ExitActions>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Image.Style>
                             </Image>
-                            <Border Tag="{Binding Icon0}" AllowDrop="True" Drop="Icon0_OnDrop" Visibility="{Binding ShowIcon, Converter={StaticResource VisibilityConverter}}" CornerRadius="8" Height="80" Width="80" Margin="-280,0,0,0">
+                            <Border Tag="{Binding Icon0}" AllowDrop="True" Drop="Icon0_OnDrop" CornerRadius="8" Height="80" Width="80" Margin="-280,0,0,0">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="15" ShadowDepth="1" Opacity="1"/>
                                 </Border.Effect>
@@ -286,10 +411,45 @@
                                         <MenuItem IsEnabled="{Binding IsSaveAsEnabled}" Header="Save Icon As..." Click="SaveResource_OnClick"></MenuItem>
                                     </ContextMenu>
                                 </Border.ContextMenu>
-                                <Image Source="{Binding Icon0.Icon}" Height="80" Width="80"></Image>
+                                <Image Source="{Binding Icon0.Icon}" Height="80" Width="80">
+                                    <Image.Style>
+                                        <Style TargetType="Image">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ShowIcon}" Value="True">
+                                                    <DataTrigger.EnterActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                        To="1"
+                                                                        Duration="0:0:0.5"/>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </DataTrigger.EnterActions>
+                                                    <DataTrigger.ExitActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                        To="0"
+                                                                        Duration="0:0:0.5"/>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </DataTrigger.ExitActions>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Image.Style>
+                                </Image>
                             </Border>
+                            <TextBlock FontFamily="{x:Static resources:FontManager.NewRodinProDBFontFamily}" FontSize="14" FontWeight="Bold" Foreground="White"
+                                       Text="{Binding CurrentTime}"
+                                       TextAlignment="Right"
+                                       Width="480" Height="272" Margin="0,0,25,0">
+                                <TextBlock.Effect>
+                                    <DropShadowEffect BlurRadius="5" ShadowDepth="2"></DropShadowEffect>
+                                </TextBlock.Effect>
+                            </TextBlock>
                         </Grid>
-                        <Grid  Grid.Row="2" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+                        <Grid Grid.Row="2" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
                             <Label>Drag and drop images onto the resource areas to load into the resource. Right-click to show context menu.</Label>
                         </Grid>
                     </Grid>

@@ -109,7 +109,7 @@ namespace Popstation
 
                         if (FileExtensionHelper.IsCue(file))
                         {
-                            var (outfile, srcToc) = ProcessCue(file, options.TempPath);
+                            var (outfile, srcToc) = PreProcessCue(file, options.TempPath);
 
                             result = ConvertIso(originalFile, outfile, srcToc, options, cancellationToken);
                         }
@@ -137,7 +137,7 @@ namespace Popstation
                             {
                                 if (FileExtensionHelper.IsCue(fileEntry))
                                 {
-                                    var (outfile, srcToc) = ProcessCue(Path.Combine(filePath, fileEntry), options.TempPath);
+                                    var (outfile, srcToc) = PreProcessCue(Path.Combine(filePath, fileEntry), options.TempPath);
                                     files.Add(outfile);
                                     tocs.Add(srcToc);
                                 }
@@ -210,100 +210,125 @@ namespace Popstation
             }
         }
 
-        public (string, string) ProcessCue(string file, string tempPath)
+        /// <summary>
+        /// Pre-processes a cue sheet. If multiple .bin files are referenced, merges them into a single .bin file and generates a new cue sheet.
+        /// </summary>
+        /// <param name="cueFilePath"></param>
+        /// <param name="tempPath"></param>
+        /// <returns></returns>
+        public (string, string) PreProcessCue(string cueFilePath, string tempPath)
         {
-            var filePath = Path.GetDirectoryName(file);
+            var cueFile = CueFileReader.Read(cueFilePath);
 
-            var cueFiles = CueFileReader.Read(file);
-            string srcToc = null;
-            if (cueFiles.FileEntries.Count() > 1)
+            // If there are multiple .bin files, merge them into a single .bin
+            if (cueFile.FileEntries.Count > 1)
             {
                 _notifier?.Notify(PopstationEventEnum.Info, $"Merging .bins...");
-                var mergedBin = MergeBins(file, cueFiles, tempPath);
-                var cueFile = Path.Combine(tempPath,
-                    Path.GetFileNameWithoutExtension(mergedBin.Path) + ".cue");
-                CueFileWriter.Write(mergedBin.CueFile, cueFile);
-                srcToc = cueFile;
-                file = mergedBin.Path;
 
-                tempFiles.Add(mergedBin.Path);
-                tempFiles.Add(cueFile);
+                var fileName = Path.GetFileNameWithoutExtension(cueFilePath);
+                var mergedBinFileName = fileName + "_merged.bin";
+                var mergedBinFilePath = Path.Combine(tempPath, mergedBinFileName);
+
+                var mergedCueFileName = fileName + "_merged.cue";
+                var mergedCueFilePath = Path.Combine(tempPath, mergedCueFileName);
+
+                using var outputStream = new FileStream(mergedBinFilePath, FileMode.Create, FileAccess.Write);
+
+                var mergedCueFile = MergeBins(outputStream, mergedBinFileName, cueFile);
+                
+                CueFileWriter.Write(mergedCueFile, mergedCueFilePath);
+
+                tempFiles.Add(mergedBinFilePath);
+                tempFiles.Add(mergedCueFilePath);
+
+                return (mergedBinFilePath, mergedCueFilePath);
             }
             else
             {
-                srcToc = file;
-                file = Path.Combine(filePath, cueFiles.FileEntries.First().FileName);
-            }
+                var cueDirectory = Path.GetDirectoryName(cueFilePath);
+                var binFileName = cueFile.FileEntries[0].FileName;
+                if (!Path.IsPathFullyQualified(binFileName))
+                {
+                    binFileName = Path.Combine(cueDirectory, binFileName);
+                }
 
-            return (file, srcToc);
+                return (binFileName, cueFilePath);
+            }
         }
 
-        static MergedBin MergeBins(string file, CueFile cueFilex, string tempPath)
+
+        /// <summary>
+        /// Merges multiple .bin files referenced in a cue sheet into a single .bin file
+        /// </summary>
+        /// <param name="outputStream">The stream where the merged bin will be written to</param>
+        /// <param name="binFileName">The name of the file that will be generated and placed in the singe FILE entry</param>
+        /// <param name="unmergedCue">The <see cref="CueFile"/> containing the bins to be merged</param>
+        /// <param name="basePath">The path that will be used to find the bins in the cue file if the bin paths are relative</param>
+        /// <returns>The merged <see cref="CueFile"/></returns>
+        public static CueFile MergeBins(Stream outputStream, string binFileName, CueFile unmergedCue)
         {
-            var mergedBin = new MergedBin();
-            mergedBin.CueFile = new CueFile();
-
-            var cueFilePath = Path.GetDirectoryName(file);
-
-
-            long currentFrame = 0;
-
-            var mergedFilename = Path.GetFileNameWithoutExtension(file) + " - MERGED.bin";
-
-            mergedBin.Path = Path.Combine(tempPath, mergedFilename);
-
-            var mcueFile = new CueFileEntry()
+            var mergedCueFileEntry = new CueFileEntry()
             {
-                FileName = mergedFilename,
+                FileName = binFileName,
                 FileType = "BINARY",
                 Tracks = new List<CueTrack>()
             };
 
-            mergedBin.CueFile.FileEntries.Add(mcueFile);
+            var cueFile = new CueFile();
 
-            using (var joinedFile = new FileStream(mergedBin.Path, FileMode.Create, FileAccess.Write))
+            cueFile.FileEntries.Add(mergedCueFileEntry);
+
+            long currentFrame = 0;
+
+            var basePath = Path.GetDirectoryName(unmergedCue.Path);
+
+            // Copy each source bin file into the merged bin
+            foreach (var cueFileEntry in unmergedCue.FileEntries)
             {
-                foreach (var cueFileEntry in cueFilex.FileEntries)
+                var binPath = cueFileEntry.FileName;
+                var binDirectory = Path.GetDirectoryName(binPath);
+
+                // If the bin path is relative, combine it with the base path
+                if (binDirectory == "" || binDirectory.StartsWith("..") || binDirectory.StartsWith("."))
                 {
-                    var binPath = cueFileEntry.FileName;
-                    if (Path.GetDirectoryName(binPath) == "" || Path.GetDirectoryName(binPath).StartsWith("..") || Path.GetDirectoryName(binPath).StartsWith("."))
-                    {
-                        binPath = Path.Combine(cueFilePath, cueFileEntry.FileName);
-                    }
-
-                    using (var srcStream = new FileStream(binPath, FileMode.Open, FileAccess.Read))
-                    {
-                        srcStream.CopyTo(joinedFile);
-
-                        foreach (var item in cueFileEntry.Tracks)
-                        {
-                            var indexes = new List<CueIndex>();
-                            foreach (var idx in item.Indexes)
-                            {
-                                var newIndex = new CueIndex
-                                {
-                                    Number = idx.Number,
-                                    Position = idx.Position + TOCHelper.PositionFromFrames(currentFrame)
-                                };
-                                indexes.Add(newIndex);
-                            }
-                            var newTrack = new CueTrack()
-                            {
-                                DataType = item.DataType,
-                                Number = item.Number,
-                                Indexes = indexes
-                            };
-                            mcueFile.Tracks.Add(newTrack);
-                        }
-
-                        var frames = srcStream.Length / 2352;
-                        currentFrame += frames;
-                    }
-
+                    binPath = Path.Combine(basePath, cueFileEntry.FileName);
                 }
+
+                using (var srcStream = new FileStream(binPath, FileMode.Open, FileAccess.Read))
+                {
+                    srcStream.CopyTo(outputStream);
+
+                    // Copy track data to the merged bin, 
+                    // and adjust the cue sheet indexes accordingly
+                    foreach (var item in cueFileEntry.Tracks)
+                    {
+                        var indexes = new List<CueIndex>();
+
+                        foreach (var idx in item.Indexes)
+                        {
+                            var newIndex = new CueIndex
+                            {
+                                Number = idx.Number,
+                                Position = idx.Position + TOCHelper.PositionFromFrames(currentFrame)
+                            };
+                            indexes.Add(newIndex);
+                        }
+                        var newTrack = new CueTrack()
+                        {
+                            DataType = item.DataType,
+                            Number = item.Number,
+                            Indexes = indexes
+                        };
+                        mergedCueFileEntry.Tracks.Add(newTrack);
+                    }
+
+                    var frames = srcStream.Length / 2352;
+                    currentFrame += frames;
+                }
+
             }
 
-            return mergedBin;
+            return cueFile;
         }
 
         static string Shorten(ulong size)

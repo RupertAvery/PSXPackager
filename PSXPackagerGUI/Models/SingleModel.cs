@@ -26,6 +26,11 @@ namespace PSXPackagerGUI.Models
         private bool _showInformation;
         private bool _showBackground;
         private Track? _selectedTrack;
+        private string _currentTime;
+        private ResourceModel _currentResource;
+        private string _currentResourceName;
+        private string _saveId;
+        private string _saveTitle;
 
         public SettingsModel Settings
         {
@@ -47,6 +52,12 @@ namespace PSXPackagerGUI.Models
         {
             get => _sfoEntries;
             set => SetProperty(ref _sfoEntries, value);
+        }
+
+        public ResourceModel CurrentResource
+        {
+            get => _currentResource;
+            set => SetProperty(ref _currentResource, value);
         }
 
         public ResourceModel Icon0 { get => _icon0; set => SetProperty(ref _icon0, value); }
@@ -89,6 +100,30 @@ namespace PSXPackagerGUI.Models
         {
             get => _selectedTrack;
             set => SetProperty(ref _selectedTrack, value);
+        }
+
+        public string CurrentTime
+        {
+            get => _currentTime;
+            set => SetProperty(ref _currentTime, value);
+        }
+
+        public string CurrentResourceName
+        {
+            get => _currentResourceName;
+            set => SetProperty(ref _currentResourceName, value);
+        }
+
+        public string SaveID
+        {
+            get => _saveId;
+            set => SetProperty(ref _saveId, value);
+        }
+
+        public string SaveTitle
+        {
+            get => _saveTitle;
+            set => SetProperty(ref _saveTitle, value);
         }
     }
 }
