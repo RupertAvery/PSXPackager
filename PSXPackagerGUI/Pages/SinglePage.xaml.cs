@@ -1,4 +1,5 @@
 ﻿using DiscUtils;
+using DiscUtils.Raw;
 using Popstation;
 using Popstation.Database;
 using Popstation.Pbp;
@@ -160,6 +161,15 @@ namespace PSXPackagerGUI.Pages
 
         private void ModelOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
+            switch (e.PropertyName)
+            {
+                case nameof(SingleModel.SaveID):
+                    Model.SFOEntries.FirstOrDefault(d => d.Key == SFOKeys.DISC_ID).Value = Model.SaveID;
+                    break;
+                case nameof(SingleModel.SaveTitle):
+                    Model.SFOEntries.FirstOrDefault(d => d.Key == SFOKeys.TITLE).Value = Model.SaveTitle;
+                    break;
+            }
         }
 
 
@@ -510,20 +520,7 @@ namespace PSXPackagerGUI.Pages
             set => _model = value;
         }
 
-        Regex gameIDregex = new Regex("(SCUS|SLUS|SLES|SCES|SCED|SLPS|SLPM|SCPS|SLED|SLPS|SIPS|ESPM|PBPX)(\\d{5})");
-
-        private void ValidateDisc(Disc disc)
-        {
-            if (!gameIDregex.IsMatch(disc.GameID))
-            {
-                MessageBox.Show(Window, "", "Validation Error");
-            }
-        }
-
-        private void Validate()
-        {
-
-        }
+        Regex gameIDregex = new Regex("(SCUS|SLUS|SLES|SCES|SCED|SLPS|SLPM|SCPS|SLED|SLPS|SIPS|ESPM|PBPX)(\\d{5})", RegexOptions.IgnoreCase);
 
         public void Save(bool pspMode = false)
         {
@@ -541,7 +538,24 @@ namespace PSXPackagerGUI.Pages
                 return;
             }
 
-            var discs = Model.Discs.Where(d => d.SourceUrl != null).OrderBy(d => d.Index).ToList();
+            var discs = Model.Discs.Where(d => !d.IsEmpty).OrderBy(d => d.Index).ToList();
+
+            foreach (var disc in discs)
+            {
+                if (!gameIDregex.IsMatch(disc.GameID))
+                {
+                    MessageBox.Show(Window, $"The GameID {disc.GameID} is not valid.", "PSXPackager",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+            }
+            
+            if (!gameIDregex.IsMatch(Model.SaveID))
+            {
+                MessageBox.Show(Window, $"The SaveID {Model.SaveID} is not valid.", "PSXPackager",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
 
             if (discs.Count == 0)
             {
@@ -632,10 +646,11 @@ namespace PSXPackagerGUI.Pages
 
                     Snd0 = GetResourceOrEmpty(Model.Snd0),
                     Icon1 = GetResourceOrEmpty(Model.Icon1),
-                    
-                    MainGameTitle = disc1.SaveTitle,
-                    MainGameID = disc1.SaveID,
+
+                    MainGameID = Model.SaveID,
+                    MainGameTitle = Model.SaveTitle,
                     MainGameRegion = disc1.Region,
+
                     BasePbp = Path.Combine(appPath, "Resources", "BASE.PBP"),
                     CompressionLevel = _settings.CompressionLevel,
                     //CheckIfFileExists = processOptions.CheckIfFileExists,
@@ -999,8 +1014,8 @@ namespace PSXPackagerGUI.Pages
 
                     disc.GameID = game.GameID;
                     disc.Title = game.Title;
-                    disc.SaveID = game.MainGameID;
-                    disc.SaveTitle = game.MainGameTitle;
+                    Model.SaveID = game.MainGameID;
+                    Model.SaveTitle = game.MainGameTitle;
                     disc.Region = game.Region;
 
                     if (disc.Index == 0)
@@ -1234,7 +1249,7 @@ namespace PSXPackagerGUI.Pages
                 var result = window.ShowDialog();
                 if (result is true)
                 {
-                    _model.SelectedDisc.GameID = window.SelectedGame.SerialID;
+                    _model.SelectedDisc.GameID = window.SelectedGame.GameID;
                     _model.SelectedDisc.Title = window.SelectedGame.Title;
                 }
             }
@@ -1321,6 +1336,21 @@ namespace PSXPackagerGUI.Pages
             }
 
             Model.CurrentResourceName = resourceId;
+        }
+
+        private void SelectSaveID_Click(object sender, RoutedEventArgs e)
+        {
+            if (_model.SelectedDisc is { IsEmpty: false })
+            {
+                var window = new GameListWindow();
+                window.Owner = Window;
+                var result = window.ShowDialog();
+                if (result is true)
+                {
+                    _model.SaveID = window.SelectedGame.MainGameID;
+                    _model.SaveTitle = window.SelectedGame.MainGameTitle;
+                }
+            }
         }
     }
 }

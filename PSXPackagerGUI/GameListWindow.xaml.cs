@@ -53,7 +53,9 @@ namespace PSXPackagerGUI
                 {
                     _model.Entries =
                         new ObservableCollection<GameEntry>(_gameDb.GameEntries.Where(d =>
-                            d.SerialID.ToLower().Contains(searchText) || d.Title.ToLower().Contains(searchText)
+                            d.SerialID.ToLower().Contains(searchText) 
+                            || d.GameID.ToLower().Contains(searchText)
+                            || d.Title.ToLower().Contains(searchText)
                         ));
                 }
                 else

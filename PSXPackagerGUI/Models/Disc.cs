@@ -78,9 +78,7 @@ namespace PSXPackagerGUI.Models
     public class Disc : BaseNotifyModel
     {
         private string _title;
-        private string _saveTitle;
         private string _gameId;
-        private string _saveId;
         private string _region;
         private uint _size;
         private bool _isEmpty;
@@ -102,15 +100,6 @@ namespace PSXPackagerGUI.Models
             get => _title;
             set => SetProperty(ref _title, value);
         }
-
-        public string SaveTitle
-        {
-            get => _saveTitle;
-            set => SetProperty(ref _saveTitle, value);
-        }
-
-        public ICommand LoadCommand { get; set; }
-        public ICommand SaveAsCommand { get; set; }
 
         public ICommand RemoveCommand
         {
@@ -154,12 +143,6 @@ namespace PSXPackagerGUI.Models
             set => SetProperty(ref _gameId, value);
         }
 
-        public string SaveID
-        {
-            get => _saveId;
-            set => SetProperty(ref _saveId, value);
-        }
-
         public string Region
         {
             get => _region;
@@ -167,8 +150,8 @@ namespace PSXPackagerGUI.Models
         }
 
 
-        public string SourceUrl { get; set; }
-        public string SourceTOC { get; set; }
+        public string? SourceUrl { get; set; }
+        public string? SourceTOC { get; set; }
 
         public ObservableCollection<Track> Tracks
         {

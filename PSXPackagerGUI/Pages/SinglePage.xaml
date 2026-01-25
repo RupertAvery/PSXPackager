@@ -113,8 +113,9 @@
                                 <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="0" Text="{Binding SelectedDisc.GameID}" MaxLength="9"></TextBox>
                                 <Button Grid.Column="2" Click="SelectGameID_Click">...</Button>
                                 <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="1" Text="{Binding SelectedDisc.Title}" MaxLength="128"></TextBox>
-                                <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="2" Text="{Binding SelectedDisc.SaveID}" MaxLength="9"></TextBox>
-                                <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="3" Text="{Binding SelectedDisc.SaveTitle}" MaxLength="128"></TextBox>
+                                <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="2" Text="{Binding SaveID, UpdateSourceTrigger=PropertyChanged}" MaxLength="9"></TextBox>
+                                <Button Grid.Column="2" Grid.Row="2" Click="SelectSaveID_Click">...</Button>
+                                <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="3" Text="{Binding SaveTitle}" MaxLength="128"></TextBox>
 
                             </Grid>
                         </TabItem>
