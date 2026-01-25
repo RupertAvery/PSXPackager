@@ -36,8 +36,8 @@
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="30"/>
-                <RowDefinition/>
                 <RowDefinition Height="30"/>
+                <RowDefinition/>
             </Grid.RowDefinitions>
 
             <ToolBar>
@@ -68,19 +68,21 @@
                 </Menu>
             </ToolBar>
 
-            <!--
-            <Label Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Content="{Binding Text, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}"></Label>
-            <Grid Grid.Row="0" Grid.Column="0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition/>
-                    <ColumnDefinition Width="20"/>
-                    <ColumnDefinition Width="20"/>
-                </Grid.ColumnDefinitions>
-                <Button Grid.Column="2" x:Name="MoreButton" IsEnabled="{Binding IsEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}" Click="More_OnClick">...</Button>
+            <Grid Grid.Row="1" Grid.Column="0" Visibility="{Binding SelectedLayer, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}, Converter={StaticResource NotNullVisibilityConverter}}">
+                <StackPanel Orientation="Horizontal">
+                    <Label VerticalContentAlignment="Center">Layer Properties </Label>
+                    <Label Margin="10,0,0,0"  VerticalContentAlignment="Center">X:</Label>
+                    <TextBox Height="24" Width="30" TextAlignment="Center" VerticalContentAlignment="Center" Text="{Binding SelectedLayer.OffsetX, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" KeyUp="Redraw" LostFocus="UIElement_OnLostFocus"></TextBox>
+                    <Label VerticalContentAlignment="Center">Y:</Label>
+                    <TextBox Height="24" Width="30" TextAlignment="Center" VerticalContentAlignment="Center" Text="{Binding SelectedLayer.OffsetY, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" KeyUp="Redraw" LostFocus="UIElement_OnLostFocus"></TextBox>
+                    <Label VerticalContentAlignment="Center">Width:</Label>
+                    <TextBox Height="24" Width="30" TextAlignment="Center" VerticalContentAlignment="Center" Text="{Binding SelectedLayer.Width, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" KeyUp="Redraw" LostFocus="UIElement_OnLostFocus"></TextBox>
+                    <Label VerticalContentAlignment="Center">Height:</Label>
+                    <TextBox Height="24" Width="30" TextAlignment="Center" VerticalContentAlignment="Center" Text="{Binding SelectedLayer.Height, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" KeyUp="Redraw" LostFocus="UIElement_OnLostFocus"></TextBox>
+                </StackPanel>
             </Grid>
-            -->
 
-            <Grid x:Name="Grid" Tag="{Binding .}" Grid.Row="1" Grid.Column="0" MouseDown="UIElement_OnMouseDown" MouseMove="UIElement_OnMouseMove" MouseUp="UIElement_OnMouseUp">
+            <Grid x:Name="Grid" Tag="{Binding .}" Grid.Row="2" Grid.Column="0" MouseDown="UIElement_OnMouseDown" MouseMove="UIElement_OnMouseMove" MouseUp="UIElement_OnMouseUp">
                 <Grid.Background>
                     <DrawingBrush TileMode="Tile"
                               Viewport="0,0,16,16"
@@ -153,20 +155,20 @@
                 </Canvas>
             </Grid>
 
-            <Grid Grid.Row="1" Grid.Column="0">
+            <Grid Grid.Row="2" Grid.Column="0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="100"/>
                 </Grid.ColumnDefinitions>
 
-                <Border Tag="{Binding .}" BorderBrush="#C0C0C0" BorderThickness="1" Width="100" Grid.Column="1">
+                <Border Tag="{Binding .}" BorderBrush="#C0C0C0" BorderThickness="1" Width="100" Grid.Column="2">
                     <Border.ContextMenu>
                         <ContextMenu>
                             <MenuItem Header="Insert Image Layer" Click="AppendImageLayer_OnClick"></MenuItem>
                             <MenuItem Header="Insert Text Layer" Click="AppendTextLayer_OnClick"></MenuItem>
                         </ContextMenu>
                     </Border.ContextMenu>
-                    <ScrollViewer Background="{DynamicResource {x:Static SystemColors.WindowFrameBrushKey}}" Visibility="{Binding Type, Converter={StaticResource VisibilityConverter}}" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Background="{DynamicResource {x:Static SystemColors.WindowFrameBrushKey}}" VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding Layers}" VerticalAlignment="Top">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -223,18 +225,6 @@
                 </Border>
             </Grid>
 
-            <Grid Grid.Row="2" Grid.Column="0" Visibility="{Binding SelectedLayer, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}, Converter={StaticResource NotNullVisibilityConverter}}">
-                <StackPanel Orientation="Horizontal">
-                    <Label VerticalContentAlignment="Center">X:</Label>
-                    <TextBox Width="30" TextAlignment="Center" VerticalContentAlignment="Center" Text="{Binding SelectedLayer.OffsetX, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" KeyUp="Redraw" LostFocus="UIElement_OnLostFocus"></TextBox>
-                    <Label VerticalContentAlignment="Center">Y:</Label>
-                    <TextBox Width="30" TextAlignment="Center" VerticalContentAlignment="Center" Text="{Binding SelectedLayer.OffsetY, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" KeyUp="Redraw" LostFocus="UIElement_OnLostFocus"></TextBox>
-                    <Label VerticalContentAlignment="Center">Width:</Label>
-                    <TextBox Width="30" TextAlignment="Center" VerticalContentAlignment="Center" Text="{Binding SelectedLayer.Width, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" KeyUp="Redraw" LostFocus="UIElement_OnLostFocus"></TextBox>
-                    <Label VerticalContentAlignment="Center">Height:</Label>
-                    <TextBox Width="30" TextAlignment="Center" VerticalContentAlignment="Center" Text="{Binding SelectedLayer.Height, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" KeyUp="Redraw" LostFocus="UIElement_OnLostFocus"></TextBox>
-                </StackPanel>
-            </Grid>
         </Grid>
     </Grid>
 </UserControl>

@@ -23,6 +23,8 @@ namespace PSXPackagerGUI.Controls
                 typeof(ResourceControl),
                 new PropertyMetadata(null, OnResourceChanged));
 
+        private string _toolTip;
+
         private static void OnResourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var control = (ResourceControl)d;
@@ -57,6 +59,16 @@ namespace PSXPackagerGUI.Controls
             set
             {
                 SetValue(ResourceProperty, value);
+                OnPropertyChanged();
+            }
+        }
+
+        public string ToolTip
+        {
+            get => _toolTip;
+            set
+            {
+                _toolTip = value;
                 OnPropertyChanged();
             }
         }
@@ -163,6 +175,11 @@ namespace PSXPackagerGUI.Controls
                         MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
+        }
+
+        private void ImageEditorControl_OnHover(object sender, RoutedEventArgs e)
+        {
+            ToolTip = "Hold CTRL and click to select the top-most object";
         }
     }
 }

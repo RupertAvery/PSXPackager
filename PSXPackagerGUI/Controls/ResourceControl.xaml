@@ -16,7 +16,8 @@
 
         <DataTemplate x:Key="ImageTemplate" DataType="{x:Type resource:ResourceModel}">
             <local:ImageEditorControl Composite="{Binding Composite}"
-                ResourceType="{Binding Type}" 
+                ResourceType="{Binding Type}"
+                Hover="ImageEditorControl_OnHover"
                 Updated="ImageEditorControl_OnUpdated" 
                 Save="ImageEditorControl_OnSave" 
                 Load="ImageEditorControl_OnLoad"></local:ImageEditorControl>
@@ -88,6 +89,15 @@
                     </Style>
                 </ContentControl.Style>
             </ContentControl>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="30"/>
+                </Grid.RowDefinitions>
+                <Border Grid.Row="1" BorderThickness="1" Background="#FFFFEE" BorderBrush="#808060" CornerRadius="5" Padding="4,0,4,0">
+                    <Label Content="{Binding ToolTip, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}"></Label>
+                </Border>
+            </Grid>
         </Grid>
     </Grid>
 </UserControl>

@@ -11,20 +11,25 @@ using System.Windows.Media;
 using Popstation.Pbp;
 using System.Runtime.CompilerServices;
 using System.Collections.ObjectModel;
-using System.Runtime;
 using System.Xml.Serialization;
-using PSXPackagerGUI.Templates;
 using ImageLayer = PSXPackagerGUI.Models.Resource.ImageLayer;
 using Layer = PSXPackagerGUI.Models.Resource.Layer;
 using TextLayer = PSXPackagerGUI.Models.Resource.TextLayer;
-using Popstation;
 using PSXPackagerGUI.Common;
 using PSXPackagerGUI.Models;
 using Resource = PSXPackagerGUI.Templates.Resource;
-using System.Windows.Media.Media3D;
 
 namespace PSXPackagerGUI.Controls
 {
+    public class HoverEventArgs : RoutedEventArgs
+    {
+        public Layer Layer { get; }
+        public HoverEventArgs(RoutedEvent routedEvent, object source, Layer layer) : base(routedEvent, source)
+        {
+            Layer = layer;
+        }
+    }
+
     /// <summary>
     /// Interaction logic for ImageEditorControl.xaml
     /// </summary>
@@ -53,14 +58,16 @@ namespace PSXPackagerGUI.Controls
             EventManager.RegisterRoutedEvent(nameof(Updated), RoutingStrategy.Bubble, typeof(RoutedEventHandler),
                 typeof(ResourceControl));
 
-
         public static readonly RoutedEvent LoadEvent =
             EventManager.RegisterRoutedEvent(nameof(Load), RoutingStrategy.Bubble, typeof(RoutedEventHandler),
                 typeof(ResourceControl));
 
-
         public static readonly RoutedEvent SaveEvent =
             EventManager.RegisterRoutedEvent(nameof(Save), RoutingStrategy.Bubble, typeof(RoutedEventHandler),
+                typeof(ResourceControl));
+
+        public static readonly RoutedEvent HoverEvent =
+            EventManager.RegisterRoutedEvent(nameof(Hover), RoutingStrategy.Bubble, typeof(RoutedEventHandler),
                 typeof(ResourceControl));
 
         public event RoutedEventHandler Updated
@@ -81,7 +88,14 @@ namespace PSXPackagerGUI.Controls
             remove => RemoveHandler(SaveEvent, value);
         }
 
-        public ImageComposite Composite { 
+        public event RoutedEventHandler Hover
+        {
+            add => AddHandler(HoverEvent, value);
+            remove => RemoveHandler(HoverEvent, value);
+        }
+
+        public ImageComposite Composite
+        {
             get => (ImageComposite)GetValue(CompositeProperty);
             set => SetValue(CompositeProperty, value);
         }
@@ -243,36 +257,64 @@ namespace PSXPackagerGUI.Controls
 
         private void UIElement_OnMouseMove(object sender, MouseEventArgs e)
         {
-            if (e.LeftButton != MouseButtonState.Pressed || SelectedLayer == null)
-                return;
+            var element = (UIElement)sender;
 
-            var image = (UIElement)sender;
-            var pos = e.GetPosition(image);
-
-            var deltaX = pos.X - startX;
-            var deltaY = pos.Y - startY;
-
-            if (resizeMode)
+            if (e.LeftButton != MouseButtonState.Pressed)
             {
-                SelectedLayer.Width += deltaX;
-                SelectedLayer.Height += deltaY;
-                SelectedLayer.Width = Math.Max(SelectedLayer.Width, 4);
-                SelectedLayer.Height = Math.Max(SelectedLayer.Height, 4);
+                var pos = e.GetPosition(element);
+                startX = pos.X;
+                startY = pos.Y;
+
+                var offsetX = (Grid.ActualWidth - Composite.Width) / 2;
+                var offsetY = (Grid.ActualHeight - Composite.Height) / 2;
+
+                foreach (var layer in Composite.Layers.Reverse())
+                {
+                    if (pos.X >= offsetX + layer.OffsetX && pos.X <= offsetX + layer.OffsetX + layer.Width &&
+                        pos.Y >= offsetY + layer.OffsetY && pos.Y <= offsetY + layer.OffsetY + layer.Height)
+                    {
+                        var newEventArgs = new HoverEventArgs(HoverEvent, this, layer);
+                        RaiseEvent(newEventArgs);
+                        break;
+                    }
+                }
             }
-            else if (dragStarted)
+            else
             {
-                SelectedLayer.OffsetX += deltaX;
-                SelectedLayer.OffsetY += deltaY;
+
+                if (SelectedLayer == null)
+                {
+                    return;
+                }
+
+                var pos = e.GetPosition(element);
+
+                var deltaX = pos.X - startX;
+                var deltaY = pos.Y - startY;
+
+                if (resizeMode)
+                {
+                    SelectedLayer.Width += deltaX;
+                    SelectedLayer.Height += deltaY;
+                    SelectedLayer.Width = Math.Max(SelectedLayer.Width, 4);
+                    SelectedLayer.Height = Math.Max(SelectedLayer.Height, 4);
+                }
+                else if (dragStarted)
+                {
+                    SelectedLayer.OffsetX += deltaX;
+                    SelectedLayer.OffsetY += deltaY;
+                }
+
+                startX = pos.X;
+                startY = pos.Y;
+
+                if (resizeMode || dragStarted)
+                {
+                    UpdateSelection();
+                    Update();
+                }
             }
 
-            startX = pos.X;
-            startY = pos.Y;
-
-            if (resizeMode || dragStarted)
-            {
-                UpdateSelection();
-                Update();
-            }
         }
 
         private void UIElement_OnMouseUp(object sender, MouseButtonEventArgs e)
@@ -366,6 +408,8 @@ namespace PSXPackagerGUI.Controls
 
                 int width = image.PixelWidth;
                 int height = image.PixelHeight;
+                int originalWidth = width;
+                int originalHeight = height;
 
                 double scale = Math.Min(
                     (double)Composite.Width / image.PixelWidth,
@@ -388,8 +432,8 @@ namespace PSXPackagerGUI.Controls
 
                 newLayer.Width = width;
                 newLayer.Height = height;
-                newLayer.OriginalWidth = width;
-                newLayer.OriginalHeight = height;
+                newLayer.OriginalWidth = originalWidth;
+                newLayer.OriginalHeight = originalHeight;
 
                 Composite.InsertLayerAfter(newLayer, layer);
 
@@ -695,8 +739,11 @@ namespace PSXPackagerGUI.Controls
                     (double)Composite.Width / SelectedLayer.Width,
                     (double)Composite.Height / SelectedLayer.Height);
 
-                SelectedLayer.Width = SelectedLayer.OriginalWidth * scale;
-                SelectedLayer.Height = SelectedLayer.OriginalHeight * scale;
+                SelectedLayer.OffsetX = 0;
+                SelectedLayer.OffsetY = 0;
+
+                SelectedLayer.Width = SelectedLayer.Width * scale;
+                SelectedLayer.Height = SelectedLayer.Height * scale;
 
                 UpdateSelection();
                 Update();
@@ -709,8 +756,11 @@ namespace PSXPackagerGUI.Controls
             {
                 double scale = (double)Composite.Width / SelectedLayer.Width;
 
-                SelectedLayer.Width = SelectedLayer.OriginalWidth * scale;
-                SelectedLayer.Height = SelectedLayer.OriginalHeight * scale;
+                SelectedLayer.OffsetX = 0;
+                SelectedLayer.OffsetY = 0;
+
+                SelectedLayer.Width = SelectedLayer.Width * scale;
+                SelectedLayer.Height = SelectedLayer.Height * scale;
 
                 UpdateSelection();
                 Update();
@@ -723,8 +773,11 @@ namespace PSXPackagerGUI.Controls
             {
                 double scale = (double)Composite.Height / SelectedLayer.Height;
 
-                SelectedLayer.Width = SelectedLayer.OriginalWidth * scale;
-                SelectedLayer.Height = SelectedLayer.OriginalHeight * scale;
+                SelectedLayer.OffsetX = 0;
+                SelectedLayer.OffsetY = 0;
+
+                SelectedLayer.Width = SelectedLayer.Width * scale;
+                SelectedLayer.Height = SelectedLayer.Height * scale;
 
                 UpdateSelection();
                 Update();

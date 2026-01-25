@@ -183,8 +183,9 @@ namespace PSXPackagerGUI.Pages
             Model.Boot.Reset();
 
             ResourceHelper.LoadResource(Model.Icon0, GetDefaultResourceFile(Model.Icon0.Type), true);
-            ResourceHelper.LoadResource(Model.Pic0, GetDefaultResourceFile(Model.Pic0.Type), true);
             ResourceHelper.LoadResource(Model.Pic1, GetDefaultResourceFile(Model.Pic1.Type), true);
+            ResourceHelper.LoadTemplate(Model.Pic0, GetDefaulTemplateFile(Model.Pic0.Type), true);
+            //ResourceHelper.LoadResource(Model.Pic1, GetDefaultResourceFile(Model.Pic1.Type), true);
 
             //LoadResource(Model.Boot, GetDefaultResourceFile(Model.Boot.Type));
             Model.Icon0.IsIncluded = true;
@@ -203,7 +204,7 @@ namespace PSXPackagerGUI.Pages
                 new() { Key = SFOKeys.DISC_ID, Value = "", EntryType = SFOEntryType.STR,IsEditable = true  },
                 new() { Key = SFOKeys.DISC_VERSION, Value =  "1.00", EntryType = SFOEntryType.STR, IsEditable = true  },
                 new() { Key = SFOKeys.LICENSE, Value = SFOValues.License, EntryType = SFOEntryType.STR,IsEditable = true  },
-                new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  SFOValues.ParentalLevel, EntryType = SFOEntryType.NUM, IsEditable = false },
+                new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  SFOValues.ParentalLevel, EntryType = SFOEntryType.NUM, IsEditable = true },
                 new() { Key = SFOKeys.PSP_SYSTEM_VER, Value =  SFOValues.PSPSystemVersion, EntryType = SFOEntryType.STR,IsEditable = true  },
                 new() { Key = SFOKeys.REGION, Value =  0x8000, EntryType = SFOEntryType.NUM, IsEditable = true },
                 new() { Key = SFOKeys.TITLE, Value = "", EntryType = SFOEntryType.STR, IsEditable = true  },
@@ -483,6 +484,12 @@ namespace PSXPackagerGUI.Pages
             var ext = Popstation.Popstation.GetExtensionFromType(type);
 
             return Path.Combine(PSXPackager.Common.ApplicationInfo.AppPath, "Resources", $"{type}.{ext}");
+        }
+
+
+        string GetDefaulTemplateFile(ResourceType type)
+        {
+            return Path.Combine(PSXPackager.Common.ApplicationInfo.AppPath, "Templates", $"{type}.xml");
         }
 
 
