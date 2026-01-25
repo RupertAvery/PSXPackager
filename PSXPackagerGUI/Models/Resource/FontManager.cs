@@ -16,12 +16,12 @@ public static class FontManager
         //pack://application:,,,/Resources/Editor/#FOT-NewRodin Pro DB
 
         var fontUri = new Uri(
-            "pack://application:,,,/Resources/Editor/#FOT-NewRodin Pro DB",
+            "pack://application:,,,/Resources/Editor",
             UriKind.Absolute);
 
         // EXACT family name from font properties
         NewRodinProDBFontFamily =
-            new FontFamily(fontUri, "NewRodinPro-DB");
+            new FontFamily(fontUri, "FOT-NewRodin Pro DB");
 
         NewRodinProDB = new Typeface(
             NewRodinProDBFontFamily,

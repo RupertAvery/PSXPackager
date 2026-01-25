@@ -23,14 +23,6 @@
             <MenuItem Header="Load Disc Image" x:Name="LoadISO" Click="LoadISO_OnClick" />
             <MenuItem Header="Save As..." x:Name="SaveImage" Click="SaveImage_OnClick" />
         </ContextMenu>
-        <ContextMenu x:Key="ResourceButtonContextMenu">
-            <MenuItem Header="Revert to Default" x:Name="ResetResource" Click="ResetResource_OnClick" />
-            <MenuItem Header="Load Resource" x:Name="LoadResource" Click="LoadResource_OnClick" />
-            <MenuItem Header="Save As..." x:Name="SaveResource" Click="SaveResource_OnClick" />
-            <Separator x:Name="TemplateSeparator"/>
-            <MenuItem Header="Load From Template" x:Name="LoadFromTemplate" Click="LoadFromTemplate_OnClick" />
-            <MenuItem Header="Save As Template" x:Name="SaveAsTemplate" Click="SaveAsTemplate_OnClick" />
-        </ContextMenu>
     </Page.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -99,7 +91,7 @@
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
-                    <TabControl Grid.Row="1">
+                    <TabControl Grid.Row="1" Margin="0,5,0,0">
                         <TabItem Header="Disc Metadata">
                             <Grid Margin="5,5,5,5" VerticalAlignment="Top">
                                 <Grid.ColumnDefinitions>
@@ -226,97 +218,73 @@
                                     <RowDefinition Height="200"/>-->
                                 </Grid.RowDefinitions>
 
-                                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                                    <Button Height="30" Width="100" Margin="5,0,0,0" HorizontalContentAlignment="Left" Click="SelectResource_Click" Tag="ICON0">
-                                        <Button.Style>
-                                            <Style TargetType="Button">
+                                <StackPanel Margin="5,0,5,0" HorizontalAlignment="Left" Orientation="Horizontal">
+                                    <controls:ResourceButton Height="30" Width="100" Label="Icon" IsChecked="{Binding Icon0.IsIncluded}" Click="SelectResource_Click" Tag="ICON0" IsFixed="True">
+                                        <controls:ResourceButton.Style>
+                                            <Style TargetType="controls:ResourceButton">
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding CurrentResourceName}" Value="ICON0">
-                                                        <Setter Property="Background" Value="{x:Static SystemColors.ControlDarkBrush}"></Setter>
+                                                        <Setter Property="IsActive" Value="True"></Setter>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
-                                        </Button.Style>
-                                        <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
-                                            <CheckBox IsChecked="{Binding Icon0.IsIncluded}" VerticalContentAlignment="Center"></CheckBox>
-                                            <Label VerticalContentAlignment="Center">Icon</Label>
-                                        </StackPanel>
-                                    </Button>
-                                    <Button Height="30" Width="100" Margin="5,0,0,0" HorizontalContentAlignment="Left" Click="SelectResource_Click" Tag="PIC1">
-                                        <Button.Style>
-                                            <Style TargetType="Button">
+                                        </controls:ResourceButton.Style>
+                                    </controls:ResourceButton>
+                                    <controls:ResourceButton Height="30" Width="100" Margin="5,0,0,0" Label="Background" IsChecked="{Binding Pic1.IsIncluded}" Click="SelectResource_Click" Tag="PIC1">
+                                        <controls:ResourceButton.Style>
+                                            <Style TargetType="controls:ResourceButton">
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding CurrentResourceName}" Value="PIC1">
-                                                        <Setter Property="Background" Value="{x:Static SystemColors.ControlDarkBrush}"></Setter>
+                                                        <Setter Property="IsActive" Value="True"></Setter>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
-                                        </Button.Style>
-                                        <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
-                                            <CheckBox IsChecked="{Binding Pic1.IsIncluded}" VerticalContentAlignment="Center"></CheckBox>
-                                            <Label VerticalContentAlignment="Center">Background</Label>
-                                        </StackPanel>
-                                    </Button>
-                                    <Button Height="30" Width="100" Margin="5,0,0,0" HorizontalContentAlignment="Left" Click="SelectResource_Click" Tag="PIC0">
-                                        <Button.Style>
-                                            <Style TargetType="Button">
+                                        </controls:ResourceButton.Style>
+                                    </controls:ResourceButton>
+                                    <controls:ResourceButton Height="30" Width="100" Margin="5,0,0,0" Label="Information" IsChecked="{Binding Pic0.IsIncluded}" Click="SelectResource_Click" Tag="PIC0">
+                                        <controls:ResourceButton.Style>
+                                            <Style TargetType="controls:ResourceButton">
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding CurrentResourceName}" Value="PIC0">
-                                                        <Setter Property="Background" Value="{x:Static SystemColors.ControlDarkBrush}"></Setter>
+                                                        <Setter Property="IsActive" Value="True"></Setter>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
-                                        </Button.Style>
-                                        <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
-                                            <CheckBox IsChecked="{Binding Pic0.IsIncluded}" VerticalContentAlignment="Center"></CheckBox>
-                                            <Label VerticalContentAlignment="Center">Info</Label>
-                                        </StackPanel>
-                                    </Button>
-                                    <Button Height="30" Width="100" Margin="5,0,0,0" HorizontalContentAlignment="Left" Click="SelectResource_Click" Tag="BOOT">
-                                        <Button.Style>
-                                            <Style TargetType="Button">
+                                        </controls:ResourceButton.Style>
+                                    </controls:ResourceButton>
+                                    <controls:ResourceButton Height="30" Width="100" Margin="5,0,0,0" Label="Boot" IsChecked="{Binding Boot.IsIncluded}" Click="SelectResource_Click" Tag="BOOT">
+                                        <controls:ResourceButton.Style>
+                                            <Style TargetType="controls:ResourceButton">
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding CurrentResourceName}" Value="BOOT">
-                                                        <Setter Property="Background" Value="{x:Static SystemColors.ControlDarkBrush}"></Setter>
+                                                        <Setter Property="IsActive" Value="True"></Setter>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
-                                        </Button.Style>
-                                        <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
-                                            <CheckBox IsChecked="{Binding Boot.IsIncluded}" VerticalContentAlignment="Center"></CheckBox>
-                                            <Label VerticalContentAlignment="Center">Boot</Label>
-                                        </StackPanel>
-                                    </Button>
-                                    <Button Height="30" Width="100" Margin="5,0,0,0" HorizontalContentAlignment="Left" Click="SelectResource_Click" Tag="SND0">
-                                        <Button.Style>
-                                            <Style TargetType="Button">
+                                        </controls:ResourceButton.Style>
+                                    </controls:ResourceButton>
+                                    <controls:ResourceButton Height="30" Width="100" Margin="5,0,0,0" Label="Music" IsChecked="{Binding Snd0.IsIncluded}" Click="SelectResource_Click" Tag="SND0">
+                                        <controls:ResourceButton.Style>
+                                            <Style TargetType="controls:ResourceButton">
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding CurrentResourceName}" Value="SND0">
-                                                        <Setter Property="Background" Value="{x:Static SystemColors.ControlDarkBrush}"></Setter>
+                                                        <Setter Property="IsActive" Value="True"></Setter>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
-                                        </Button.Style>
-                                        <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
-                                            <CheckBox IsChecked="{Binding Snd0.IsIncluded}" VerticalContentAlignment="Center"></CheckBox>
-                                            <Label VerticalContentAlignment="Center">Music</Label>
-                                        </StackPanel>
-                                    </Button>
-                                    <Button Height="30" Width="100" Margin="5,0,0,0" HorizontalContentAlignment="Left" Click="SelectResource_Click" Tag="ICON1">
-                                        <Button.Style>
-                                            <Style TargetType="Button">
+                                        </controls:ResourceButton.Style>
+                                    </controls:ResourceButton>
+                                    <controls:ResourceButton Height="30" Width="100" Margin="5,0,0,0" Label="Animation" IsChecked="{Binding Icon1.IsIncluded}" Click="SelectResource_Click" Tag="ICON1">
+                                        <controls:ResourceButton.Style>
+                                            <Style TargetType="controls:ResourceButton">
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding CurrentResourceName}" Value="ICON1">
-                                                        <Setter Property="Background" Value="{x:Static SystemColors.ControlDarkBrush}"></Setter>
+                                                        <Setter Property="IsActive" Value="True"></Setter>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
-                                        </Button.Style>
-                                        <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
-                                            <CheckBox IsChecked="{Binding Icon1.IsIncluded}" VerticalContentAlignment="Center"></CheckBox>
-                                            <Label VerticalContentAlignment="Center">Animation</Label>
-                                        </StackPanel>
-                                    </Button>
+                                        </controls:ResourceButton.Style>
+                                    </controls:ResourceButton>
                                 </StackPanel>
 
                                 <Grid Grid.Row="1">
@@ -471,7 +439,7 @@
                                     </Image.Style>
                                 </Image>
                             </Border>
-                            <TextBlock FontFamily="New Rodin Pro DB" FontSize="14" FontWeight="Bold" Foreground="White"
+                            <TextBlock FontFamily="{x:Static resources:FontManager.NewRodinProDBFontFamily}" FontSize="14" FontWeight="Bold" Foreground="White"
                                        Text="{Binding CurrentTime}"
                                        TextAlignment="Right"
                                        Width="480" Height="272" Margin="0,0,25,0">
@@ -480,7 +448,7 @@
                                 </TextBlock.Effect>
                             </TextBlock>
                         </Grid>
-                        <Grid  Grid.Row="2" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+                        <Grid Grid.Row="2" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
                             <Label>Drag and drop images onto the resource areas to load into the resource. Right-click to show context menu.</Label>
                         </Grid>
                     </Grid>

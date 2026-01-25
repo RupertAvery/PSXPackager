@@ -172,9 +172,9 @@ namespace PSXPackagerGUI.Pages
             Model.Snd0.Reset();
             Model.Boot.Reset();
 
-            LoadResource(Model.Icon0, GetDefaultResourceFile(Model.Icon0.Type), true);
-            LoadResource(Model.Pic0, GetDefaultResourceFile(Model.Pic0.Type), true);
-            LoadResource(Model.Pic1, GetDefaultResourceFile(Model.Pic1.Type), true);
+            ResourceHelper.LoadResource(Model.Icon0, GetDefaultResourceFile(Model.Icon0.Type), true);
+            ResourceHelper.LoadResource(Model.Pic0, GetDefaultResourceFile(Model.Pic0.Type), true);
+            ResourceHelper.LoadResource(Model.Pic1, GetDefaultResourceFile(Model.Pic1.Type), true);
 
             //LoadResource(Model.Boot, GetDefaultResourceFile(Model.Boot.Type));
             Model.Icon0.IsIncluded = true;
@@ -199,6 +199,7 @@ namespace PSXPackagerGUI.Pages
                 new() { Key = SFOKeys.TITLE, Value = "", EntryType = SFOEntryType.STR, IsEditable = true  },
             };
 
+            Model.CurrentResourceName = "ICON0";
             Model.CurrentResource = Model.Icon0;
         }
 
@@ -270,11 +271,9 @@ namespace PSXPackagerGUI.Pages
                                 resource.Composite.Clear();
                                 resource.Composite.AddLayer(new ImageLayer(ImageProcessing.GetBitmapImage(bootStream), "image", $"pbp://{path}#{resource.Type}"));
                                 resource.RefreshIcon();
-                                resource.IsLoadEnabled = true;
-                                resource.IsSaveAsEnabled = true;
-                                resource.IsRemoveEnabled = true;
                                 resource.SourceUrl = $"pbp://{path}#{resource.Type}";
                                 resource.IsIncluded = true;
+                                resource.HasResource = true;
                             }
                         }
                         else
@@ -288,17 +287,14 @@ namespace PSXPackagerGUI.Pages
                                 resource.Composite.Clear();
                                 resource.Composite.AddLayer(new ImageLayer(ImageProcessing.GetBitmapImage(resourceStream), "image", $"pbp://{path}#{resource.Type}"));
                                 resource.RefreshIcon();
-                                resource.IsLoadEnabled = true;
-                                resource.IsSaveAsEnabled = true;
-                                resource.IsRemoveEnabled = true;
                                 resource.SourceUrl = $"pbp://{path}#{resource.Type}";
                                 resource.IsIncluded = true;
+                                resource.HasResource = true;
                             }
                         }
 
 
                     }
-
 
                     TryLoadResource(Model.Icon0);
                     TryLoadResource(Model.Icon1);
@@ -464,7 +460,7 @@ namespace PSXPackagerGUI.Pages
 
         private Resource GetResourceOrEmpty(ResourceModel resource)
         {
-            if (resource.Stream != null)
+            if (resource is { IsIncluded: true, HasResource: true })
             {
                 return new Resource(resource.Type, resource.Stream, resource.Size);
             }
@@ -482,7 +478,7 @@ namespace PSXPackagerGUI.Pages
 
         private Resource GetResourceOrDefault(ResourceModel resource)
         {
-            if (resource.Stream != null)
+            if (resource is { Stream: not null, IsIncluded: true, HasResource: true })
             {
                 return new Resource(resource.Type, resource.Stream, resource.Size);
             }
@@ -496,12 +492,9 @@ namespace PSXPackagerGUI.Pages
 
                 var info = new FileInfo(fileName);
 
-                using var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+                var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
 
-                var buffer = new byte[info.Length];
-                stream.Read(buffer, 0, (int)info.Length);
-
-                return new Resource(type, buffer, (uint)info.Length);
+                return new Resource(type, stream, (uint)info.Length);
             }
 
             return Resource.Empty(resource.Type);
@@ -629,13 +622,17 @@ namespace PSXPackagerGUI.Pages
                     OutputPath = Path.GetDirectoryName(filename),
                     OriginalFilename = Path.GetFileName(filename),
                     DiscInfos = discs.Select(GetDiscInfo).ToList(),
+                    
                     DataPsp = GetResourceOrDefault(new ResourceModel() { Type = ResourceType.DATA }),
+                    
                     Icon0 = GetResourceOrDefault(Model.Icon0),
-                    Icon1 = GetResourceOrEmpty(Model.Icon1),
-                    Pic0 = GetResourceOrDefault(Model.Pic0),
                     Pic1 = GetResourceOrDefault(Model.Pic1),
-                    Snd0 = GetResourceOrEmpty(Model.Snd0),
+                    Pic0 = GetResourceOrDefault(Model.Pic0),
                     Boot = GetResourceOrEmpty(Model.Boot),
+
+                    Snd0 = GetResourceOrEmpty(Model.Snd0),
+                    Icon1 = GetResourceOrEmpty(Model.Icon1),
+                    
                     MainGameTitle = disc1.SaveTitle,
                     MainGameID = disc1.SaveID,
                     MainGameRegion = disc1.Region,
@@ -1299,7 +1296,7 @@ namespace PSXPackagerGUI.Pages
 
         private void SelectResource_Click(object sender, RoutedEventArgs e)
         {
-            var resourceId = (string)((Button)sender).Tag;
+            var resourceId = (string)((Control)sender).Tag;
 
             switch (resourceId)
             {

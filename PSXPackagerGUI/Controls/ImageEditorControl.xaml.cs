@@ -10,6 +10,18 @@ using System.Windows.Input;
 using System.Windows.Media;
 using Popstation.Pbp;
 using System.Runtime.CompilerServices;
+using System.Collections.ObjectModel;
+using System.Runtime;
+using System.Xml.Serialization;
+using PSXPackagerGUI.Templates;
+using ImageLayer = PSXPackagerGUI.Models.Resource.ImageLayer;
+using Layer = PSXPackagerGUI.Models.Resource.Layer;
+using TextLayer = PSXPackagerGUI.Models.Resource.TextLayer;
+using Popstation;
+using PSXPackagerGUI.Common;
+using PSXPackagerGUI.Models;
+using Resource = PSXPackagerGUI.Templates.Resource;
+using System.Windows.Media.Media3D;
 
 namespace PSXPackagerGUI.Controls
 {
@@ -37,6 +49,38 @@ namespace PSXPackagerGUI.Controls
                 typeof(ImageEditorControl),
                 new PropertyMetadata(ResourceType.BOOT));
 
+        public static readonly RoutedEvent UpdatedEvent =
+            EventManager.RegisterRoutedEvent(nameof(Updated), RoutingStrategy.Bubble, typeof(RoutedEventHandler),
+                typeof(ResourceControl));
+
+
+        public static readonly RoutedEvent LoadEvent =
+            EventManager.RegisterRoutedEvent(nameof(Load), RoutingStrategy.Bubble, typeof(RoutedEventHandler),
+                typeof(ResourceControl));
+
+
+        public static readonly RoutedEvent SaveEvent =
+            EventManager.RegisterRoutedEvent(nameof(Save), RoutingStrategy.Bubble, typeof(RoutedEventHandler),
+                typeof(ResourceControl));
+
+        public event RoutedEventHandler Updated
+        {
+            add => AddHandler(UpdatedEvent, value);
+            remove => RemoveHandler(UpdatedEvent, value);
+        }
+
+        public event RoutedEventHandler Load
+        {
+            add => AddHandler(LoadEvent, value);
+            remove => RemoveHandler(LoadEvent, value);
+        }
+
+        public event RoutedEventHandler Save
+        {
+            add => AddHandler(SaveEvent, value);
+            remove => RemoveHandler(SaveEvent, value);
+        }
+
         public ImageComposite Composite { 
             get => (ImageComposite)GetValue(CompositeProperty);
             set => SetValue(CompositeProperty, value);
@@ -55,7 +99,9 @@ namespace PSXPackagerGUI.Controls
         private bool dragStarted;
         private Selection? _selection;
 
-    
+
+        public SettingsModel Settings => ServiceLocator.Settings;
+
         public Selection? Selection
         {
             get => _selection;
@@ -70,6 +116,7 @@ namespace PSXPackagerGUI.Controls
         {
             InitializeComponent();
             Selection = new Selection();
+            SizeChanged += (s, e) => UpdateSelection();
         }
 
 
@@ -142,7 +189,8 @@ namespace PSXPackagerGUI.Controls
                 if (SelectedLayer is TextLayer textLayer)
                 {
                     EditText(textLayer);
-                    //Resource.RefreshIcon();
+                    UpdateSelection();
+                    Update();
                 }
             }
 
@@ -170,8 +218,8 @@ namespace PSXPackagerGUI.Controls
                     var cornerX = offsetX + slayer.OffsetX + slayer.Width;
                     var cornerY = offsetY + slayer.OffsetY + slayer.Height;
 
-                    if (pos.X >= cornerX - 4 && pos.X <= cornerX + 4 &&
-                        pos.Y >= cornerY - 4 && pos.Y <= cornerY + 4)
+                    if (pos.X >= cornerX - 6 && pos.X <= cornerX + 6 &&
+                        pos.Y >= cornerY - 6 && pos.Y <= cornerY + 6)
                     {
                         resizeMode = true;
                     }
@@ -223,7 +271,7 @@ namespace PSXPackagerGUI.Controls
             if (resizeMode || dragStarted)
             {
                 UpdateSelection();
-                //Resource.RefreshIcon();
+                Update();
             }
         }
 
@@ -244,7 +292,7 @@ namespace PSXPackagerGUI.Controls
                 if (SelectedLayer is TextLayer textLayer)
                 {
                     EditText(textLayer);
-                    //Resource.RefreshIcon();
+                    Update();
                 }
             }
         }
@@ -254,7 +302,7 @@ namespace PSXPackagerGUI.Controls
             if (Composite != null && TryGetLayer(sender, out var layer))
             {
                 Composite.MoveLayerDown(layer);
-                //Resource.RefreshIcon();
+                Update();
             }
         }
 
@@ -274,7 +322,7 @@ namespace PSXPackagerGUI.Controls
 
             SelectedLayer = newLayer;
             UpdateSelection();
-            //Resource.RefreshIcon();
+            Update();
         }
 
         private void AppendTextLayer_OnClick(object sender, RoutedEventArgs e)
@@ -297,7 +345,7 @@ namespace PSXPackagerGUI.Controls
 
                 SelectedLayer = newLayer;
                 UpdateSelection();
-                //Resource.RefreshIcon();
+                Update();
             }
         }
 
@@ -316,14 +364,14 @@ namespace PSXPackagerGUI.Controls
 
                 var image = ImageProcessing.GetBitmapImage(stream);
 
+                int width = image.PixelWidth;
+                int height = image.PixelHeight;
+
                 double scale = Math.Min(
                     (double)Composite.Width / image.PixelWidth,
                     (double)Composite.Height / image.PixelHeight);
 
-                int width = image.PixelWidth;
-                int height = image.PixelHeight;
-
-                if (scale >= 1)
+                if (scale < 1)
                 {
                     var resizeResult = MessageBox.Show(App.Current.MainWindow,
                         "The selected image is larger than the content area. Do you want to resize it to fit?",
@@ -332,8 +380,7 @@ namespace PSXPackagerGUI.Controls
                     if (resizeResult == MessageBoxResult.Yes)
                     {
                         width = (int)(width * scale);
-                        height = (int)(width * scale);
-
+                        height = (int)(height * scale);
                     }
                 }
 
@@ -348,7 +395,7 @@ namespace PSXPackagerGUI.Controls
 
                 SelectedLayer = newLayer;
                 UpdateSelection();
-                //Resource.RefreshIcon();
+                Update();
             }
         }
 
@@ -374,7 +421,7 @@ namespace PSXPackagerGUI.Controls
 
                     SelectedLayer = newLayer;
                     UpdateSelection();
-                    //Resource.RefreshIcon();
+                    Update();
                 }
             }
         }
@@ -389,7 +436,7 @@ namespace PSXPackagerGUI.Controls
                     SelectedLayer = null;
                 }
                 UpdateSelection();
-                //Resource.RefreshIcon();
+                Update();
             }
         }
 
@@ -397,7 +444,7 @@ namespace PSXPackagerGUI.Controls
         {
             if (Composite != null && TryGetLayer(sender, out var layer))
             {
-                //Resource.RefreshIcon();
+                Update();
             }
         }
 
@@ -406,7 +453,7 @@ namespace PSXPackagerGUI.Controls
             if (Composite != null && TryGetLayer(sender, out var layer))
             {
                 Composite.MoveLayerUp(layer);
-                //Resource.RefreshIcon();
+                Update();
             }
         }
 
@@ -416,7 +463,7 @@ namespace PSXPackagerGUI.Controls
             {
                 layer.Reset();
                 UpdateSelection();
-                //Resource.RefreshIcon();
+                Update();
             }
 
         }
@@ -428,7 +475,7 @@ namespace PSXPackagerGUI.Controls
                 case MenuItem { DataContext: Layer l }:
                     layer = l;
                     return true;
-                case MenuItem { DataContext: ResourceModel model }:
+                case MenuItem { DataContext: ImageComposite model }:
                     if (SelectedLayer == null)
                     {
                         SelectedLayer = Composite.Layers.LastOrDefault();
@@ -445,14 +492,14 @@ namespace PSXPackagerGUI.Controls
             if (e.Key == Key.Return)
             {
                 Composite.Render();
-                //Resource.RefreshIcon();
+                Update();
             }
         }
 
         private void UIElement_OnLostFocus(object sender, RoutedEventArgs e)
         {
             Composite.Render();
-            //Resource.RefreshIcon();
+            Update();
         }
 
         private void EditText_OnClick(object sender, RoutedEventArgs e)
@@ -460,7 +507,7 @@ namespace PSXPackagerGUI.Controls
             if (Composite != null && TryGetLayer(sender, out var layer))
             {
                 EditText((TextLayer)layer);
-                //Resource.RefreshIcon();
+                Update();
             }
         }
 
@@ -509,7 +556,8 @@ namespace PSXPackagerGUI.Controls
                         SelectedLayer.OffsetY++;
                         break;
                 }
-                //Resource.RefreshIcon();
+                UpdateSelection();
+                Update();
                 e.Handled = true;
             }
         }
@@ -525,6 +573,162 @@ namespace PSXPackagerGUI.Controls
         protected void OnPropertyChanged([CallerMemberName] string name = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
+
+        private void Update()
+        {
+            var newEventArgs = new RoutedEventArgs(UpdatedEvent, this);
+            RaiseEvent(newEventArgs);
+        }
+
+        private void LoadTemplate_Click(object sender, RoutedEventArgs e)
+        {
+            var openFileDialog = new Microsoft.Win32.OpenFileDialog();
+
+            openFileDialog.InitialDirectory = Settings.LastTemplateDirectory ?? Path.Combine(ApplicationInfo.AppPath, "Templates");
+
+            openFileDialog.Filter = "Template files|*.xml|All files|*.*";
+
+            var result = openFileDialog.ShowDialog();
+
+            if (result is true)
+            {
+                var basePath = Path.GetDirectoryName(openFileDialog.FileName);
+
+                Settings.LastTemplateDirectory = basePath;
+
+                XmlSerializer serializer = new XmlSerializer(typeof(Resource));
+
+                using (FileStream stream = File.OpenRead(openFileDialog.FileName))
+                {
+                    try
+                    {
+                        var xmlResource = (Resource)serializer.Deserialize(stream)!;
+                        var resourceTemplate = xmlResource.ToResourceTemplate(basePath!);
+                        if (resourceTemplate.ResourceType != ResourceType)
+                        {
+                            var confirmResult = MessageBox.Show(Application.Current.MainWindow,
+                                $"The selected template does not match the resource type {ResourceType}. Are you sure you want to continue?",
+                                "PSXPackager",
+                                MessageBoxButton.YesNo,
+                                MessageBoxImage.Warning
+                            );
+
+                            if (confirmResult == MessageBoxResult.No)
+                            {
+                                return;
+                            }
+                        }
+                        Composite.Layers = new ObservableCollection<Layer>(resourceTemplate.Layers);
+                        Update();
+                    }
+                    catch (Exception exception)
+                    {
+                        MessageBox.Show(Application.Current.MainWindow, $"Failed to load template:\n{exception.Message}", "PSXPackager",
+                            MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+        }
+
+        private void SaveAsTemplate_Click(object sender, RoutedEventArgs e)
+        {
+            var saveFileDialog = new Microsoft.Win32.SaveFileDialog();
+            saveFileDialog.InitialDirectory = Settings.LastTemplateDirectory ?? Path.Combine(ApplicationInfo.AppPath, "Templates");
+            saveFileDialog.AddExtension = true;
+            saveFileDialog.Filter = "Template files|*.xml|All files|*.*";
+            var result = saveFileDialog.ShowDialog();
+
+            if (result is true)
+            {
+
+                var basePath = Path.GetDirectoryName(saveFileDialog.FileName);
+
+                Settings.LastTemplateDirectory = basePath;
+
+                var resourceTemplate = new ResourceTemplate
+                {
+                    ResourceType = ResourceType,
+                    Width = Composite.Width,
+                    Height = Composite.Height,
+                    Layers = Composite.Layers.ToList()
+                };
+
+                var template = resourceTemplate.ToTemplateResource();
+
+                foreach (var layer in template.Layers)
+                {
+                    if (layer is Templates.ImageLayer imageLayer)
+                    {
+                        if (Path.GetDirectoryName(imageLayer.SourceUri) == basePath)
+                        {
+                            imageLayer.SourceUri = Path.GetRelativePath(basePath!, imageLayer.SourceUri);
+                        }
+                    }
+                }
+
+                XmlSerializer serializer = new XmlSerializer(typeof(Resource));
+                using (TextWriter writer = new StreamWriter(saveFileDialog.FileName))
+                {
+                    serializer.Serialize(writer, template);
+                }
+            }
+        }
+
+        private void SaveAs_Click(object sender, RoutedEventArgs e)
+        {
+            var newEventArgs = new RoutedEventArgs(SaveEvent, this);
+            RaiseEvent(newEventArgs);
+        }
+
+        private void Load_Click(object sender, RoutedEventArgs e)
+        {
+            var newEventArgs = new RoutedEventArgs(LoadEvent, this);
+            RaiseEvent(newEventArgs);
+        }
+
+        private void FitBounds_Click(object sender, RoutedEventArgs e)
+        {
+            if (SelectedLayer != null)
+            {
+                double scale = Math.Min(
+                    (double)Composite.Width / SelectedLayer.Width,
+                    (double)Composite.Height / SelectedLayer.Height);
+
+                SelectedLayer.Width = SelectedLayer.OriginalWidth * scale;
+                SelectedLayer.Height = SelectedLayer.OriginalHeight * scale;
+
+                UpdateSelection();
+                Update();
+            }
+        }
+
+        private void FitWidth_Click(object sender, RoutedEventArgs e)
+        {
+            if (SelectedLayer != null)
+            {
+                double scale = (double)Composite.Width / SelectedLayer.Width;
+
+                SelectedLayer.Width = SelectedLayer.OriginalWidth * scale;
+                SelectedLayer.Height = SelectedLayer.OriginalHeight * scale;
+
+                UpdateSelection();
+                Update();
+            }
+        }
+
+        private void FitHeight_Click(object sender, RoutedEventArgs e)
+        {
+            if (SelectedLayer != null)
+            {
+                double scale = (double)Composite.Height / SelectedLayer.Height;
+
+                SelectedLayer.Width = SelectedLayer.OriginalWidth * scale;
+                SelectedLayer.Height = SelectedLayer.OriginalHeight * scale;
+
+                UpdateSelection();
+                Update();
+            }
         }
     }
 }

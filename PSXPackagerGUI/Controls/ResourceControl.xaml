@@ -15,13 +15,29 @@
         <converters:BooleanVisibilityConverter x:Key="BooleanVisibilityConverter"></converters:BooleanVisibilityConverter>
 
         <DataTemplate x:Key="ImageTemplate" DataType="{x:Type resource:ResourceModel}">
-            <local:ImageEditorControl Composite="{Binding Composite}" ResourceType="{Binding ResourceType}"></local:ImageEditorControl>
+            <local:ImageEditorControl Composite="{Binding Composite}"
+                ResourceType="{Binding Type}" 
+                Updated="ImageEditorControl_OnUpdated" 
+                Save="ImageEditorControl_OnSave" 
+                Load="ImageEditorControl_OnLoad"></local:ImageEditorControl>
         </DataTemplate>
 
         <DataTemplate x:Key="SoundTemplate" DataType="{x:Type resource:ResourceModel}">
+            <Grid Background="{x:Static SystemColors.ControlBrush}">
+                <StackPanel Width="200" Height="100">
+                    <Button Width="200" Height="30" Margin="0,0,0,5" Click="LoadResource_OnClick">Load AT3</Button>
+                    <Button IsEnabled="{Binding HasResource}" Width="200" Height="30" Click="SaveResource_OnClick">Save AT3 Resource</Button>
+                </StackPanel>
+            </Grid>
         </DataTemplate>
 
         <DataTemplate x:Key="AnimationTemplate" DataType="{x:Type resource:ResourceModel}">
+            <Grid Background="{x:Static SystemColors.ControlBrush}">
+                <StackPanel Width="200" Height="100">
+                    <Button Width="200" Height="30" Margin="0,0,0,5" Click="LoadResource_OnClick">Load PMF</Button>
+                    <Button IsEnabled="{Binding HasResource}" Width="200" Height="30" Click="SaveResource_OnClick">Save PMF As</Button>
+                </StackPanel>
+            </Grid>
         </DataTemplate>
 
     </UserControl.Resources>
@@ -41,7 +57,7 @@
                 <Label.Effect>
                     <DropShadowEffect BlurRadius="4" ShadowDepth="2"></DropShadowEffect>
                 </Label.Effect>
-                Not Included
+                Empty
             </Label>
         </Grid>
         <Grid Visibility="{Binding IsIncluded, Converter={StaticResource BooleanVisibilityConverter}}">

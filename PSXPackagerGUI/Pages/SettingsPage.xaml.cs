@@ -51,6 +51,8 @@ namespace PSXPackagerGUI.Pages
 
             Model = settings;
 
+            ServiceLocator.Settings = Model;
+
             var version = typeof(SettingsPage).Assembly.GetName().Version;
 
             Model.Version = $"PSXPackagerGUI {version.Major}.{version.Minor}.{version.Build}";

@@ -3,21 +3,22 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows.Media;
+using Popstation.Pbp;
 using PSXPackagerGUI.Pages;
 
 namespace PSXPackagerGUI.Models.Resource;
 
 public static class ImageCompositeExtensions
 {
-    public static Templates.Resource ToTemplateResource(this ResourceModel resource)
+    public static Templates.Resource ToTemplateResource(this ResourceTemplate resourceTemplate)
     {
         // Convert ImageComposite back to Templates.Resource
         return new Templates.Resource()
         {
-            ResourceType = resource.Type,
-            Width = resource.Composite.Width,
-            Height = resource.Composite.Height,
-            Layers = resource.Composite.Layers.Select(layer =>
+            ResourceType = resourceTemplate.ResourceType,
+            Width = resourceTemplate.Width,
+            Height = resourceTemplate.Height,
+            Layers = resourceTemplate.Layers.Select(layer =>
             {
                 return layer switch
                 {

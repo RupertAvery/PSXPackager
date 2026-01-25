@@ -1,3 +1,4 @@
+using PSXPackagerGUI.Common;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -14,7 +15,7 @@ public partial class SinglePage
     {
         if (TryGetFilename(e.Data, imageExtensions, out var filename))
         {
-            LoadResource(Model.Icon0, filename);
+            ResourceHelper.LoadResource(Model.Icon0, filename);
             return;
         }
         MessageBox.Show(Window, "Invalid fie type", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -24,7 +25,7 @@ public partial class SinglePage
     {
         if (TryGetFilename(e.Data, imageExtensions, out var filename))
         {
-            LoadResource(Model.Icon1, filename);
+            ResourceHelper.LoadResource(Model.Icon1, filename);
             return;
         }
         MessageBox.Show(Window, "Invalid fie type", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -34,7 +35,7 @@ public partial class SinglePage
     {
         if (TryGetFilename(e.Data, imageExtensions, out var filename))
         {
-            LoadResource(Model.Pic0, filename);
+            ResourceHelper.LoadResource(Model.Pic0, filename);
             return;
         }
         MessageBox.Show(Window, "Invalid fie type", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -44,7 +45,7 @@ public partial class SinglePage
     {
         if (TryGetFilename(e.Data, imageExtensions, out var filename))
         {
-            LoadResource(Model.Pic1, filename);
+            ResourceHelper.LoadResource(Model.Pic1, filename);
             return;
         }
         MessageBox.Show(Window, "Invalid fie type", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -54,7 +55,7 @@ public partial class SinglePage
     {
         if (TryGetFilename(e.Data, imageExtensions, out var filename))
         {
-            LoadResource(Model.Boot, filename);
+            ResourceHelper.LoadResource(Model.Boot, filename);
             return;
         }
         MessageBox.Show(Window, "Invalid fie type", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -64,7 +65,7 @@ public partial class SinglePage
     {
         if (TryGetFilename(e.Data, new[] { ".at3" }, out var filename))
         {
-            LoadResource(Model.Snd0, filename);
+            ResourceHelper.LoadResource(Model.Snd0, filename);
         }
         MessageBox.Show(Window, "Invalid fie type", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Warning);
     }

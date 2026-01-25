@@ -40,16 +40,45 @@
                 <RowDefinition Height="30"/>
             </Grid.RowDefinitions>
 
-            <Label Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Content="{Binding Text, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}"></Label>
+            <ToolBar>
+                <Menu>
+                    <MenuItem Header="_File">
+                        <MenuItem Header="Load Image" Click="Load_Click">
+                        </MenuItem>
+                        <MenuItem Header="Save As" Click="SaveAs_Click">
+                        </MenuItem>
+                        <Separator/>
+                        <MenuItem Header="Load Template" Click="LoadTemplate_Click">
+                        </MenuItem>
+                        <MenuItem Header="Save As Template" Click="SaveAsTemplate_Click">
+                        </MenuItem>
+                        <Separator/>
+                        <MenuItem Header="Clear">
+                        </MenuItem>
+                    </MenuItem>
+                    <MenuItem Header="_Layer">
+                        <MenuItem Header="Insert Image" Click="InsertImageLayer_OnClick">
+                        </MenuItem>
+                        <MenuItem Header="Insert Text" Click="InsertTextLayer_OnClick">
+                        </MenuItem>
+                        <MenuItem Header="Reset" Click="ResetLayer_OnClick">
 
-            <!--<Grid Grid.Row="0" Grid.Column="0">
+                        </MenuItem>
+                    </MenuItem>
+                </Menu>
+            </ToolBar>
+
+            <!--
+            <Label Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Content="{Binding Text, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}"></Label>
+            <Grid Grid.Row="0" Grid.Column="0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition/>
                     <ColumnDefinition Width="20"/>
                     <ColumnDefinition Width="20"/>
                 </Grid.ColumnDefinitions>
                 <Button Grid.Column="2" x:Name="MoreButton" IsEnabled="{Binding IsEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}" Click="More_OnClick">...</Button>
-            </Grid>-->
+            </Grid>
+            -->
 
             <Grid x:Name="Grid" Tag="{Binding .}" Grid.Row="1" Grid.Column="0" MouseDown="UIElement_OnMouseDown" MouseMove="UIElement_OnMouseMove" MouseUp="UIElement_OnMouseUp">
                 <Grid.Background>
@@ -70,9 +99,9 @@
                 </Grid.Background>
                 <Grid.ContextMenu>
                     <ContextMenu IsEnabled="{Binding PlacementTarget.Tag.HasLayers, RelativeSource={RelativeSource Self}}">
-                        <MenuItem Header="Fit to bounds"></MenuItem>
-                        <MenuItem Header="Fit to width"></MenuItem>
-                        <MenuItem Header="Fit to height"></MenuItem>
+                        <MenuItem Header="Fit to bounds" Click="FitBounds_Click"></MenuItem>
+                        <MenuItem Header="Fit to width" Click="FitWidth_Click"></MenuItem>
+                        <MenuItem Header="Fit to height" Click="FitHeight_Click"></MenuItem>
                         <Separator></Separator>
                         <MenuItem Header="Insert image layer" Click="InsertImageLayer_OnClick"></MenuItem>
                         <MenuItem Header="Insert text layer" Click="InsertTextLayer_OnClick"></MenuItem>

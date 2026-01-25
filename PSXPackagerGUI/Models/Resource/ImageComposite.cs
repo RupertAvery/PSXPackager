@@ -78,9 +78,6 @@ public class ImageComposite : BaseNotifyModel
 
     public void RenderLayers()
     {
-        if (Layers.Count == 0)
-            return;
-
         var visual = new DrawingVisual();
 
 
