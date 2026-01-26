@@ -76,7 +76,11 @@ public static class ImageCompositeExtensions
                         OffsetX = imgLayer.X,
                         OffsetY = imgLayer.Y,
                         Width = imgLayer.Width,
-                        Height = imgLayer.Height
+                        Height = imgLayer.Height,
+                        OriginalOffsetX = imgLayer.X,
+                        OriginalOffsetY = imgLayer.Y,
+                        OriginalWidth = imgLayer.Width,
+                        OriginalHeight = imgLayer.Height,
                     };
                     layers.Add(imageLayer);
                 }
@@ -94,7 +98,11 @@ public static class ImageCompositeExtensions
                         OffsetX = textLayer.X,
                         OffsetY = textLayer.Y,
                         Width = textLayer.Width,
-                        Height = textLayer.Height
+                        Height = textLayer.Height,
+                        OriginalOffsetX = textLayer.X,
+                        OriginalOffsetY = textLayer.Y,
+                        OriginalWidth = textLayer.Width,
+                        OriginalHeight = textLayer.Height,
                     };
                     layers.Add(textLayerModel);
                 }

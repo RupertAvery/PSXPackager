@@ -6,6 +6,7 @@
              xmlns:local="clr-namespace:PSXPackagerGUI.Controls"
              xmlns:resource="clr-namespace:PSXPackagerGUI.Models.Resource"
              xmlns:converters="clr-namespace:PSXPackagerGUI.Converters"
+             xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
@@ -56,33 +57,49 @@
                         <MenuItem Header="Clear">
                         </MenuItem>
                     </MenuItem>
+                    <MenuItem Header="_Edit">
+                        <MenuItem Header="Undo" InputGestureText="Ctrl+Z" Click="Undo_Click">
+                        </MenuItem>
+                        <MenuItem Header="Redo" InputGestureText="Ctrl+Y" Click="Redo_Click">
+                        </MenuItem>
+                    </MenuItem>
                     <MenuItem Header="_Layer">
                         <MenuItem Header="Insert Image" Click="InsertImageLayer_OnClick">
                         </MenuItem>
                         <MenuItem Header="Insert Text" Click="InsertTextLayer_OnClick">
                         </MenuItem>
                         <MenuItem Header="Reset" Click="ResetLayer_OnClick">
-
+                        </MenuItem>
+                        <Separator/>
+                        <MenuItem Header="Clear Layers" Click="ClearLayers_OnClick">
                         </MenuItem>
                     </MenuItem>
                 </Menu>
             </ToolBar>
 
             <Grid Grid.Row="1" Grid.Column="0" Visibility="{Binding SelectedLayer, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}, Converter={StaticResource NotNullVisibilityConverter}}">
-                <StackPanel Orientation="Horizontal">
-                    <Label VerticalContentAlignment="Center">Layer Properties </Label>
+                <StackPanel Orientation="Horizontal" DataContext="{Binding SelectedLayer, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}">
+                    <Label VerticalContentAlignment="Center">Layer</Label>
                     <Label Margin="10,0,0,0"  VerticalContentAlignment="Center">X:</Label>
-                    <TextBox Height="24" Width="30" TextAlignment="Center" VerticalContentAlignment="Center" Text="{Binding SelectedLayer.OffsetX, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" KeyUp="Redraw" LostFocus="UIElement_OnLostFocus"></TextBox>
+                    <TextBox Height="24" Width="30" TextAlignment="Center" VerticalContentAlignment="Center" Text="{Binding OffsetX, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" KeyUp="Redraw" GotFocus="UIElement_OnGotFocus" LostFocus="UIElement_OnLostFocus"></TextBox>
                     <Label VerticalContentAlignment="Center">Y:</Label>
-                    <TextBox Height="24" Width="30" TextAlignment="Center" VerticalContentAlignment="Center" Text="{Binding SelectedLayer.OffsetY, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" KeyUp="Redraw" LostFocus="UIElement_OnLostFocus"></TextBox>
+                    <TextBox Height="24" Width="30" TextAlignment="Center" VerticalContentAlignment="Center" Text="{Binding OffsetY, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" KeyUp="Redraw" GotFocus="UIElement_OnGotFocus" LostFocus="UIElement_OnLostFocus"></TextBox>
                     <Label VerticalContentAlignment="Center">Width:</Label>
-                    <TextBox Height="24" Width="30" TextAlignment="Center" VerticalContentAlignment="Center" Text="{Binding SelectedLayer.Width, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" KeyUp="Redraw" LostFocus="UIElement_OnLostFocus"></TextBox>
+                    <TextBox Height="24" Width="30" TextAlignment="Center" VerticalContentAlignment="Center" Text="{Binding Width, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" KeyUp="Redraw" GotFocus="UIElement_OnGotFocus" LostFocus="UIElement_OnLostFocus"></TextBox>
                     <Label VerticalContentAlignment="Center">Height:</Label>
-                    <TextBox Height="24" Width="30" TextAlignment="Center" VerticalContentAlignment="Center" Text="{Binding SelectedLayer.Height, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" KeyUp="Redraw" LostFocus="UIElement_OnLostFocus"></TextBox>
+                    <TextBox Height="24" Width="30" TextAlignment="Center" VerticalContentAlignment="Center" Text="{Binding Height, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" KeyUp="Redraw" GotFocus="UIElement_OnGotFocus" LostFocus="UIElement_OnLostFocus"></TextBox>
                 </StackPanel>
             </Grid>
 
-            <Grid x:Name="Grid" Tag="{Binding .}" Grid.Row="2" Grid.Column="0" MouseDown="UIElement_OnMouseDown" MouseMove="UIElement_OnMouseMove" MouseUp="UIElement_OnMouseUp">
+            <Grid x:Name="Grid" Tag="{Binding SelectedLayer, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}" 
+                  Grid.Row="2" 
+                  Grid.Column="0" 
+                  Focusable="True"
+                  MouseDown="UIElement_OnMouseDown" 
+                  MouseMove="UIElement_OnMouseMove" 
+                  MouseUp="UIElement_OnMouseUp"
+                  KeyDown="Grid_OnKeyDown"
+                  >
                 <Grid.Background>
                     <DrawingBrush TileMode="Tile"
                               Viewport="0,0,16,16"
@@ -100,7 +117,7 @@
                     </DrawingBrush>
                 </Grid.Background>
                 <Grid.ContextMenu>
-                    <ContextMenu IsEnabled="{Binding PlacementTarget.Tag.HasLayers, RelativeSource={RelativeSource Self}}">
+                    <ContextMenu>
                         <MenuItem Header="Fit to bounds" Click="FitBounds_Click"></MenuItem>
                         <MenuItem Header="Fit to width" Click="FitWidth_Click"></MenuItem>
                         <MenuItem Header="Fit to height" Click="FitHeight_Click"></MenuItem>
@@ -116,12 +133,8 @@
                     </ContextMenu>
                 </Grid.ContextMenu>
                 <Border Width="{Binding Width}" Height="{Binding Height}" BorderThickness="1" BorderBrush="#000000"
-                    Focusable="True"
-                    KeyboardNavigation.IsTabStop="True"
-                    PreviewKeyDown="ResourceControl_OnPreviewKeyDown"
-                    MouseDown="Border_OnMouseDown"
-            >
-                    <Image  Stretch="None" VerticalAlignment="Center" Source="{Binding CompositeBitmap}" AllowDrop="True"></Image>
+                    PreviewKeyDown="ResourceControl_OnPreviewKeyDown">
+                    <Image Stretch="None" VerticalAlignment="Center" Source="{Binding CompositeBitmap}" AllowDrop="True"></Image>
                 </Border>
                 <Canvas DataContext="{Binding Selection, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}"
                     Visibility="{Binding Visibility}"
@@ -169,7 +182,7 @@
                         </ContextMenu>
                     </Border.ContextMenu>
                     <ScrollViewer Background="{DynamicResource {x:Static SystemColors.WindowFrameBrushKey}}" VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding Layers}" VerticalAlignment="Top">
+                        <ItemsControl ItemsSource="{Binding ReverseLayers}" VerticalAlignment="Top">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border Tag="{Binding .}" BorderBrush="#C0C0C0" BorderThickness="1" IsHitTestVisible="True" MouseDown="Layer_OnMouseDown">

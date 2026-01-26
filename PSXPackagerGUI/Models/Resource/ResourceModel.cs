@@ -50,7 +50,6 @@ namespace PSXPackagerGUI.Models.Resource
 
         public void RefreshIcon()
         {
-            Composite?.Render();
             Icon = Composite?.CompositeBitmap;
         }
 

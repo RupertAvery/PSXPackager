@@ -210,6 +210,7 @@ namespace PSXPackagerGUI.Pages
                 new() { Key = SFOKeys.TITLE, Value = "", EntryType = SFOEntryType.STR, IsEditable = true  },
             };
 
+            ResourceTabs.SelectedIndex = 0;
             Model.CurrentResourceName = "ICON0";
             Model.CurrentResource = Model.Icon0;
         }
@@ -1357,6 +1358,38 @@ namespace PSXPackagerGUI.Pages
                     _model.SaveID = window.SelectedGame.MainGameID;
                     _model.SaveTitle = window.SelectedGame.MainGameTitle;
                 }
+            }
+        }
+
+        private void Selector_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems[0] is TabItem tabItem)
+            {
+                var resourceId = (string)tabItem.Tag;
+
+                switch (resourceId)
+                {
+                    case "ICON0":
+                        Model.CurrentResource = Model.Icon0;
+                        break;
+                    case "ICON1":
+                        Model.CurrentResource = Model.Icon1;
+                        break;
+                    case "PIC0":
+                        Model.CurrentResource = Model.Pic0;
+                        break;
+                    case "PIC1":
+                        Model.CurrentResource = Model.Pic1;
+                        break;
+                    case "SND0":
+                        Model.CurrentResource = Model.Snd0;
+                        break;
+                    case "BOOT":
+                        Model.CurrentResource = Model.Boot;
+                        break;
+                }
+
+                Model.CurrentResourceName = resourceId;
             }
         }
     }

@@ -1,7 +1,10 @@
-﻿using System.Collections.ObjectModel;
+﻿using System.Collections.Generic;
+using PSXPackagerGUI.Templates;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -16,15 +19,55 @@ public class ImageComposite : BaseNotifyModel
     private bool _hasLayers;
 
     private ObservableCollection<Layer> _layers;
+    private ObservableCollection<Layer> _reverseLayers;
     private ImageSource _compositeBitmap;
+    private StateManager _stateManager;
 
     public int Width { get; set; }
     public int Height { get; set; }
 
+    private void LayersOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        HasLayers = Layers.Count > 0;
+        OnPropertyChanged(nameof(ReverseLayers));
+    }
+
+    private void ReverseLayersOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+
+    }
+
+    public ImageComposite(int width, int height)
+    {
+        Width = width;
+        Height = height;
+        Layers = new ObservableCollection<Layer>();
+        _stateManager = new StateManager(this);
+        Render();
+    }
+
+
     public ObservableCollection<Layer> Layers
     {
         get => _layers;
-        set => SetProperty(ref _layers, value);
+        set
+        {
+            SetProperty(ref _layers, value);
+            if (_layers != null)
+                _layers.CollectionChanged -= LayersOnCollectionChanged;
+
+            _layers = value;
+
+            if (_layers != null)
+                _layers.CollectionChanged += LayersOnCollectionChanged;
+
+            OnPropertyChanged(nameof(ReverseLayers));
+        }
+    }
+
+    public IEnumerable<Layer> ReverseLayers
+    {
+        get => _layers.Reverse();
     }
 
     public ImageSource CompositeBitmap
@@ -46,19 +89,6 @@ public class ImageComposite : BaseNotifyModel
         IsDirty = false;
     }
 
-    public ImageComposite(int width, int height)
-    {
-        Width = width;
-        Height = height;
-        Layers = new ObservableCollection<Layer>();
-        Layers.CollectionChanged += LayersOnCollectionChanged;
-        Render();
-    }
-
-    private void LayersOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-    {
-        HasLayers = Layers.Count > 0;
-    }
 
     public void SetAplhaMask(BitmapSource bitmapSource)
     {
@@ -110,14 +140,14 @@ public class ImageComposite : BaseNotifyModel
                             CultureInfo.CurrentCulture,
                             FlowDirection.LeftToRight,
                             typeFace,
-                            text.FontSize, 
+                            text.FontSize,
                             text.Color,
                             96
                         );
                     formattedText.MaxTextWidth = text.Width;
 
                     var point = new Point(text.OffsetX, text.OffsetY);
-                    
+
                     dc.DrawText(formattedText, point);
 
                     if (text.DropShadow)
@@ -127,7 +157,7 @@ public class ImageComposite : BaseNotifyModel
                             CultureInfo.CurrentCulture,
                             FlowDirection.LeftToRight,
                             typeFace,
-                            text.FontSize, 
+                            text.FontSize,
                             new SolidColorBrush(Color.FromArgb(64, 0, 0, 0)),
                             96
                         );
@@ -156,6 +186,7 @@ public class ImageComposite : BaseNotifyModel
     public void Clear()
     {
         Layers.Clear();
+        _stateManager.ClearState();
     }
 
     public void SaveToPNG(Stream stream)
@@ -178,18 +209,43 @@ public class ImageComposite : BaseNotifyModel
     public void MoveLayerDown(Layer layer)
     {
         var index = Layers.IndexOf(layer);
-        if (index < Layers.Count - 1)
+        if (index > 0)
         {
-            Layers.Move(index, index + 1);
+            Layers.Move(index, index - 1);
         }
     }
 
     public void MoveLayerUp(Layer layer)
     {
         var index = Layers.IndexOf(layer);
-        if (index > 0)
+        if (index < Layers.Count - 1)
         {
-            Layers.Move(index, index - 1);
+            Layers.Move(index, index + 1);
         }
+    }
+
+    public void PushState()
+    {
+        _stateManager.PushState();
+    }
+
+    public void SaveState()
+    {
+        _stateManager.SaveState();
+    }
+
+    public void UndoState()
+    {
+        _stateManager.UndoState();
+    }
+
+    public void RedoState()
+    {
+        _stateManager.RedoState();
+    }
+
+    public void CommitState()
+    {
+        _stateManager.CommitState();
     }
 }

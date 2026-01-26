@@ -15,6 +15,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<None Remove="Resources\battery.png" />
 		<None Remove="Resources\disc.png" />
 		<None Remove="Resources\Editor\back.png" />
 		<None Remove="Resources\Editor\boot.png" />
@@ -50,6 +51,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Resource Include="Resources\battery.png" />
 		<Resource Include="Resources\disc.png" />
 		<Resource Include="Resources\Editor\NewRodin Pro DB.otf">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

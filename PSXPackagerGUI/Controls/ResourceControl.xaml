@@ -18,6 +18,7 @@
             <local:ImageEditorControl Composite="{Binding Composite}"
                 ResourceType="{Binding Type}"
                 Hover="ImageEditorControl_OnHover"
+                Select="ImageEditorControl_OnSelect"
                 Updated="ImageEditorControl_OnUpdated" 
                 Save="ImageEditorControl_OnSave" 
                 Load="ImageEditorControl_OnLoad"></local:ImageEditorControl>
@@ -89,13 +90,15 @@
                     </Style>
                 </ContentControl.Style>
             </ContentControl>
-            <Grid>
+            <Grid DataContext="{Binding ., RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="30"/>
                 </Grid.RowDefinitions>
                 <Border Grid.Row="1" BorderThickness="1" Background="#FFFFEE" BorderBrush="#808060" CornerRadius="5" Padding="4,0,4,0">
-                    <Label Content="{Binding ToolTip, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}"></Label>
+                    <Label Foreground="Black" 
+                           Content="{Binding ToolTip}"
+                           ToolTip="{Binding ToolTip}"></Label>
                 </Border>
             </Grid>
         </Grid>

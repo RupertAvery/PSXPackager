@@ -1,10 +1,6 @@
-﻿using Microsoft.VisualBasic;
-using PSXPackagerGUI.Models.Resource;
+﻿using PSXPackagerGUI.Models.Resource;
 using PSXPackagerGUI.Pages;
-using System.ComponentModel;
 using System.IO;
-using System.Runtime;
-using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using PSXPackagerGUI.Common;
@@ -15,7 +11,7 @@ namespace PSXPackagerGUI.Controls
     /// <summary>
     /// Interaction logic for Resource.xaml
     /// </summary>
-    public partial class ResourceControl : UserControl, INotifyPropertyChanged
+    public partial class ResourceControl : UserControl
     {
         public static readonly DependencyProperty ResourceProperty =
             DependencyProperty.Register(nameof(Resource),
@@ -23,7 +19,18 @@ namespace PSXPackagerGUI.Controls
                 typeof(ResourceControl),
                 new PropertyMetadata(null, OnResourceChanged));
 
-        private string _toolTip;
+        public static readonly DependencyProperty ToolTipProperty =
+            DependencyProperty.Register(
+                nameof(ToolTip),
+                typeof(string),
+                typeof(ResourceControl),
+                new PropertyMetadata(string.Empty));
+
+        public string ToolTip
+        {
+            get => (string)GetValue(ToolTipProperty);
+            set => SetValue(ToolTipProperty, value);
+        }
 
         private static void OnResourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
@@ -59,20 +66,8 @@ namespace PSXPackagerGUI.Controls
             set
             {
                 SetValue(ResourceProperty, value);
-                OnPropertyChanged();
             }
         }
-
-        public string ToolTip
-        {
-            get => _toolTip;
-            set
-            {
-                _toolTip = value;
-                OnPropertyChanged();
-            }
-        }
-
 
         public ResourceControl()
         {
@@ -82,14 +77,6 @@ namespace PSXPackagerGUI.Controls
 
         private void More_OnClick(object sender, RoutedEventArgs e)
         {
-        }
-
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected void OnPropertyChanged([CallerMemberName] string name = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
 
         private void ImageEditorControl_OnUpdated(object sender, RoutedEventArgs e)
@@ -179,7 +166,39 @@ namespace PSXPackagerGUI.Controls
 
         private void ImageEditorControl_OnHover(object sender, RoutedEventArgs e)
         {
-            ToolTip = "Hold CTRL and click to select the top-most object";
+            if (e is HoverEventArgs args)
+            {
+                if (args.Layer == null)
+                {
+
+                }
+                else
+                {
+                    if (args.IsSelected)
+                    {
+                    }
+                    else
+                    {
+                        ToolTip = "Hold CTRL and click to select the top-most object";
+                    }
+
+                }
+            }
+        }
+
+        private void ImageEditorControl_OnSelect(object sender, RoutedEventArgs e)
+        {
+            if (e is SelectLayerEventArgs args)
+            {
+                var toolTip = "Use arrow Keys to adjust position.";
+                if (args.Layer is TextLayer)
+                {
+                    toolTip += " Double-click to edit text.";
+                }
+                toolTip += " Drag bottom-right corner to resize.";
+
+                ToolTip = toolTip;
+            }
         }
     }
 }

@@ -1,7 +1,12 @@
-﻿using System.Windows.Media.Imaging;
+﻿using System.ComponentModel;
+using System.Text.Json.Serialization;
+using System.Windows.Media.Imaging;
 
 namespace PSXPackagerGUI.Models.Resource;
 
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
+[JsonDerivedType(typeof(ImageLayer), typeDiscriminator: "image")]
+[JsonDerivedType(typeof(TextLayer), typeDiscriminator: "text")]
 public abstract class Layer : BaseNotifyModel
 {
     private BitmapSource _bitmap;
@@ -14,9 +19,19 @@ public abstract class Layer : BaseNotifyModel
     private double _width;
     private double _height;
 
-
     public abstract LayerType LayerType { get; }
 
+    protected Layer()
+    {
+        PropertyChanged += OnPropertyChanged;
+    }
+
+    private void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        IsDirty = true;
+    }
+
+    public string? Hash { get; set; }
 
     public string Name
     {
@@ -24,10 +39,15 @@ public abstract class Layer : BaseNotifyModel
         set => SetProperty(ref _name, value);
     }
 
+    [JsonIgnore]
     public BitmapSource Bitmap
     {
         get => _bitmap;
-        set => SetProperty(ref _bitmap, value);
+        set
+        {
+            SetProperty(ref _bitmap, value);
+            Hash = value.GetHashCode().ToString();
+        }
     }
 
     public double OffsetX
@@ -54,6 +74,10 @@ public abstract class Layer : BaseNotifyModel
         set => SetProperty(ref _height, value);
     }
 
+    public double OriginalOffsetX { get; set; }
+
+    public double OriginalOffsetY { get; set; }
+
     public double OriginalWidth { get; set; }
 
     public double OriginalHeight { get; set; }
@@ -72,10 +96,17 @@ public abstract class Layer : BaseNotifyModel
 
     public StretchMode StrechMode { get; set; }
 
+    public bool IsDirty { get; private set; }
+
+    public void SetPristine()
+    {
+        IsDirty = false;
+    }
+
     public virtual void Reset()
     {
-        OffsetX = 0;
-        OffsetY = 0;
+        OffsetX = OriginalOffsetX;
+        OffsetY = OriginalOffsetY;
         Width = OriginalWidth;
         Height = OriginalHeight;
         ScaleX = 1;

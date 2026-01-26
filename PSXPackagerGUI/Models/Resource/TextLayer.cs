@@ -1,4 +1,6 @@
-﻿using System.Windows.Media;
+﻿using System.Text.Json.Serialization;
+using System.Windows.Markup;
+using System.Windows.Media;
 
 namespace PSXPackagerGUI.Models.Resource;
 
@@ -6,14 +8,25 @@ public class TextLayer : Layer
 {
     public override LayerType LayerType => LayerType.Text;
 
+    [JsonConverter(typeof(FontFamilyConverter))]
     public FontFamily FontFamily { get; set; }
+    public string FontFamilyName { get; set; }
+
     public double FontSize { get; set; } = 12;
     public string TextContent { get; set; } = "Sample Text";
+
+    [JsonConverter(typeof(BrushConverter))]
     public Brush Color { get; set; }
     public bool DropShadow { get; set; }
 
     private double _calculatedWidth;
     private double _calculatedHeight;
+
+    public TextLayer()
+    {
+
+    }
+
 
     public TextLayer(string name, string text, FontFamily fontFamily, double fontSize, Brush color, bool dropShadow, int width, int height)
     {

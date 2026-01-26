@@ -33,6 +33,6 @@ public static class FontManager
 
     public static FontFamily GetFontFamily(string familyName)
     {
-        return familyName == "NewRodin Pro DB" ? NewRodinProDBFontFamily : new FontFamily(familyName);
+        return familyName == "FOT-NewRodin Pro DB" ? NewRodinProDBFontFamily : new FontFamily(familyName);
     }
 }
