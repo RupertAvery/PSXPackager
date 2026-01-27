@@ -34,32 +34,37 @@ namespace PSXPackager.Common.Cue
 
             };
 
-            cueFile.FileEntries =
-            [
-                fileEntry
-            ];
+
+            var indexes = new CueIndex
+            {
+                Number = 0,
+                Position =
+                new IndexPosition() {
+                    Frames = 0,
+                    Minutes = 0,
+                    Seconds = 0
+                }
+            };
+
+            var track = new CueTrack
+            {
+                FileEntry = fileEntry,
+                Number = 1,
+                DataType = DataTypes.DATA,
+                Indexes =
+                [
+                    indexes
+                ]
+            };
 
             fileEntry.Tracks =
             [
-                new CueTrack
-                {
-                    FileEntry = fileEntry,
-                    Number = 1,
-                    DataType = DataTypes.DATA,
-                    Indexes =
-                    [
-                        new CueIndex
-                        {
-                            Number = 0,
-                            Position =
-                            {
-                                Frames = 0,
-                                Minutes = 0,
-                                Seconds = 0
-                            }
-                        }
-                    ]
-                }
+                track
+            ];
+
+            cueFile.FileEntries =
+            [
+                fileEntry
             ];
 
             return cueFile;

@@ -1,7 +1,6 @@
 ﻿using PSXPackagerGUI.Models.Resource;
 using PSXPackagerGUI.Pages;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -12,7 +11,6 @@ using System.Windows.Media;
 using Popstation.Pbp;
 using System.Runtime.CompilerServices;
 using System.Collections.ObjectModel;
-using System.Windows.Media.Imaging;
 using System.Xml.Serialization;
 using ImageLayer = PSXPackagerGUI.Models.Resource.ImageLayer;
 using Layer = PSXPackagerGUI.Models.Resource.Layer;
@@ -20,7 +18,6 @@ using TextLayer = PSXPackagerGUI.Models.Resource.TextLayer;
 using PSXPackagerGUI.Common;
 using PSXPackagerGUI.Models;
 using Resource = PSXPackagerGUI.Templates.Resource;
-using PSXPackagerGUI.Templates;
 
 namespace PSXPackagerGUI.Controls
 {
@@ -98,7 +95,7 @@ namespace PSXPackagerGUI.Controls
             add => AddHandler(SelectEvent, value);
             remove => RemoveHandler(SelectEvent, value);
         }
-
+        
         public ImageComposite Composite
         {
             get => (ImageComposite)GetValue(CompositeProperty);
@@ -117,17 +114,16 @@ namespace PSXPackagerGUI.Controls
         private double startOffsetY;
         private double startWidth;
         private double startHeight;
-
-
         private Layer? _selectedLayer;
+
         private bool resizeMode;
         private bool dragStarted;
-        private Selection? _selection;
+        private Selection _selection;
 
 
         public SettingsModel Settings => ServiceLocator.Settings;
 
-        public Selection? Selection
+        public Selection Selection
         {
             get => _selection;
             set
@@ -217,20 +213,21 @@ namespace PSXPackagerGUI.Controls
             {
                 if (SelectedLayer is TextLayer textLayer)
                 {
-                    EditText(textLayer);
-
-                    if (SelectedLayer is { IsDirty: true })
+                    if (EditText(textLayer))
                     {
-                        Composite.CommitState();
-                        SelectedLayer.SetPristine();
-                    }
+                        if (SelectedLayer is { IsDirty: true })
+                        {
+                            Composite.CommitState();
+                            SelectedLayer.SetPristine();
+                        }
 
-                    UpdateSelection();
-                    Update();
+                        UpdateSelection();
+                        Update();
+                    }
                 }
             }
 
-            if (Composite?.Layers.Count > 0)
+            if (Composite.Layers.Count > 0)
             {
                 var image = (UIElement)sender;
 
@@ -261,8 +258,7 @@ namespace PSXPackagerGUI.Controls
                 }
 
                 var slayer = SelectedLayer;
-
-
+                
                 if (slayer != null)
                 {
                     startOffsetX = slayer.OffsetX;
@@ -324,24 +320,28 @@ namespace PSXPackagerGUI.Controls
                 var deltaX = pos.X - startX;
                 var deltaY = pos.Y - startY;
 
-                if (resizeMode)
+                if (Math.Abs(deltaX) > 1 || Math.Abs(deltaY) > 1)
                 {
-                    SelectedLayer.Width = Math.Max(startWidth + deltaX, 4);
-                    SelectedLayer.Height = Math.Max(startHeight + deltaY, 4);
-                }
-                else if (dragStarted)
-                {
-                    SelectedLayer.OffsetX = startOffsetX + deltaX;
-                    SelectedLayer.OffsetY = startOffsetY + deltaY;
-                }
+                    if (resizeMode)
+                    {
+                        SelectedLayer.Width = Math.Max(startWidth + deltaX, 4);
+                        SelectedLayer.Height = Math.Max(startHeight + deltaY, 4);
+                    }
+                    else if (dragStarted)
+                    {
+                        SelectedLayer.OffsetX = startOffsetX + deltaX;
+                        SelectedLayer.OffsetY = startOffsetY + deltaY;
+                    }
 
-                //startX = pos.X;
-                //startY = pos.Y;
-                if (resizeMode || dragStarted)
-                {
-                    UpdateSelection();
-                    Update();
+                    //startX = pos.X;
+                    //startY = pos.Y;
+                    if (resizeMode || dragStarted)
+                    {
+                        UpdateSelection();
+                        Update();
+                    }
                 }
+    
             }
 
         }
@@ -378,169 +378,41 @@ namespace PSXPackagerGUI.Controls
             }
         }
 
-        private void MoveDownLayer_OnClick(object sender, RoutedEventArgs e)
-        {
-            if (Composite != null && TryGetLayer(sender, out var layer))
-            {
-                Composite.PushState();
-                Composite.MoveLayerDown(layer);
-                Update();
-            }
-        }
-
-        private void AppendImageLayer_OnClick(object sender, RoutedEventArgs e)
-        {
-            var openFileDialog = new Microsoft.Win32.OpenFileDialog();
-            openFileDialog.Filter = ImageProcessing.GetFilterFromType(ResourceType);
-
-            var result = openFileDialog.ShowDialog();
-            if (result != true)
-                return;
-
-            using var stream = new FileStream(openFileDialog.FileName, FileMode.Open, FileAccess.Read);
-            var newLayer = new ImageLayer(ImageProcessing.GetBitmapImage(stream), "image", openFileDialog.FileName);
-
-            Composite.PushState();
-            Composite.AddLayer(newLayer);
-
-            SelectedLayer = newLayer;
-            UpdateSelection();
-            Update();
-        }
-
-        private void AppendTextLayer_OnClick(object sender, RoutedEventArgs e)
-        {
-            var textEditorWindow = new TextEditorWindow();
-            var model = textEditorWindow.Model;
-
-            model.Text = "Sample Text";
-            model.Color = Brushes.White;
-            model.DropShadow = true;
-
-            textEditorWindow.Owner = Application.Current.MainWindow;
-            var result = textEditorWindow.ShowDialog();
-
-            if (result is true)
-            {
-                var newLayer = new TextLayer("Text", model.Text, model.FontFamily, model.FontSize, model.Color, model.DropShadow, Composite.Width - 20, Composite.Height);
-
-                Composite.PushState();
-                Composite.AddLayer(newLayer);
-
-                SelectedLayer = newLayer;
-                UpdateSelection();
-                Update();
-            }
-        }
-
         private void InsertImageLayer_OnClick(object sender, RoutedEventArgs e)
         {
-            if (Composite != null && TryGetLayer(sender, out var layer))
+            if (TryGetLayer(sender, out var layer))
             {
-                var openFileDialog = new Microsoft.Win32.OpenFileDialog();
-                openFileDialog.Filter = ImageProcessing.GetFilterFromType(ResourceType);
-
-                var result = openFileDialog.ShowDialog();
-                if (result != true)
-                    return;
-
-                using var stream = new FileStream(openFileDialog.FileName, FileMode.Open, FileAccess.Read);
-
-                var image = ImageProcessing.GetBitmapImage(stream);
-
-                int width = image.PixelWidth;
-                int height = image.PixelHeight;
-                int originalWidth = width;
-                int originalHeight = height;
-
-                double scale = Math.Min(
-                    (double)Composite.Width / image.PixelWidth,
-                    (double)Composite.Height / image.PixelHeight);
-
-                if (scale < 1)
-                {
-                    var resizeResult = MessageBox.Show(App.Current.MainWindow,
-                        "The selected image is larger than the content area. Do you want to resize it to fit?",
-                        "Load image", MessageBoxButton.YesNoCancel);
-
-                    if (resizeResult == MessageBoxResult.Yes)
-                    {
-                        width = (int)(width * scale);
-                        height = (int)(height * scale);
-                    }
-                }
-
-
-                var newLayer = new ImageLayer(image, "image", openFileDialog.FileName);
-
-                newLayer.Width = width;
-                newLayer.Height = height;
-                newLayer.OriginalWidth = originalWidth;
-                newLayer.OriginalHeight = originalHeight;
-
-                Composite.PushState();
-                Composite.InsertLayerAfter(newLayer, layer);
-
-                SelectedLayer = newLayer;
-                UpdateSelection();
-                Update();
+                InsertImageLayer(layer);
             }
         }
 
         private void InsertTextLayer_OnClick(object sender, RoutedEventArgs e)
         {
-            if (Composite != null && TryGetLayer(sender, out var layer))
+            if (TryGetLayer(sender, out var layer))
             {
-                var textEditorWindow = new TextEditorWindow();
-                var model = textEditorWindow.Model;
-
-                model.Text = "Sample Text";
-                model.Color = Brushes.White;
-                model.DropShadow = true;
-
-                textEditorWindow.Owner = Application.Current.MainWindow;
-                var result = textEditorWindow.ShowDialog();
-
-                if (result is true)
-                {
-                    Composite.PushState();
-                    var newLayer = new TextLayer("Text", model.Text, model.FontFamily, model.FontSize, model.Color, model.DropShadow, Composite.Width - 20, Composite.Height);
-
-                    Composite.InsertLayerAfter(newLayer, layer);
-
-                    SelectedLayer = newLayer;
-                    UpdateSelection();
-                    Update();
-                }
+                InsertTextLayer(layer);
             }
         }
 
         private void RemoveLayer_OnClick(object sender, RoutedEventArgs e)
         {
-            if (Composite != null && TryGetLayer(sender, out var layer))
+            if (TryGetLayer(sender, out var layer))
             {
-                Composite.PushState();
-                Composite.Layers.Remove(layer);
-                if (layer == SelectedLayer)
-                {
-                    SelectedLayer = null;
-                }
-                UpdateSelection();
-                Update();
+                RemoveLayer(layer);
             }
         }
 
-        private void ReplaceLayer_OnClick(object sender, RoutedEventArgs e)
+        private void ResetLayer_OnClick(object sender, RoutedEventArgs e)
         {
-            if (Composite != null && TryGetLayer(sender, out var layer))
+            if (TryGetLayer(sender, out var layer))
             {
-                Update();
+                ResetLayer(layer);
             }
         }
 
-        private void MoveUpLayer_OnClick(object sender, RoutedEventArgs e)
+        private void MoveLayerUp_OnClick(object sender, RoutedEventArgs e)
         {
-            if (Composite != null && TryGetLayer(sender, out var layer))
+            if (TryGetLayer(sender, out var layer))
             {
                 Composite.PushState();
                 Composite.MoveLayerUp(layer);
@@ -548,17 +420,16 @@ namespace PSXPackagerGUI.Controls
             }
         }
 
-        private void ResetLayer_OnClick(object sender, RoutedEventArgs e)
+        private void MoveLayerDown_OnClick(object sender, RoutedEventArgs e)
         {
-            if (Composite != null && TryGetLayer(sender, out var layer))
+            if (TryGetLayer(sender, out var layer))
             {
                 Composite.PushState();
-                layer.Reset();
-                UpdateSelection();
+                Composite.MoveLayerDown(layer);
                 Update();
             }
-
         }
+
 
         private bool TryGetLayer(object sender, out Layer? layer)
         {
@@ -609,7 +480,7 @@ namespace PSXPackagerGUI.Controls
 
         private void EditText_OnClick(object sender, RoutedEventArgs e)
         {
-            if (Composite != null && TryGetLayer(sender, out var layer))
+            if (TryGetLayer(sender, out var layer))
             {
                 Composite.SaveState();
                 if (EditText((TextLayer)layer))
@@ -648,44 +519,6 @@ namespace PSXPackagerGUI.Controls
             }
 
             return false;
-        }
-
-        private void ResourceControl_OnPreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key is Key.Up or Key.Down or Key.Left or Key.Right && SelectedLayer != null)
-            {
-                switch (e.Key)
-                {
-                    case Key.Left:
-                        SelectedLayer.OffsetX--;
-                        break;
-                    case Key.Right:
-                        SelectedLayer.OffsetX++;
-                        break;
-                    case Key.Up:
-                        SelectedLayer.OffsetY--;
-                        break;
-                    case Key.Down:
-                        SelectedLayer.OffsetY++;
-                        break;
-                }
-                UpdateSelection();
-                Update();
-                e.Handled = true;
-            }
-        }
-
-        private void Border_OnMouseDown(object sender, MouseButtonEventArgs e)
-        {
-
-        }
-
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected void OnPropertyChanged([CallerMemberName] string name = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
 
         private void Update()
@@ -902,53 +735,15 @@ namespace PSXPackagerGUI.Controls
             }
         }
 
-        private void UIElement_OnGotFocus(object sender, RoutedEventArgs e)
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChanged([CallerMemberName] string name = null)
         {
-            Composite.SaveState();
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
 
-        private void Undo_Click(object sender, RoutedEventArgs e)
-        {
-            UndoState();
-        }
 
-        private void Redo_Click(object sender, RoutedEventArgs e)
-        {
-            RedoState();
-        }
-
-        private void UndoState()
-        {
-            var selectedIndex = -1;
-            if (SelectedLayer != null)
-                selectedIndex = Composite.Layers.IndexOf(SelectedLayer);
-
-            Composite.UndoState();
-
-            if (selectedIndex != -1)
-            {
-                SelectedLayer = Composite.Layers[selectedIndex];
-            }
-
-            UpdateSelection();
-            Update();
-        }
-
-        private void RedoState()
-        {
-            var selectedIndex = -1;
-            if (SelectedLayer != null)
-                selectedIndex = Composite.Layers.IndexOf(SelectedLayer);
-
-            Composite.RedoState();
-
-            if (selectedIndex != -1)
-            {
-                SelectedLayer = Composite.Layers[selectedIndex];
-            }
-
-            UpdateSelection();
-            Update();
-        }
     }
+
 }

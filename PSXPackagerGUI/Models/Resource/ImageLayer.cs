@@ -28,6 +28,7 @@ public class ImageLayer : Layer
         ScaleX = 1;
         ScaleY = 1;
         StrechMode = StretchMode.None;
+        SetPristine();
     }
 
 

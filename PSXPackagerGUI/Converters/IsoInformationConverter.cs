@@ -1,32 +1,35 @@
-﻿using System;
+﻿using PSXPackagerGUI.Models;
+using System;
 using System.Windows.Data;
 
 namespace PSXPackagerGUI.Converters
 {
-    class IsoInformationConverter : IMultiValueConverter
+    class IsoInformationConverter : IValueConverter
     {
-        public object Convert(object[] value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
             if (value == null)
             {
                 return null;
             }
-            if (value[0] == null || value[0].GetType() != typeof(string))
+            if (value is Disc disc)
             {
-                return null;
-            }
-            if (value[1] == null)
-            {
-                return null;
-            }
-            var title = (string)value[0];
-            var size = (uint)value[1];
-            var sizef = size / 1048576f;
+                if (disc.IsEmpty)
+                {
+                    return "No disc loaded";
+                }
+                else
+                {
+                    var title = disc.Title;
+                    var sizef = disc.Size / 1048576f;
 
-            return $"{title} ({sizef:F2}MB)";
+                    return $"{title} ({sizef:F2}MB)";
+                }
+            }
+            return null;
         }
 
-        public object[] ConvertBack(object value, Type[] targetType, object parameter, System.Globalization.CultureInfo culture)
+        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
             throw new NotImplementedException();
         }

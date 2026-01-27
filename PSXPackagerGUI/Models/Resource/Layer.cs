@@ -1,4 +1,6 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 using System.Windows.Media.Imaging;
 
@@ -18,8 +20,25 @@ public abstract class Layer : BaseNotifyModel
     private double _scaleY;
     private double _width;
     private double _height;
+    private bool _canMoveUp;
+    private bool _canMoveDown;
 
     public abstract LayerType LayerType { get; }
+
+
+    [JsonIgnore]
+    public bool CanMoveUp
+    {
+        get => _canMoveUp;
+        set => SetProperty(ref _canMoveUp, value);
+    }
+
+    [JsonIgnore]
+    public bool CanMoveDown
+    {
+        get => _canMoveDown;
+        set => SetProperty(ref _canMoveDown, value);
+    }
 
     protected Layer()
     {
@@ -28,6 +47,7 @@ public abstract class Layer : BaseNotifyModel
 
     private void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        Debug.WriteLine(e.PropertyName);
         IsDirty = true;
     }
 
@@ -46,7 +66,10 @@ public abstract class Layer : BaseNotifyModel
         set
         {
             SetProperty(ref _bitmap, value);
-            Hash = value.GetHashCode().ToString();
+            if (value != null)
+            {
+                Hash = value.GetHashCode().ToString();
+            }
         }
     }
 
@@ -96,6 +119,7 @@ public abstract class Layer : BaseNotifyModel
 
     public StretchMode StrechMode { get; set; }
 
+    [JsonIgnore]
     public bool IsDirty { get; private set; }
 
     public void SetPristine()

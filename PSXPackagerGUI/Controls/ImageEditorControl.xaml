@@ -58,9 +58,9 @@
                         </MenuItem>
                     </MenuItem>
                     <MenuItem Header="_Edit">
-                        <MenuItem Header="Undo" InputGestureText="Ctrl+Z" Click="Undo_Click">
+                        <MenuItem Header="Undo" InputGestureText="Ctrl+Z" Click="Undo_Click" IsEnabled="{Binding CanUndo}">
                         </MenuItem>
-                        <MenuItem Header="Redo" InputGestureText="Ctrl+Y" Click="Redo_Click">
+                        <MenuItem Header="Redo" InputGestureText="Ctrl+Y" Click="Redo_Click" IsEnabled="{Binding CanRedo}">
                         </MenuItem>
                     </MenuItem>
                     <MenuItem Header="_Layer">
@@ -68,10 +68,10 @@
                         </MenuItem>
                         <MenuItem Header="Insert Text" Click="InsertTextLayer_OnClick">
                         </MenuItem>
-                        <MenuItem Header="Reset" Click="ResetLayer_OnClick">
+                        <MenuItem Header="Reset" Click="ResetLayer_OnClick" IsEnabled="{Binding HasLayers}">
                         </MenuItem>
                         <Separator/>
-                        <MenuItem Header="Clear Layers" Click="ClearLayers_OnClick">
+                        <MenuItem Header="Clear Layers" Click="ClearLayers_OnClick" IsEnabled="{Binding HasLayers}">
                         </MenuItem>
                     </MenuItem>
                 </Menu>
@@ -92,6 +92,7 @@
             </Grid>
 
             <Grid x:Name="Grid" Tag="{Binding SelectedLayer, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}" 
+                  Background="#808080"
                   Grid.Row="2" 
                   Grid.Column="0" 
                   Focusable="True"
@@ -100,22 +101,7 @@
                   MouseUp="UIElement_OnMouseUp"
                   KeyDown="Grid_OnKeyDown"
                   >
-                <Grid.Background>
-                    <DrawingBrush TileMode="Tile"
-                              Viewport="0,0,16,16"
-                              ViewportUnits="Absolute">
-                        <DrawingBrush.Drawing>
-                            <DrawingGroup>
-                                <GeometryDrawing Brush="#FFFFFFFF"
-                                             Geometry="M0,0 H16 V16 H0 Z"/>
-                                <GeometryDrawing Brush="#FFCCCCCC"
-                                             Geometry="M0,0 H8 V8 H0 Z"/>
-                                <GeometryDrawing Brush="#FFCCCCCC"
-                                             Geometry="M8,8 H16 V16 H8 Z"/>
-                            </DrawingGroup>
-                        </DrawingBrush.Drawing>
-                    </DrawingBrush>
-                </Grid.Background>
+              
                 <Grid.ContextMenu>
                     <ContextMenu>
                         <MenuItem Header="Fit to bounds" Click="FitBounds_Click"></MenuItem>
@@ -126,14 +112,29 @@
                         <MenuItem Header="Insert text layer" Click="InsertTextLayer_OnClick"></MenuItem>
                         <MenuItem Header="Remove layer" Click="RemoveLayer_OnClick"></MenuItem>
                         <Separator></Separator>
-                        <MenuItem Header="Move up" Click="MoveUpLayer_OnClick"></MenuItem>
-                        <MenuItem Header="Move down" Click="MoveDownLayer_OnClick"></MenuItem>
+                        <MenuItem Header="Move up" Click="MoveLayerUp_OnClick"></MenuItem>
+                        <MenuItem Header="Move down" Click="MoveLayerDown_OnClick"></MenuItem>
                         <Separator></Separator>
                         <MenuItem Header="Reset layer" Click="ResetLayer_OnClick"></MenuItem>
                     </ContextMenu>
                 </Grid.ContextMenu>
-                <Border Width="{Binding Width}" Height="{Binding Height}" BorderThickness="1" BorderBrush="#000000"
-                    PreviewKeyDown="ResourceControl_OnPreviewKeyDown">
+                <Border Width="{Binding Width}" Height="{Binding Height}" BorderThickness="1" BorderBrush="#808080">
+                    <Border.Background>
+                        <DrawingBrush TileMode="Tile"
+                                      Viewport="0,0,16,16"
+                                      ViewportUnits="Absolute">
+                            <DrawingBrush.Drawing>
+                                <DrawingGroup>
+                                    <GeometryDrawing Brush="#FFFFFFFF"
+                                                     Geometry="M0,0 H16 V16 H0 Z"/>
+                                    <GeometryDrawing Brush="#FFCCCCCC"
+                                                     Geometry="M0,0 H8 V8 H0 Z"/>
+                                    <GeometryDrawing Brush="#FFCCCCCC"
+                                                     Geometry="M8,8 H16 V16 H8 Z"/>
+                                </DrawingGroup>
+                            </DrawingBrush.Drawing>
+                        </DrawingBrush>
+                    </Border.Background>
                     <Image Stretch="None" VerticalAlignment="Center" Source="{Binding CompositeBitmap}" AllowDrop="True"></Image>
                 </Border>
                 <Canvas DataContext="{Binding Selection, RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl, AncestorLevel=1}}"
@@ -145,7 +146,7 @@
                     <Line X1="{Binding E2.X}" Y1="{Binding E2.Y}" X2="{Binding E3.X}" Y2="{Binding E3.Y}" Stroke="#70A0FF"></Line>
                     <Line X1="{Binding E3.X}" Y1="{Binding E3.Y}" X2="{Binding E4.X}" Y2="{Binding E4.Y}" Stroke="#70A0FF"></Line>
                     <Line X1="{Binding E4.X}" Y1="{Binding E4.Y}" X2="{Binding E1.X}" Y2="{Binding E1.Y}" Stroke="#70A0FF"></Line>
-                    <Rectangle  
+                    <!--<Rectangle  
                     Canvas.Left="{Binding C1.X}" 
                     Canvas.Top="{Binding C1.Y}"
                     Width="5" Height="5" Fill="White" Stroke="#70A0FF">
@@ -154,17 +155,17 @@
                     Canvas.Left="{Binding C2.X}" 
                     Canvas.Top="{Binding C2.Y}"
                     Width="5" Height="5" Fill="White" Stroke="#70A0FF">
-                    </Rectangle>
+                    </Rectangle>-->
                     <Rectangle 
                     Canvas.Left="{Binding C3.X}" 
                     Canvas.Top="{Binding C3.Y}"
                     Width="5" Height="5" Fill="White" Stroke="#70A0FF">
                     </Rectangle>
-                    <Rectangle 
+                    <!--<Rectangle 
                     Canvas.Left="{Binding C4.X}" 
                     Canvas.Top="{Binding C4.Y}"
                     Width="5" Height="5" Fill="White" Stroke="#70A0FF">
-                    </Rectangle>
+                    </Rectangle>-->
                 </Canvas>
             </Grid>
 
@@ -174,11 +175,11 @@
                     <ColumnDefinition Width="100"/>
                 </Grid.ColumnDefinitions>
 
-                <Border Tag="{Binding .}" BorderBrush="#C0C0C0" BorderThickness="1" Width="100" Grid.Column="2">
+                <Border Tag="{Binding .}" BorderBrush="#C0C0C0" BorderThickness="1" Width="100" Grid.Column="1">
                     <Border.ContextMenu>
                         <ContextMenu>
-                            <MenuItem Header="Insert Image Layer" Click="AppendImageLayer_OnClick"></MenuItem>
-                            <MenuItem Header="Insert Text Layer" Click="AppendTextLayer_OnClick"></MenuItem>
+                            <MenuItem Header="Add Image Layer" Click="InsertImageLayer_OnClick"></MenuItem>
+                            <MenuItem Header="Add Text Layer" Click="InsertTextLayer_OnClick"></MenuItem>
                         </ContextMenu>
                     </Border.ContextMenu>
                     <ScrollViewer Background="{DynamicResource {x:Static SystemColors.WindowFrameBrushKey}}" VerticalScrollBarVisibility="Auto">
@@ -193,8 +194,8 @@
                                                 <MenuItem Header="Insert Text Layer" Click="InsertTextLayer_OnClick"></MenuItem>
                                                 <MenuItem Header="Remove Layer" Click="RemoveLayer_OnClick"></MenuItem>
                                                 <Separator></Separator>
-                                                <MenuItem Header="Move up" Click="MoveUpLayer_OnClick"></MenuItem>
-                                                <MenuItem Header="Move down" Click="MoveDownLayer_OnClick"></MenuItem>
+                                                <MenuItem Header="Move up" Click="MoveLayerUp_OnClick" IsEnabled="{Binding CanMoveUp}"></MenuItem>
+                                                <MenuItem Header="Move down" Click="MoveLayerDown_OnClick" IsEnabled="{Binding CanMoveDown}"></MenuItem>
                                                 <Separator></Separator>
                                                 <MenuItem Header="Reset Layer" Click="ResetLayer_OnClick"></MenuItem>
                                             </ContextMenu>

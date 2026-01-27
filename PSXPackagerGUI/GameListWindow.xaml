@@ -40,7 +40,7 @@
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
             <Button Grid.Column="0" Click="Cancel_Click">Cancel</Button>
-            <Button Grid.Column="1" Click="Select_Click">Select</Button>
+            <Button Grid.Column="1" Click="Select_Click" IsEnabled="{Binding HasSelected}">Select</Button>
         </Grid>
     </Grid>
 </Window>

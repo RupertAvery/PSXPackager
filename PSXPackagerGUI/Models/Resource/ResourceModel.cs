@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Windows.Media;
 using Popstation.Pbp;
 
@@ -11,6 +12,8 @@ namespace PSXPackagerGUI.Models.Resource
         private ImageSource? _icon;
         private bool _text;
         private bool _isIncluded;
+
+        public event EventHandler Cleared;
 
         public bool IsIncluded
         {
@@ -56,6 +59,7 @@ namespace PSXPackagerGUI.Models.Resource
         public void Reset()
         {
             Composite?.Clear();
+            Cleared?.Invoke(this, EventArgs.Empty);
             Icon = null;
             SourceUrl = null;
             Stream?.Dispose();

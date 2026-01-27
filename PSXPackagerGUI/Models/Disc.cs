@@ -164,7 +164,8 @@ namespace PSXPackagerGUI.Models
             return new Disc()
             {
                 Index = index,
-                Title = "No Disc",
+                GameID = "",
+                Title = "",
                 IsEmpty = true,
                 IsRemoveEnabled = false,
                 IsLoadEnabled = true,

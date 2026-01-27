@@ -22,13 +22,32 @@ public class ImageComposite : BaseNotifyModel
     private ObservableCollection<Layer> _reverseLayers;
     private ImageSource _compositeBitmap;
     private StateManager _stateManager;
+    private bool _canRedo;
+    private bool _canUndo;
 
     public int Width { get; set; }
     public int Height { get; set; }
 
+    public bool CanUndo
+    {
+        get => _stateManager.CanUndo;
+    }
+
+    public bool CanRedo
+    {
+        get => _stateManager.CanRedo;
+    }
+
     private void LayersOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         HasLayers = Layers.Count > 0;
+
+        foreach (var layer in Layers)
+        {
+            layer.CanMoveUp = Layers.IndexOf(layer) < Layers.Count - 1;
+            layer.CanMoveDown = Layers.IndexOf(layer) > 0;
+        }
+
         OnPropertyChanged(nameof(ReverseLayers));
     }
 
@@ -43,7 +62,14 @@ public class ImageComposite : BaseNotifyModel
         Height = height;
         Layers = new ObservableCollection<Layer>();
         _stateManager = new StateManager(this);
+        _stateManager.StateChanged += StateManagerOnStateChanged;
         Render();
+    }
+
+    private void StateManagerOnStateChanged(object? sender, StateChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(CanUndo));
+        OnPropertyChanged(nameof(CanRedo));
     }
 
 
@@ -59,9 +85,20 @@ public class ImageComposite : BaseNotifyModel
             _layers = value;
 
             if (_layers != null)
+            {
                 _layers.CollectionChanged += LayersOnCollectionChanged;
 
-            OnPropertyChanged(nameof(ReverseLayers));
+                HasLayers = _layers.Count > 0;
+
+                foreach (var layer in _layers)
+                {
+                    layer.CanMoveUp = _layers.IndexOf(layer) < Layers.Count - 1;
+                    layer.CanMoveDown = _layers.IndexOf(layer) > 0;
+                }
+
+                OnPropertyChanged(nameof(ReverseLayers));
+            }
+
         }
     }
 

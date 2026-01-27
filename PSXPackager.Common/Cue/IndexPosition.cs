@@ -9,6 +9,7 @@ namespace PSXPackager.Common.Cue
         {
 
         }
+
         public IndexPosition(int minutes, int seconds, int frames)
         {
             Minutes = minutes;

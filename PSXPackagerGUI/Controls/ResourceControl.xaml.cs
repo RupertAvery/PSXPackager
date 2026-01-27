@@ -1,10 +1,12 @@
-﻿using PSXPackagerGUI.Models.Resource;
+﻿using System;
+using PSXPackagerGUI.Models.Resource;
 using PSXPackagerGUI.Pages;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using PSXPackagerGUI.Common;
 using PSXPackagerGUI.Models;
+using System.Windows.Media;
 
 namespace PSXPackagerGUI.Controls
 {
@@ -53,10 +55,37 @@ namespace PSXPackagerGUI.Controls
             //        //control.InvalidateVisual();
             //    }
             //}
-
+            newValue.Cleared += (s,e) => ResourceOnCleared(d, e);
 
             newValue.RefreshIcon();
         }
+
+        private static void ResourceOnCleared(object? sender, EventArgs e)
+        {
+            if (sender is ResourceControl control)
+            {
+                var imageEditor = GetChildOfType<ImageEditorControl>(control.ResourceContent);
+                if (imageEditor != null)
+                {
+                    imageEditor.SelectedLayer = null;
+                }
+            }
+        }
+
+        private static T? GetChildOfType<T>(DependencyObject depObj) where T : DependencyObject
+        {
+            if (depObj == null) return null;
+
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(depObj); i++)
+            {
+                var child = VisualTreeHelper.GetChild(depObj, i);
+
+                var result = (child as T) ?? GetChildOfType<T>(child);
+                if (result != null) return result;
+            }
+            return null;
+        }
+
 
         public SettingsModel Settings => ServiceLocator.Settings;
 
@@ -179,7 +208,7 @@ namespace PSXPackagerGUI.Controls
                     }
                     else
                     {
-                        ToolTip = "Hold CTRL and click to select the top-most object";
+                        ToolTip = "Hold CTRL and click to select the top-most layer under the cursor";
                     }
 
                 }

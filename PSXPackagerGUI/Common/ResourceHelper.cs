@@ -119,6 +119,7 @@ public class ResourceHelper
                         }
                         resource.HasResource = true;
                         resource.SourceUrl = filename;
+                        resource.Composite.Render();
                         resource.RefreshIcon();
                     }
                     catch (Exception e)

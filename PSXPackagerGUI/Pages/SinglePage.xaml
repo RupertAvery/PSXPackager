@@ -75,15 +75,9 @@
                                     </controls:AutoDisableImage>
                                     <TextBlock TextTrimming="CharacterEllipsis"
                                                Width="{Binding ElementName=TitleColumnWidth, Path=ActualWidth}" VerticalAlignment="Center" Grid.Column="1" 
-                                               Foreground="{Binding IsEmpty, Converter={StaticResource IsEmptyBrushConverter}}">
-                                        <TextBlock.Text>
-                                            <MultiBinding Converter="{StaticResource IsoInformationConverter}">
-                                                <Binding Path="Title"></Binding>
-                                                <Binding Path="Size"></Binding>
-                                            </MultiBinding>
-
-                                        </TextBlock.Text>
-
+                                               Foreground="{Binding IsEmpty, Converter={StaticResource IsEmptyBrushConverter}}"
+                                               Text="{Binding ., Converter={StaticResource IsoInformationConverter}}"
+                                               >
                                     </TextBlock>
                                     <Button Grid.Column="2" x:Name="DiscButton" Click="DiscButton_OnClick" IsEnabled="{Binding IsLoadEnabled}">...</Button>
                                     <Button Grid.Column="3" Command="{Binding RemoveCommand}" IsEnabled="{Binding IsRemoveEnabled}">x</Button>
@@ -95,7 +89,7 @@
                         <TabItem Header="Disc Metadata">
                             <Grid Margin="5,5,5,5" VerticalAlignment="Top">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="120"/>
                                     <ColumnDefinition/>
                                     <ColumnDefinition Width="20"/>
                                 </Grid.ColumnDefinitions>
@@ -104,19 +98,45 @@
                                     <RowDefinition Height="30"/>
                                     <RowDefinition Height="30"/>
                                     <RowDefinition Height="30"/>
+                                    <RowDefinition Height="30"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                <Label Grid.Column="0" Grid.Row="0" >Game ID</Label>
-                                <Label Grid.Column="0" Grid.Row="1" >Game Title</Label>
-                                <Label Grid.Column="0" Grid.Row="2" >Save ID</Label>
-                                <Label Grid.Column="0" Grid.Row="3" >Save Title</Label>
+                                <Label Grid.Column="0" Grid.Row="0" >Game ID (per disc)</Label>
+                                <Label Grid.Column="0" Grid.Row="1" >Game Title (per disc)</Label>
+                                <Label Grid.Column="0" Grid.Row="2" >Save ID (main)</Label>
+                                <Label Grid.Column="0" Grid.Row="3" >Save Title (main)</Label>
                                 <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="0" Text="{Binding SelectedDisc.GameID}" MaxLength="9"></TextBox>
-                                <Button Grid.Column="2" Click="SelectGameID_Click">...</Button>
-                                <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="1" Text="{Binding SelectedDisc.Title}" MaxLength="128"></TextBox>
+                                <Button Grid.Column="2" Click="SelectGameID_Click" ToolTip="Select Game ID/Title">...</Button>
+                                <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="1" Text="{Binding SelectedDisc.Title}"  MaxLength="128"></TextBox>
                                 <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="2" Text="{Binding SaveID, UpdateSourceTrigger=PropertyChanged}" MaxLength="9"></TextBox>
-                                <Button Grid.Column="2" Grid.Row="2" Click="SelectSaveID_Click">...</Button>
-                                <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="3" Text="{Binding SaveTitle}" MaxLength="128"></TextBox>
+                                <Button Grid.Column="2" Grid.Row="2" Click="SelectSaveID_Click" ToolTip="Select Save ID/Title">...</Button>
+                                <TextBox Grid.Column="1" VerticalContentAlignment="Center" Grid.Row="3" Text="{Binding SaveTitle, UpdateSourceTrigger=PropertyChanged}" MaxLength="128"></TextBox>
 
+                                <!--<StackPanel Orientation="Horizontal" Grid.Row="4" Grid.Column="1">
+                                    <Button Padding="10,5,10,5">Reset disc Game ID/Title</Button>
+                                    <Button Padding="10,5,10,5" Margin="5,0,0,0">Reset all Game ID/Title</Button>
+                                    <Button Padding="10,5,10,5" Margin="5,0,0,0">Reset Save ID/Title</Button>
+                                </StackPanel>-->
+                                <ScrollViewer  Margin="5,20,0,0" Grid.Row="5" Grid.ColumnSpan="3" >
+                                    <TextBlock TextWrapping="WrapWithOverflow" Padding="5">
+                                        These settings primarily affect the PSP.
+                                        <LineBreak/>
+                                        <LineBreak/>
+                                        <Bold>Game ID</Bold> - Used by POPS for game compatibility. Only change if the game has issues running on a real PSP.
+                                        <LineBreak/>
+                                        <LineBreak/>
+                                        <Bold>Game Title</Bold> - The title of the disc. Does not affect compatibility
+                                        <LineBreak/>
+                                        <LineBreak/>
+                                        <Bold>Save ID</Bold> - Used to determine which folder will be used for the save game. Only change if you know what you are doing (i.e. sharing memory cards between games). Sets the DISC_ID key in PARAM.SFO
+                                        <LineBreak/>
+                                        <LineBreak/>
+                                        <Bold>Save Title</Bold> - The title displayed on the save game manager. Change as desired. Sets the TITLE key in PARAM.SFO
+                                        <LineBreak/>
+                                        <LineBreak/>
+                                    </TextBlock>
+                                </ScrollViewer>
+                               
                             </Grid>
                         </TabItem>
                         <TabItem Header="Tracks">
@@ -219,7 +239,7 @@
                                     <TabItem Tag="ICON0">
                                         <TabItem.Header>
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                                                <CheckBox IsChecked="{Binding Icon0.IsIncluded}" VerticalContentAlignment="Center"></CheckBox>
+                                                <CheckBox IsChecked="{Binding Icon0.IsIncluded}" IsEnabled="False" VerticalContentAlignment="Center"></CheckBox>
                                                 <Label VerticalContentAlignment="Center">Icon</Label>
                                             </StackPanel>
                                         </TabItem.Header>
@@ -306,7 +326,11 @@
 
                                 <Image.Style>
                                     <Style TargetType="Image">
+                                        <Setter Property="Visibility" Value="Hidden"></Setter>
                                         <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Pic1.IsIncluded}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"></Setter>
+                                            </DataTrigger>
                                             <DataTrigger Binding="{Binding ShowBackground}" Value="True">
                                                 <DataTrigger.EnterActions>
                                                     <BeginStoryboard>
@@ -341,7 +365,11 @@
                                 </Image.ContextMenu>
                                 <Image.Style>
                                     <Style TargetType="Image">
+                                        <Setter Property="Visibility" Value="Hidden"></Setter>
                                         <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Pic0.IsIncluded}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"></Setter>
+                                            </DataTrigger>
                                             <DataTrigger Binding="{Binding ShowInformation}" Value="True">
                                                 <DataTrigger.EnterActions>
                                                     <BeginStoryboard>
@@ -380,7 +408,11 @@
                                 <Image Source="{Binding Icon0.Icon}" Height="80" Width="80">
                                     <Image.Style>
                                         <Style TargetType="Image">
+                                            <Setter Property="Visibility" Value="Hidden"></Setter>
                                             <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Icon0.IsIncluded}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"></Setter>
+                                                </DataTrigger>
                                                 <DataTrigger Binding="{Binding ShowIcon}" Value="True">
                                                     <DataTrigger.EnterActions>
                                                         <BeginStoryboard>
@@ -409,14 +441,14 @@
                             <TextBlock FontFamily="{x:Static resources:FontManager.NewRodinProDBFontFamily}" FontSize="12" FontWeight="Bold" Foreground="White"
                                        Text="{Binding CurrentTime}"
                                        TextAlignment="Right"
-                                       Width="480" Height="272" Margin="0,0,80,0">
+                                       Width="125" Height="20" Margin="270,0,0,250">
                                 <TextBlock.Effect>
                                     <DropShadowEffect BlurRadius="5" ShadowDepth="2"></DropShadowEffect>
                                 </TextBlock.Effect>
                             </TextBlock>
-                            <Image Source="/Resources/battery.png" Height="30" Margin="0,0,80,0">
+                            <Image Source="/Resources/battery.png" Height="20" Width="30" Margin="440,0,0,243">
                                 <Image.Effect>
-                                    <DropShadowEffect BlurRadius="5" ShadowDepth="2"></DropShadowEffect>
+                                    <DropShadowEffect BlurRadius="2" ShadowDepth="1"></DropShadowEffect>
                                 </Image.Effect>
                             </Image>
                         </Grid>

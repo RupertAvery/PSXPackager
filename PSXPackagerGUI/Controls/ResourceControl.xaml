@@ -63,7 +63,7 @@
             </Label>
         </Grid>
         <Grid Visibility="{Binding IsIncluded, Converter={StaticResource BooleanVisibilityConverter}}">
-            <ContentControl Content="{Binding Path=.}">
+            <ContentControl x:Name="ResourceContent" Content="{Binding Path=.}">
                 <ContentControl.Style>
                     <Style TargetType="ContentControl">
                         <Setter Property="ContentTemplate" Value="{StaticResource ImageTemplate}" />

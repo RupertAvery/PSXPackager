@@ -25,14 +25,17 @@
             <ComboBox Width="60" ItemsSource="{Binding FontSizes}" SelectedItem="{Binding FontSize}">
             </ComboBox>
             <Label>Color</Label>
-            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="10" Width="10" Background="White" BorderBrush="Black" BorderThickness="1"></Border>
-            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="10" Width="10" Background="Black" BorderBrush="Black" BorderThickness="1"></Border>
-            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="10" Width="10" Background="Red" BorderBrush="Black" BorderThickness="1"></Border>
-            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="10" Width="10" Background="Green" BorderBrush="Black" BorderThickness="1"></Border>
-            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="10" Width="10" Background="Blue" BorderBrush="Black" BorderThickness="1"></Border>
-            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="10" Width="10" Background="Cyan" BorderBrush="Black" BorderThickness="1"></Border>
-            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="10" Width="10" Background="Magenta" BorderBrush="Black" BorderThickness="1"></Border>
-            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="10" Width="10" Background="Yellow" BorderBrush="Black" BorderThickness="1"></Border>
+
+            <Border Margin="2,0,0,0" Height="12" Width="12" Background="{Binding Color}" BorderBrush="Black" BorderThickness="1"></Border>
+
+            <Border MouseDown="Color_MouseDown" Margin="16,0,0,0" Height="12" Width="12" Background="White" BorderBrush="Black" BorderThickness="1"></Border>
+            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="12" Width="12" Background="Black" BorderBrush="Black" BorderThickness="1"></Border>
+            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="12" Width="12" Background="Red" BorderBrush="Black" BorderThickness="1"></Border>
+            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="12" Width="12" Background="Green" BorderBrush="Black" BorderThickness="1"></Border>
+            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="12" Width="12" Background="Blue" BorderBrush="Black" BorderThickness="1"></Border>
+            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="12" Width="12" Background="Cyan" BorderBrush="Black" BorderThickness="1"></Border>
+            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="12" Width="12" Background="Magenta" BorderBrush="Black" BorderThickness="1"></Border>
+            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="12" Width="12" Background="Yellow" BorderBrush="Black" BorderThickness="1"></Border>
 
             <Grid Margin="10,0,0,0" >
                 <CheckBox IsChecked="{Binding DropShadow}" Content="Drop Shadow" VerticalContentAlignment="Center"></CheckBox>

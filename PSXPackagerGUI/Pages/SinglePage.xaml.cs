@@ -185,6 +185,15 @@ namespace PSXPackagerGUI.Pages
             ResourceHelper.LoadResource(Model.Icon0, GetDefaultResourceFile(Model.Icon0.Type), true);
             ResourceHelper.LoadResource(Model.Pic1, GetDefaultResourceFile(Model.Pic1.Type), true);
             ResourceHelper.LoadTemplate(Model.Pic0, GetDefaulTemplateFile(Model.Pic0.Type), true);
+
+            Model.Icon0.Composite.Render();
+            Model.Pic0.Composite.Render();
+            Model.Pic1.Composite.Render();
+
+            Model.Icon0.RefreshIcon();
+            Model.Pic0.RefreshIcon();
+            Model.Pic1.RefreshIcon();
+
             //ResourceHelper.LoadResource(Model.Pic1, GetDefaultResourceFile(Model.Pic1.Type), true);
 
             //LoadResource(Model.Boot, GetDefaultResourceFile(Model.Boot.Type));
@@ -893,7 +902,7 @@ namespace PSXPackagerGUI.Pages
 
         private void LoadISO_OnClick(object sender, RoutedEventArgs e)
         {
-            var disc = ((MenuItem)sender).DataContext as Disc;
+            var selectedDisc = ((MenuItem)sender).DataContext as Disc;
 
             var openFileDialog = new Microsoft.Win32.OpenFileDialog();
             openFileDialog.InitialDirectory = _settings.LastDiscImageDirectory;
@@ -905,6 +914,8 @@ namespace PSXPackagerGUI.Pages
                 var fileDirectory = Path.GetDirectoryName(openFileDialog.FileName);
 
                 _settings.LastDiscImageDirectory = fileDirectory;
+
+                var disc = new Disc();
 
                 // clear the old TOC
                 disc!.SourceTOC = null;
@@ -936,8 +947,8 @@ namespace PSXPackagerGUI.Pages
                         var result = MessageBox.Show("A CUE file was found for the selected image, do you want to use it?", "Load ISO", MessageBoxButton.YesNo, MessageBoxImage.Question);
                         if (result == MessageBoxResult.Yes)
                         {
-                            var sheet = CueFileReader.Read(openFileDialog.FileName);
-                            disc.SourceTOC = Path.Combine(dirPath, cueFilename);
+                            var sheet = CueFileReader.Read(cuePath);
+                            disc.SourceTOC = cuePath;
                             disc.Tracks = new ObservableCollection<Track>(sheet.FileEntries.SelectMany(d => d.Tracks).Select(d => new Track(d)));
 
                             isCue = true;
@@ -1059,6 +1070,12 @@ namespace PSXPackagerGUI.Pages
                 _model.SelectedDisc = disc;
 
                 Model.IsDirty = true;
+
+                var discIndex = Model.Discs.IndexOf(selectedDisc);
+
+                Model.Discs[discIndex] = disc;
+
+                Model.SelectedDisc = disc;
             }
 
         }
@@ -1213,7 +1230,7 @@ namespace PSXPackagerGUI.Pages
                 {
                     new() { Key = SFOKeys.BOOTABLE, Value = 0x01, IsEditable = false },
                     new() { Key = SFOKeys.CATEGORY, Value = SFOValues.PS1Category, IsEditable = false  },
-                    new() { Key = SFOKeys.DISC_ID, Value = gameId, IsEditable = true  },
+                    new() { Key = SFOKeys.DISC_ID, Value = game.MainGameID, IsEditable = true  },
                     new() { Key = SFOKeys.DISC_VERSION, Value =  "1.00", IsEditable = true  },
                     new() { Key = SFOKeys.LICENSE, Value =  SFOValues.License, IsEditable = true  },
                     new() { Key = SFOKeys.PARENTAL_LEVEL, Value = SFOValues.ParentalLevel, IsEditable = true },
@@ -1255,7 +1272,7 @@ namespace PSXPackagerGUI.Pages
                 var window = new GameListWindow();
                 window.Owner = Window;
                 var result = window.ShowDialog();
-                if (result is true)
+                if (result is true && window.SelectedGame is { })
                 {
                     _model.SelectedDisc.GameID = window.SelectedGame.GameID;
                     _model.SelectedDisc.Title = window.SelectedGame.Title;
@@ -1353,7 +1370,7 @@ namespace PSXPackagerGUI.Pages
                 var window = new GameListWindow();
                 window.Owner = Window;
                 var result = window.ShowDialog();
-                if (result is true)
+                if (result is true && window.SelectedGame is {})
                 {
                     _model.SaveID = window.SelectedGame.MainGameID;
                     _model.SaveTitle = window.SelectedGame.MainGameTitle;
