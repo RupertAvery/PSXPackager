@@ -206,18 +206,17 @@ namespace PSXPackagerGUI.Pages
             Model.Progress = 0;
             Model.Discs = new ObservableCollection<Disc>(DummyDisc(0, 5));
             Model.IsNew = true;
-            Model.SFOEntries = new ObservableCollection<SFOEntry>()
-            {
-                new() { Key = SFOKeys.BOOTABLE, Value = 0x01, EntryType = SFOEntryType.NUM, IsEditable = false },
-                new() { Key = SFOKeys.CATEGORY, Value = SFOValues.PS1Category, EntryType = SFOEntryType.STR, IsEditable = false  },
-                new() { Key = SFOKeys.DISC_ID, Value = "", EntryType = SFOEntryType.STR,IsEditable = true  },
-                new() { Key = SFOKeys.DISC_VERSION, Value =  "1.00", EntryType = SFOEntryType.STR, IsEditable = true  },
-                new() { Key = SFOKeys.LICENSE, Value = SFOValues.License, EntryType = SFOEntryType.STR,IsEditable = true  },
-                new() { Key = SFOKeys.PARENTAL_LEVEL, Value =  SFOValues.ParentalLevel, EntryType = SFOEntryType.NUM, IsEditable = true },
-                new() { Key = SFOKeys.PSP_SYSTEM_VER, Value =  SFOValues.PSPSystemVersion, EntryType = SFOEntryType.STR,IsEditable = true  },
-                new() { Key = SFOKeys.REGION, Value =  0x8000, EntryType = SFOEntryType.NUM, IsEditable = true },
-                new() { Key = SFOKeys.TITLE, Value = "", EntryType = SFOEntryType.STR, IsEditable = true  },
-            };
+
+            Model.SFOEntries = new ObservableCollection<SFOEntry>(GetDefaultSFOEntries());
+
+            Model.SaveID = "";
+            Model.SaveTitle = "";
+
+
+            defaultSaveId = Model.SaveID;
+            defaultSaveTitle = Model.SaveTitle;
+
+            SetSFOMetaData();
 
             ResourceTabs.SelectedIndex = 0;
             Model.CurrentResourceName = "ICON0";
@@ -246,6 +245,8 @@ namespace PSXPackagerGUI.Pages
 
             try
             {
+                ResetModel();
+
                 using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read))
                 {
                     var pbpReader = new PbpReader(stream);
@@ -291,6 +292,7 @@ namespace PSXPackagerGUI.Pages
                             {
                                 resource.Composite.Clear();
                                 resource.Composite.AddLayer(new ImageLayer(ImageProcessing.GetBitmapImage(bootStream), "image", $"pbp://{path}#{resource.Type}"));
+                                resource.Composite.Render();
                                 resource.RefreshIcon();
                                 resource.SourceUrl = $"pbp://{path}#{resource.Type}";
                                 resource.IsIncluded = true;
@@ -307,6 +309,7 @@ namespace PSXPackagerGUI.Pages
                                 //resourceStream.Seek(0, SeekOrigin.Begin);
                                 resource.Composite.Clear();
                                 resource.Composite.AddLayer(new ImageLayer(ImageProcessing.GetBitmapImage(resourceStream), "image", $"pbp://{path}#{resource.Type}"));
+                                resource.Composite.Render();
                                 resource.RefreshIcon();
                                 resource.SourceUrl = $"pbp://{path}#{resource.Type}";
                                 resource.IsIncluded = true;
@@ -324,18 +327,49 @@ namespace PSXPackagerGUI.Pages
                     TryLoadResource(Model.Snd0);
                     TryLoadResource(Model.Boot);
 
-                    Model.SFOEntries = new ObservableCollection<SFOEntry>();
+                    var entries = new List<SFOEntry>();
+                    var keyHash = new HashSet<string>();
 
                     foreach (var sfoDataEntry in pbpReader.SFOData.Entries)
                     {
-                        Model.SFOEntries.Add(new SFOEntry()
+                        entries.Add(new SFOEntry()
                         {
                             Key = sfoDataEntry.Key,
                             Value = sfoDataEntry.Value,
                             IsEditable = GetIsEditable(sfoDataEntry.Key),
                             EntryType = GetEntryType(sfoDataEntry.Key),
                         });
+
+                        switch (sfoDataEntry.Key)
+                        {
+                            case "DISC_ID":
+                                Model.SaveID = (string)sfoDataEntry.Value;
+                                break;
+                            case "TITLE":
+                                Model.SaveTitle = (string)sfoDataEntry.Value;
+                                break;
+                        }
+
+                        keyHash.Add(sfoDataEntry.Key);
                     }
+
+
+                    // Generate missing entries with empty values
+                    var missingEntries = GetDefaultSFOEntries()
+                        .Where(d => !keyHash.Contains(d.Key))
+                        .Select(d =>
+                        {
+                            d.Value = "";
+                            return d;
+                        });
+
+                    Model.SFOEntries = new ObservableCollection<SFOEntry>(entries.Concat(missingEntries).OrderBy(d => GetKeyOrder(d.Key)));
+
+
+                    defaultSaveId = Model.SaveID;
+                    defaultSaveTitle = Model.SaveTitle;
+
+                    SetSFOMetaData();
 
                     Model.CurrentResource = Model.Icon0;
                     Model.IsNew = false;
@@ -566,7 +600,7 @@ namespace PSXPackagerGUI.Pages
                     return;
                 }
             }
-            
+
             if (!gameIDregex.IsMatch(Model.SaveID))
             {
                 MessageBox.Show(Window, $"The SaveID {Model.SaveID} is not valid.", "PSXPackager",
@@ -653,9 +687,9 @@ namespace PSXPackagerGUI.Pages
                     OutputPath = Path.GetDirectoryName(filename),
                     OriginalFilename = Path.GetFileName(filename),
                     DiscInfos = discs.Select(GetDiscInfo).ToList(),
-                    
+
                     DataPsp = GetResourceOrDefault(new ResourceModel() { Type = ResourceType.DATA }),
-                    
+
                     Icon0 = GetResourceOrDefault(Model.Icon0),
                     Pic1 = GetResourceOrDefault(Model.Pic1),
                     Pic0 = GetResourceOrDefault(Model.Pic0),
@@ -1037,6 +1071,9 @@ namespace PSXPackagerGUI.Pages
                     Model.SaveTitle = game.MainGameTitle;
                     disc.Region = game.Region;
 
+                    defaultSaveId = Model.SaveID;
+                    defaultSaveTitle = Model.SaveTitle;
+
                     if (disc.Index == 0)
                     {
                         Model.SFOEntries = new ObservableCollection<SFOEntry>()
@@ -1051,6 +1088,7 @@ namespace PSXPackagerGUI.Pages
                             new() { Key = SFOKeys.REGION, Value =  0x8000, IsEditable = true },
                             new() { Key = SFOKeys.TITLE, Value = game.MainGameTitle, IsEditable = true  },
                         };
+
                     }
                 }
                 catch (InvalidFileSystemException)
@@ -1221,41 +1259,22 @@ namespace PSXPackagerGUI.Pages
 
         private void ResetSFO_Click(object sender, RoutedEventArgs e)
         {
-            if (!Model.Discs[0].IsEmpty)
+            Model.SFOEntries = new ObservableCollection<SFOEntry>()
             {
-                var gameId = Model.Discs[0].GameID;
-                var game = _gameDb.GetEntryByGameID(gameId);
-
-                Model.SFOEntries = new ObservableCollection<SFOEntry>()
-                {
-                    new() { Key = SFOKeys.BOOTABLE, Value = 0x01, IsEditable = false },
-                    new() { Key = SFOKeys.CATEGORY, Value = SFOValues.PS1Category, IsEditable = false  },
-                    new() { Key = SFOKeys.DISC_ID, Value = game.MainGameID, IsEditable = true  },
-                    new() { Key = SFOKeys.DISC_VERSION, Value =  "1.00", IsEditable = true  },
-                    new() { Key = SFOKeys.LICENSE, Value =  SFOValues.License, IsEditable = true  },
-                    new() { Key = SFOKeys.PARENTAL_LEVEL, Value = SFOValues.ParentalLevel, IsEditable = true },
-                    new() { Key = SFOKeys.PSP_SYSTEM_VER, Value = SFOValues.PSPSystemVersion, IsEditable = true  },
-                    new() { Key = SFOKeys.REGION, Value =  0x8000, IsEditable = true },
-                    new() { Key = SFOKeys.TITLE, Value = game.MainGameTitle, IsEditable = true  },
-                };
-            }
-            else
-            {
-                Model.SFOEntries = new ObservableCollection<SFOEntry>()
-                {
-                    new() { Key = SFOKeys.BOOTABLE, Value = 0x01, IsEditable = false },
-                    new() { Key = SFOKeys.CATEGORY, Value = SFOValues.PS1Category, IsEditable = false  },
-                    new() { Key = SFOKeys.DISC_ID, Value = "", IsEditable = true  },
-                    new() { Key = SFOKeys.DISC_VERSION, Value =  "1.00", IsEditable = true  },
-                    new() { Key = SFOKeys.LICENSE, Value =  SFOValues.License, IsEditable = true  },
-                    new() { Key = SFOKeys.PARENTAL_LEVEL, Value = SFOValues.ParentalLevel , IsEditable = true },
-                    new() { Key = SFOKeys.PSP_SYSTEM_VER, Value = SFOValues.PSPSystemVersion, IsEditable = true  },
-                    new() { Key = SFOKeys.REGION, Value =  0x8000, IsEditable = true },
-                    new() { Key = SFOKeys.TITLE, Value = "", IsEditable = true  },
-                };
-            }
+                new() { Key = SFOKeys.BOOTABLE, Value = 0x01, IsEditable = false },
+                new() { Key = SFOKeys.CATEGORY, Value = SFOValues.PS1Category, IsEditable = false  },
+                new() { Key = SFOKeys.DISC_ID, Value = defaultSaveId, IsEditable = true  },
+                new() { Key = SFOKeys.DISC_VERSION, Value =  "1.00", IsEditable = true  },
+                new() { Key = SFOKeys.LICENSE, Value =  SFOValues.License, IsEditable = true  },
+                new() { Key = SFOKeys.PARENTAL_LEVEL, Value = SFOValues.ParentalLevel, IsEditable = true },
+                new() { Key = SFOKeys.PSP_SYSTEM_VER, Value = SFOValues.PSPSystemVersion, IsEditable = true  },
+                new() { Key = SFOKeys.REGION, Value =  0x8000, IsEditable = true },
+                new() { Key = SFOKeys.TITLE, Value = defaultSaveTitle, IsEditable = true  },
+            };
         }
 
+        private string defaultSaveId;
+        private string defaultSaveTitle;
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
@@ -1370,7 +1389,7 @@ namespace PSXPackagerGUI.Pages
                 var window = new GameListWindow();
                 window.Owner = Window;
                 var result = window.ShowDialog();
-                if (result is true && window.SelectedGame is {})
+                if (result is true && window.SelectedGame is { })
                 {
                     _model.SaveID = window.SelectedGame.MainGameID;
                     _model.SaveTitle = window.SelectedGame.MainGameTitle;
@@ -1407,6 +1426,22 @@ namespace PSXPackagerGUI.Pages
                 }
 
                 Model.CurrentResourceName = resourceId;
+            }
+        }
+
+        private void SFOValue_OnKeyUp(object sender, KeyEventArgs e)
+        {
+            if (((FrameworkElement)sender).DataContext is SFOEntry entry)
+            {
+                switch (entry.Key)
+                {
+                    case "DISC_ID":
+                        Model.SaveID = (string)entry.Value;
+                        break;
+                    case "TITLE":
+                        Model.SaveTitle = (string)entry.Value;
+                        break;
+                }
             }
         }
     }

@@ -19,6 +19,7 @@
         <converters:NotConverter x:Key="NotConverter"></converters:NotConverter>
         <converters:IsoInformationConverter x:Key="IsoInformationConverter"></converters:IsoInformationConverter>
         <converters:BooleanVisibilityConverter x:Key="VisibilityConverter"></converters:BooleanVisibilityConverter>
+        <converters:BooleanInvisibilityCollapsedConverter x:Key="InvisibilityConverter"></converters:BooleanInvisibilityCollapsedConverter>
         <ContextMenu x:Key="DiscButtonContextMenu">
             <MenuItem Header="Load Disc Image" x:Name="LoadISO" Click="LoadISO_OnClick" />
             <MenuItem Header="Save As..." x:Name="SaveImage" Click="SaveImage_OnClick" />
@@ -460,26 +461,47 @@
                 <TabItem Header="PARAM.SFO">
                     <Grid>
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="30"/>
                             <RowDefinition/>
                             <RowDefinition Height="30"/>
                         </Grid.RowDefinitions>
-                        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" >
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.Row="0" Grid.Column="1" VerticalContentAlignment="Center">Empty values will be omitted from the PBP</Label>
+                        <ScrollViewer Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" VerticalScrollBarVisibility="Auto" >
                             <ItemsControl ItemsSource="{Binding SFOEntries}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid Height="35">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="35"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="120"/>
                                                 <ColumnDefinition/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Grid.Column="0" Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Key}"></TextBlock>
-                                            <TextBox IsEnabled="{Binding IsEditable}" Grid.Column="1" Grid.Row="0" VerticalAlignment="Stretch" VerticalContentAlignment="Center" HorizontalAlignment="Stretch" Margin="5,5,5,5" Text="{Binding Value}"></TextBox>
+                                            <TextBox IsEnabled="{Binding IsEditable}" Grid.Column="1" Grid.Row="0" 
+                                                     VerticalAlignment="Stretch" VerticalContentAlignment="Center" 
+                                                     HorizontalAlignment="Stretch" Margin="5,5,5,5" 
+                                                     Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     ToolTip="{Binding ToolTip}"
+                                                     MaxLength="{Binding MaxLength}"
+                                                     KeyUp="SFOValue_OnKeyUp"></TextBox>
+                                            <Label Margin="5,0,0,0" Padding="0" Foreground="Red" FontSize="10" Grid.Row="1" Grid.Column="1" 
+                                                   Visibility="{Binding IsValid, Converter={StaticResource InvisibilityConverter}}"
+                                                   VerticalContentAlignment="Top">
+                                                Invalid Value
+                                            </Label>
                                         </Grid>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </ScrollViewer>
-                        <Button Grid.Row="1" Click="ResetSFO_Click">Reset</Button>
+                        <Button Grid.Row="2" Grid.ColumnSpan="2" Click="ResetSFO_Click">Reset</Button>
                     </Grid>
                 </TabItem>
             </TabControl>

@@ -18,28 +18,34 @@
             <RowDefinition Height="35"/>
         </Grid.RowDefinitions>
         <ToolBar Grid.Row="0">
-            <Label>Font</Label>
-            <ComboBox Width="150" ItemsSource="{Binding FontFamilies}" SelectedItem="{Binding FontFamily}">
-            </ComboBox>
-            <Label>Size</Label>
-            <ComboBox Width="60" ItemsSource="{Binding FontSizes}" SelectedItem="{Binding FontSize}">
-            </ComboBox>
-            <Label>Color</Label>
+            <StackPanel Orientation="Horizontal" Margin="0,0,5,0">
+                <Label>Font</Label>
+                <ComboBox Margin="5,0,0,0" Width="150" ItemsSource="{Binding FontFamilies}" SelectedItem="{Binding FontFamily}" VerticalContentAlignment="Center">
+                </ComboBox>
+            </StackPanel>
+            <StackPanel Background="Transparent" Orientation="Horizontal" Margin="0,0,5,0">
+                <Label>Size</Label>
+                <ComboBox Margin="5,0,0,0" Width="60" ItemsSource="{Binding FontSizes}" SelectedItem="{Binding FontSize}" VerticalContentAlignment="Center">
+                </ComboBox>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,0,5,0" VerticalAlignment="Center">
+                <Label>Color</Label>
 
-            <Border Margin="2,0,0,0" Height="12" Width="12" Background="{Binding Color}" BorderBrush="Black" BorderThickness="1"></Border>
+                <Border Margin="5,0,0,0" Height="12" Width="12" Background="{Binding Color}" BorderBrush="Black" BorderThickness="1"></Border>
 
-            <Border MouseDown="Color_MouseDown" Margin="16,0,0,0" Height="12" Width="12" Background="White" BorderBrush="Black" BorderThickness="1"></Border>
-            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="12" Width="12" Background="Black" BorderBrush="Black" BorderThickness="1"></Border>
-            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="12" Width="12" Background="Red" BorderBrush="Black" BorderThickness="1"></Border>
-            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="12" Width="12" Background="Green" BorderBrush="Black" BorderThickness="1"></Border>
-            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="12" Width="12" Background="Blue" BorderBrush="Black" BorderThickness="1"></Border>
-            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="12" Width="12" Background="Cyan" BorderBrush="Black" BorderThickness="1"></Border>
-            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="12" Width="12" Background="Magenta" BorderBrush="Black" BorderThickness="1"></Border>
-            <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="12" Width="12" Background="Yellow" BorderBrush="Black" BorderThickness="1"></Border>
+                <Border MouseDown="Color_MouseDown" Margin="16,0,0,0" Height="12" Width="12" Background="White" BorderBrush="Black" BorderThickness="1"></Border>
+                <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="12" Width="12" Background="Black" BorderBrush="Black" BorderThickness="1"></Border>
+                <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="12" Width="12" Background="Red" BorderBrush="Black" BorderThickness="1"></Border>
+                <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="12" Width="12" Background="Green" BorderBrush="Black" BorderThickness="1"></Border>
+                <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="12" Width="12" Background="Blue" BorderBrush="Black" BorderThickness="1"></Border>
+                <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="12" Width="12" Background="Cyan" BorderBrush="Black" BorderThickness="1"></Border>
+                <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="12" Width="12" Background="Magenta" BorderBrush="Black" BorderThickness="1"></Border>
+                <Border MouseDown="Color_MouseDown" Margin="2,0,0,0" Height="12" Width="12" Background="Yellow" BorderBrush="Black" BorderThickness="1"></Border>
+            </StackPanel>
 
-            <Grid Margin="10,0,0,0" >
-                <CheckBox IsChecked="{Binding DropShadow}" Content="Drop Shadow" VerticalContentAlignment="Center"></CheckBox>
-            </Grid>
+            <StackPanel Orientation="Horizontal" Margin="5,0,0,0" VerticalAlignment="Center">
+                <CheckBox IsChecked="{Binding DropShadow}" Content="Drop Shadow" VerticalContentAlignment="Center" VerticalAlignment="Center"></CheckBox>
+            </StackPanel>
         </ToolBar>
         <TextBox x:Name="TextBox" Grid.Row="1" FontFamily="{Binding FontFamily}" Text="{Binding Text}" FontSize="{Binding FontSize}" TextWrapping="WrapWithOverflow" VerticalScrollBarVisibility="Auto"></TextBox>
         <Grid Grid.Row="2">
