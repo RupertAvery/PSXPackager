@@ -109,10 +109,10 @@ namespace Popstation.Pbp
             byte[] buffer = new byte[0x50];
             var discEndOffset = Discs[Discs.Count - 1].EndOffset;
 
-            if (discEndOffset % 0x10 > 0)
-            {
-                discEndOffset = discEndOffset + (0x10 - (discEndOffset % 0x10));
-            }
+            //if (discEndOffset % 0x10 > 0)
+            //{
+            //    discEndOffset = discEndOffset + (0x10 - (discEndOffset % 0x10));
+            //}
 
             stream.Seek(discEndOffset, SeekOrigin.Begin);
             stream.Read(buffer, 0, 8);
