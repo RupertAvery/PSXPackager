@@ -87,7 +87,23 @@ public class ResourceHelper
                                         using var maskStream = new FileStream(alphaMaskUri, FileMode.Open, FileAccess.Read);
                                         resource.Composite.SetAplhaMask(ImageProcessing.GetBitmapImage(maskStream));
 
-                                        resource.Composite.Layers.Add(new ImageLayer(image, "image", alphaMaskUri));
+
+                                        var imageLayer = new ImageLayer(image, "image", filename);
+
+                                        var width = imageLayer.Width - 12;
+                                        var height = imageLayer.Height - 12;
+
+                                        imageLayer.OffsetX = 6;
+                                        imageLayer.OffsetY = 6;
+                                        imageLayer.OriginalOffsetX = 6;
+                                        imageLayer.OriginalOffsetY = 6;
+
+                                        imageLayer.Width = width;
+                                        imageLayer.Height = height;
+                                        imageLayer.OriginalWidth = width;
+                                        imageLayer.OriginalHeight = height;
+
+                                        resource.Composite.Layers.Add(imageLayer);
 
                                         var overlayUri = Path.Combine(appPath, "Resources", "overlay.png");
                                         using var frameStream = new FileStream(overlayUri, FileMode.Open, FileAccess.Read);
