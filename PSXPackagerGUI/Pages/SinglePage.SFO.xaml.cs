@@ -101,7 +101,7 @@ namespace PSXPackagerGUI.Pages
                             //Value = "1.00";
                             entry.EntryType = SFOEntryType.STR;
                             entry.IsEditable = true;
-                            entry.MaxLength = 9;
+                            entry.MaxLength = 16;
                             entry.Validator = ValidateVersion;
                             entry.ToolTip = "Decimal value e.g. 1.00";
                             break;
@@ -128,6 +128,7 @@ namespace PSXPackagerGUI.Pages
                             //Value = SFOValues.PSPSystemVersion;
                             entry.EntryType = SFOEntryType.STR;
                             entry.IsEditable = true;
+                            entry.MaxLength = 16;
                             entry.Validator = ValidateVersion;
                             entry.ToolTip = "Minimum required System Version e.g. 3.01";
                             break;
@@ -171,7 +172,7 @@ namespace PSXPackagerGUI.Pages
 
             if (int.TryParse(value, out var intValue))
             {
-                return intValue is >= 0 and <= 11;
+                return intValue is >= 1 and <= 11;
             }
 
             return false;
