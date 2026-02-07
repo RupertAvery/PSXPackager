@@ -24,16 +24,24 @@ namespace PSXPackagerGUI
 
         public MainWindow()
         {
+
+            Logger.LogInfo("Starting up");
+
             InitializeComponent();
 
+            Logger.LogInfo("Creating Settings Page");
             _settings = new SettingsPage(this);
             _isFirstRun = _settings.IsFirstRun;
 
 
+            Logger.LogInfo("Creating Single Page");
             _singlePage = new SinglePage(this, _settings.Model, _gameDb);
+
+            Logger.LogInfo("Creating Batch Page");
             _batchPage = new BatchPage(this, _settings.Model, _gameDb);
             _singlePage.Model.PropertyChanged += ModelOnPropertyChanged;
 
+            Logger.LogInfo("Creating Main Model");
             _model = new MainModel();
             
             DataContext = _model;
