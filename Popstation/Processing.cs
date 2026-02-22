@@ -538,6 +538,11 @@ namespace Popstation
                 }
 
                 var fileName = GetActualFileName(resourcePath);
+				
+				if (!File.Exists(fileName))
+				{
+					return Resource.Empty(type);
+				}
 
                 var info = new FileInfo(fileName);
 

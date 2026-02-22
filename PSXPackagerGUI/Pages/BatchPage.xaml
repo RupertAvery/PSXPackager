@@ -128,7 +128,17 @@
                     </Image>
                 </Grid>
             </Button>
-            <Button Grid.Column="1" Grid.Row="1" Margin="2,2,2,2" ToolTip="Start" Command="{Binding ProcessCommand}" IsEnabled="{Binding IsScanning, Converter={StaticResource NotConverter}}">
+			<Button Grid.Column="1" Grid.Row="1" Margin="2,2,2,2" Command="{Binding ProcessCommand}" IsEnabled="{Binding IsScanning, Converter={StaticResource NotConverter}}">
+				<Button.Style>
+					<Style TargetType="Button">
+						<Setter Property="ToolTip" Value="Start"/>
+						<Style.Triggers>
+							<DataTrigger Binding="{Binding IsProcessing}" Value="True">
+								<Setter Property="ToolTip" Value="Stop"/>
+							</DataTrigger>
+						</Style.Triggers>
+					</Style>
+				</Button.Style>
                 <Grid>
                     <Image Margin="5,5,5,5" Visibility="{Binding IsProcessing, Converter={StaticResource InvisibilityConverter}}">
                         <Image.Source>
