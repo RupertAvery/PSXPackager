@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Resource xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ResourceType="PIC0" Width="310" Height="180">
   <ImageLayer X="0" Y="0" Width="310" Height="180" OriginalWidth="310" OriginalHeight="180">
-    <SourceUri>D:\Play\PSXPackager\PSXPackagerGUI\bin\Debug\net8.0-windows\win-x64\Templates\PIC0.png</SourceUri>
+    <SourceUri>PIC0.png</SourceUri>
   </ImageLayer>
   <ImageLayer X="15.199999999999818" Y="107.99999999999989" Width="124" Height="59" OriginalWidth="124" OriginalHeight="59">
-    <SourceUri>D:\Play\PSXPackager\PSXPackagerGUI\bin\Debug\net8.0-windows\win-x64\Templates\E.png</SourceUri>
+    <SourceUri>E.png</SourceUri>
   </ImageLayer>
   <ImageLayer X="230.39999999999986" Y="107.20000000000016" Width="68" Height="61" OriginalWidth="68" OriginalHeight="61">
-    <SourceUri>D:\Play\PSXPackager\PSXPackagerGUI\bin\Debug\net8.0-windows\win-x64\Templates\PS3PSP.png</SourceUri>
+    <SourceUri>PS3PSP.png</SourceUri>
   </ImageLayer>
   <TextLayer X="15.999999999999773" Y="6.400000000000034" Width="118" Height="32" OriginalWidth="290" OriginalHeight="180">
     <Text>Sample Text</Text>

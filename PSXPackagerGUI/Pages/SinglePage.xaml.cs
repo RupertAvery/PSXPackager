@@ -949,7 +949,14 @@ namespace PSXPackagerGUI.Pages
 
                 _settings.LastDiscImageDirectory = fileDirectory;
 
-                var disc = new Disc();
+				var discIndex = Model.Discs.IndexOf(selectedDisc); //Get index from selectedDisc
+                var disc = new Disc()  //Create disc with correct index
+				{
+					Index = discIndex, //Index from the begining
+					IsEmpty = false,
+					IsLoadEnabled = true,
+					IsSaveAsEnabled = false
+				};
 
                 // clear the old TOC
                 disc!.SourceTOC = null;
@@ -1108,8 +1115,6 @@ namespace PSXPackagerGUI.Pages
                 _model.SelectedDisc = disc;
 
                 Model.IsDirty = true;
-
-                var discIndex = Model.Discs.IndexOf(selectedDisc);
 
                 Model.Discs[discIndex] = disc;
 
