@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Media;
 using Popstation.Pbp;
+using PSXPackagerGUI.Common;
 using PSXPackagerGUI.Pages;
 
 namespace PSXPackagerGUI.Models.Resource;
@@ -53,9 +54,11 @@ public static class ImageCompositeExtensions
 
     }
 
-    public static ResourceTemplate ToResourceTemplate(this Templates.Resource resource, string basePath)
+    public static (ResourceTemplate, List<string>) ToResourceTemplate(this Templates.Resource resource, string basePath)
     {
         var layers = new List<Layer>();
+
+        var errorMessages = new List<string>();
 
         if (resource.Layers != null)
         {
@@ -68,54 +71,71 @@ public static class ImageCompositeExtensions
                         imgLayer.SourceUri = Path.Combine(basePath, imgLayer.SourceUri);
                     }
 
-                    var stream = new FileStream(imgLayer.SourceUri, FileMode.Open, FileAccess.Read);
-                    var bitmap = ImageProcessing.GetBitmapImage(stream);
-                    var imageLayer = new ImageLayer(bitmap, "image", imgLayer.SourceUri)
+                    try
                     {
-                        Bitmap = bitmap,
-                        OffsetX = imgLayer.X,
-                        OffsetY = imgLayer.Y,
-                        Width = imgLayer.Width,
-                        Height = imgLayer.Height,
-                        OriginalOffsetX = imgLayer.X,
-                        OriginalOffsetY = imgLayer.Y,
-                        OriginalWidth = imgLayer.Width,
-                        OriginalHeight = imgLayer.Height,
-                    };
-                    layers.Add(imageLayer);
+                        var stream = new FileStream(imgLayer.SourceUri, FileMode.Open, FileAccess.Read);
+                        var bitmap = ImageProcessing.GetBitmapImage(stream);
+                        var imageLayer = new ImageLayer(bitmap, "image", imgLayer.SourceUri)
+                        {
+                            Bitmap = bitmap,
+                            OffsetX = imgLayer.X,
+                            OffsetY = imgLayer.Y,
+                            Width = imgLayer.Width,
+                            Height = imgLayer.Height,
+                            OriginalOffsetX = imgLayer.X,
+                            OriginalOffsetY = imgLayer.Y,
+                            OriginalWidth = imgLayer.Width,
+                            OriginalHeight = imgLayer.Height,
+                        };
+                        layers.Add(imageLayer);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError($"Failed to load image {imgLayer.SourceUri} for resource {resource.ResourceType}", e);
+                        errorMessages.Add(e.Message);
+                    }
                 }
                 else if (layer is Templates.TextLayer textLayer)
                 {
-                    var textLayerModel = new TextLayer("text",
-                        textLayer.Text,
-                        FontManager.GetFontFamily(textLayer.FontFamily),
-                        textLayer.FontSize,
-                        new SolidColorBrush((Color)ColorConverter.ConvertFromString(textLayer.Color)),
-                        textLayer.DropShadow,
-                        (int)textLayer.OriginalWidth,
-                        (int)textLayer.OriginalHeight)
+                    try
                     {
-                        OffsetX = textLayer.X,
-                        OffsetY = textLayer.Y,
-                        Width = textLayer.Width,
-                        Height = textLayer.Height,
-                        OriginalOffsetX = textLayer.X,
-                        OriginalOffsetY = textLayer.Y,
-                        OriginalWidth = textLayer.Width,
-                        OriginalHeight = textLayer.Height,
-                    };
-                    layers.Add(textLayerModel);
+                        var textLayerModel = new TextLayer("text",
+                            textLayer.Text,
+                            FontManager.GetFontFamily(textLayer.FontFamily),
+                            textLayer.FontSize,
+                            new SolidColorBrush((Color)ColorConverter.ConvertFromString(textLayer.Color)),
+                            textLayer.DropShadow,
+                            (int)textLayer.OriginalWidth,
+                            (int)textLayer.OriginalHeight)
+                        {
+                            OffsetX = textLayer.X,
+                            OffsetY = textLayer.Y,
+                            Width = textLayer.Width,
+                            Height = textLayer.Height,
+                            OriginalOffsetX = textLayer.X,
+                            OriginalOffsetY = textLayer.Y,
+                            OriginalWidth = textLayer.Width,
+                            OriginalHeight = textLayer.Height,
+                        };
+                        layers.Add(textLayerModel);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError($"Failed to load text layer for resource {resource.ResourceType}", e);
+                        errorMessages.Add(e.Message);
+                    }
+
                 }
             }
         }
 
 
-        return new ResourceTemplate()
+        return (new ResourceTemplate()
         {
             ResourceType = resource.ResourceType,
             Width = resource.Width,
             Height = resource.Height,
             Layers = layers
-        };
+        }, errorMessages);
     }
 }

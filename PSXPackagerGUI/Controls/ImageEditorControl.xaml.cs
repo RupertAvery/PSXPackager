@@ -552,23 +552,32 @@ namespace PSXPackagerGUI.Controls
                     try
                     {
                         var xmlResource = (Resource)serializer.Deserialize(stream)!;
-                        var resourceTemplate = xmlResource.ToResourceTemplate(basePath!);
-                        if (resourceTemplate.ResourceType != ResourceType)
+                        var (resourceTemplate, errorList) = xmlResource.ToResourceTemplate(basePath!);
+                        if (errorList.Count == 0)
                         {
-                            var confirmResult = MessageBox.Show(Application.Current.MainWindow,
-                                $"The selected template does not match the resource type {ResourceType}. Are you sure you want to continue?",
-                                "PSXPackager",
-                                MessageBoxButton.YesNo,
-                                MessageBoxImage.Warning
-                            );
-
-                            if (confirmResult == MessageBoxResult.No)
+                            if (resourceTemplate.ResourceType != ResourceType)
                             {
-                                return;
+                                var confirmResult = MessageBox.Show(Application.Current.MainWindow,
+                                    $"The selected template does not match the resource type {ResourceType}. Are you sure you want to continue?",
+                                    "PSXPackager",
+                                    MessageBoxButton.YesNo,
+                                    MessageBoxImage.Warning
+                                );
+
+                                if (confirmResult == MessageBoxResult.No)
+                                {
+                                    return;
+                                }
                             }
+                            Composite.Layers = new ObservableCollection<Layer>(resourceTemplate.Layers);
+                            Update();
+                        } 
+                        else
+                        {
+                            var messages = string.Join("\r\n", errorList);
+                            MessageBox.Show(Application.Current.MainWindow, $"Failed to load template:\n{messages}", "PSXPackager",
+                                MessageBoxButton.OK, MessageBoxImage.Warning);
                         }
-                        Composite.Layers = new ObservableCollection<Layer>(resourceTemplate.Layers);
-                        Update();
                     }
                     catch (Exception exception)
                     {

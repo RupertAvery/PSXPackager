@@ -182,9 +182,10 @@ namespace PSXPackagerGUI.Pages
             Model.Snd0.Reset();
             Model.Boot.Reset();
 
-            ResourceHelper.LoadResource(Model.Icon0, GetDefaultResourceFile(Model.Icon0.Type), true);
-            ResourceHelper.LoadResource(Model.Pic1, GetDefaultResourceFile(Model.Pic1.Type), true);
-            ResourceHelper.LoadTemplate(Model.Pic0, GetDefaulTemplateFile(Model.Pic0.Type), true);
+            var result1 = ResourceHelper.LoadResource(Model.Icon0, GetDefaultResourceFile(Model.Icon0.Type), true);
+            var result2 = ResourceHelper.LoadResource(Model.Pic1, GetDefaultResourceFile(Model.Pic1.Type), true);
+            var result3 = ResourceHelper.LoadTemplate(Model.Pic0, GetDefaulTemplateFile(Model.Pic0.Type), true);
+
 
             Model.Icon0.Composite.Render();
             Model.Pic0.Composite.Render();
@@ -221,6 +222,10 @@ namespace PSXPackagerGUI.Pages
             ResourceTabs.SelectedIndex = 0;
             Model.CurrentResourceName = "ICON0";
             Model.CurrentResource = Model.Icon0;
+
+            result1.WarnIfErrors();
+            result2.WarnIfErrors();
+            result3.WarnIfErrors();
         }
 
         public void LoadPbp()

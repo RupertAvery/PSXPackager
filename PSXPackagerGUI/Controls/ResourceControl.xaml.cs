@@ -149,7 +149,7 @@ namespace PSXPackagerGUI.Controls
             if (result is true)
             {
                 Settings.LastResourceDirectory = Path.GetDirectoryName(openFileDialog.FileName);
-                ResourceHelper.LoadResource(Resource, openFileDialog.FileName);
+                ResourceHelper.LoadResource(Resource, openFileDialog.FileName).WarnIfErrors(); 
             }
         }
 
@@ -164,7 +164,7 @@ namespace PSXPackagerGUI.Controls
             if (result is true)
             {
                 Settings.LastResourceDirectory = Path.GetDirectoryName(openFileDialog.FileName);
-                ResourceHelper.LoadResource(Resource, openFileDialog.FileName);
+                ResourceHelper.LoadResource(Resource, openFileDialog.FileName).WarnIfErrors(); 
             }
         }
 

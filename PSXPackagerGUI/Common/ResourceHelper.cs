@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Windows;
 using System.Windows.Media.Imaging;
@@ -14,60 +15,103 @@ using Layer = PSXPackagerGUI.Models.Resource.Layer;
 
 namespace PSXPackagerGUI.Common;
 
-public class ResourceHelper
+
+public static class ResourceResultExtensions
 {
-
-    public static void LoadTemplate(ResourceModel resource, string filename, bool isDefault = false)
+    public static void WarnIfErrors(this ResourceResult resourceResult)
     {
-        switch (resource.Type)
+        if (!resourceResult.Success)
         {
-            case ResourceType.ICON0:
-            case ResourceType.BOOT:
-            case ResourceType.PIC1:
-            case ResourceType.PIC0:
-                {
-                    XmlSerializer serializer = new XmlSerializer(typeof(Resource));
-
-                    var basePath = Path.GetDirectoryName(filename);
-
-                    using (FileStream stream = File.OpenRead(filename))
-                    {
-                        try
-                        {
-                            var xmlResource = (Resource)serializer.Deserialize(stream)!;
-                            var resourceTemplate = xmlResource.ToResourceTemplate(basePath!);
-                            if (resourceTemplate.ResourceType != resource.Type)
-                            {
-                                return;
-                            }
-                            resource.Composite.Clear();
-                            resource.Composite.Layers = new ObservableCollection<Layer>(resourceTemplate.Layers);
-                            resource.RefreshIcon();
-                        }
-                        finally
-                        {
-
-                        }
-                    }
-                    resource.HasResource = true;
-                    break;
-                }
+            var messages = string.Join("\r\n", resourceResult.ErrorMessages);
+            MessageBox.Show(Application.Current.MainWindow, $"An error occured while loading the resource or template for {resourceResult.ResourceType}.\r\n\r\n{messages}", "Resource load failed", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
+}
 
-    public static void LoadResource(ResourceModel resource, string filename, bool isDefault = false)
+public class ResourceResult
+{
+    public ResourceType ResourceType { get; set; }
+    public bool Success => ErrorMessages.Count == 0;
+    public List<string> ErrorMessages { get; set; } = new List<string>();
+}
+
+public class ResourceHelper
+{
+    public static ResourceResult LoadTemplate(ResourceModel resource, string filename, bool isDefault = false)
     {
-        switch (resource.Type)
-        {
-            case ResourceType.ICON0:
-            case ResourceType.BOOT:
-            case ResourceType.PIC1:
-            case ResourceType.PIC0:
-                {
-                    resource.Composite.Clear();
+        ResourceResult result = new ResourceResult() { ResourceType = resource.Type };
 
-                    try
+        try
+        {
+            switch (resource.Type)
+            {
+                case ResourceType.ICON0:
+                case ResourceType.BOOT:
+                case ResourceType.PIC1:
+                case ResourceType.PIC0:
                     {
+                        XmlSerializer serializer = new XmlSerializer(typeof(Resource));
+
+                        var basePath = Path.GetDirectoryName(filename);
+
+                        using (FileStream stream = File.OpenRead(filename))
+                        {
+                            try
+                            {
+                                var xmlResource = (Resource)serializer.Deserialize(stream)!;
+                                var (resourceTemplate, errorMessages) = xmlResource.ToResourceTemplate(basePath!);
+
+                                if (resourceTemplate.ResourceType != resource.Type)
+                                {
+                                    result.ErrorMessages.Add("Resource did not match");
+                                    return result;
+                                }
+
+                                resource.Composite.Clear();
+                                resource.Composite.Layers = new ObservableCollection<Layer>(resourceTemplate.Layers);
+                                resource.RefreshIcon();
+
+                                if (errorMessages.Count > 0)
+                                {
+                                    result.ErrorMessages.AddRange(errorMessages);
+                                }
+                            }
+                            finally
+                            {
+
+                            }
+                        }
+                        resource.HasResource = true;
+                        break;
+                    }
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError($"Failed to load Template: {resource.Type} - {filename}", ex);
+            result.ErrorMessages.Add(ex.Message);
+        }
+
+        return result;
+    }
+
+
+    public static ResourceResult LoadResource(ResourceModel resource, string filename, bool isDefault = false)
+    {
+        ResourceResult result = new ResourceResult() { ResourceType = resource.Type };
+
+        try
+        {
+            switch (resource.Type)
+            {
+                case ResourceType.ICON0:
+                case ResourceType.BOOT:
+                case ResourceType.PIC1:
+                case ResourceType.PIC0:
+                    {
+                        resource.Composite.Clear();
+
                         var appPath = ApplicationInfo.AppPath;
 
                         using var fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read);
@@ -137,28 +181,28 @@ public class ResourceHelper
                         resource.SourceUrl = filename;
                         resource.Composite.Render();
                         resource.RefreshIcon();
-                    }
-                    catch (Exception e)
-                    {
-                    }
 
-                    break;
-                }
-            default:
-                {
-                    try
+
+                        break;
+                    }
+                default:
                     {
                         using var fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read);
                         resource.CopyFromStream(fileStream);
                         resource.HasResource = true;
                         resource.SourceUrl = filename;
+
+                        break;
                     }
-                    catch (Exception e)
-                    {
-                    }
-                    break;
-                }
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.LogError($"Failed to load Resource: {resource.Type} - {filename}", e);
+            result.ErrorMessages.Add(e.Message);
         }
 
+
+        return result;
     }
 }

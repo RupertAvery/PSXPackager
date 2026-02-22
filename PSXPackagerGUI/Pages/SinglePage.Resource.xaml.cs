@@ -39,7 +39,7 @@ namespace PSXPackagerGUI.Pages
             if (result is true)
             {
                 _settings.LastResourceDirectory = Path.GetDirectoryName(openFileDialog.FileName);
-                ResourceHelper.LoadResource(resource, openFileDialog.FileName);
+                ResourceHelper.LoadResource(resource, openFileDialog.FileName).WarnIfErrors(); 
                 Model.IsDirty = true;
             }
 
