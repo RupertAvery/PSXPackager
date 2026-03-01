@@ -55,9 +55,9 @@ namespace PSXPackagerGUI.Processing
             var tempPath = Path.Combine(Path.GetTempPath(), "PSXPackager");
 
             
-            while (await _channel.Reader.WaitToReadAsync())
+            while (await _channel.Reader.WaitToReadAsync(token))
             {
-                var job = await _channel.Reader.ReadAsync();
+                var job = await _channel.Reader.ReadAsync(token);
 
                 var notifier = new ProcessNotifier(_dispatcher);
                 notifier.Entry = job.Entry;

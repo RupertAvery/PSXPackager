@@ -167,11 +167,11 @@ namespace Popstation
 
         public static void WriteResource(this Stream stream, Resource resource)
         {
-            //if (resource.Buffer != null)
-            //{
-            //    stream.Write(resource.Buffer, 0, (int)resource.Size);
-            //    return;
-            //}
+            if (resource.Buffer != null)
+            {
+                stream.Write(resource.Buffer, 0, (int)resource.Size);
+                return;
+            }
             resource.Stream.Seek(0, SeekOrigin.Begin);
             resource.Stream.CopyTo(stream);
         }

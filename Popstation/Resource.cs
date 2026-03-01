@@ -5,11 +5,18 @@ using Popstation.Pbp;
 
 namespace Popstation
 {
+
     /// <summary>
-    /// A container for a PNG, PMF or AT3
+    /// Represents a data resource that encapsulates a stream or buffer along with its type and size information.
     /// </summary>
+    /// <remarks>A Resource can be constructed from either a stream or a byte buffer, and provides access to
+    /// the underlying data, its type, and its size. The Exists property indicates whether the resource has valid data.
+    /// The Resource class implements IDisposable; callers should dispose of instances when they are no longer needed to
+    /// release any associated stream resources.</remarks>
     public class Resource : IDisposable
     {
+        public byte[] Buffer { get; private set; } = null;
+
         public Stream Stream { get; }
 
         /// <summary>
@@ -38,7 +45,7 @@ namespace Popstation
         public Resource(ResourceType resourceType, byte[] buffer, uint size)
         {
             ResourceType = resourceType;
-            Stream = new MemoryStream(buffer);
+            Buffer = buffer;
             Size = size;
             Exists = true;
         }
@@ -58,25 +65,9 @@ namespace Popstation
             return new Resource(resourceType);
         }
 
-        ///// <summary>
-        ///// Writes the contents of this <see cref="Resource"/> to the specified Stream
-        ///// </summary>
-        ///// <param name="stream"></param>
-        //public void Write(Stream stream)
-        //{
-        //    if (Buffer != null)
-        //    {
-        //        stream.Write(Buffer, 0, (int)Size);
-        //        return;
-        //    }
-
-        //    Stream.Seek(0, SeekOrigin.Begin);
-        //    Stream.CopyTo(stream);
-        //}
-
-
         public void Dispose()
         {
+            Buffer = null;
             Stream?.Dispose();
         }
 

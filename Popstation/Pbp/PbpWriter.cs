@@ -82,7 +82,12 @@ namespace Popstation.Pbp
 
                 var offset = (uint)outputStream.Position;
 
-                // fill with NULL
+                if (offset > psarOffset)
+                {
+                    throw new Exception("Resource sizes exceed the space allocated before PSAR data!");
+                }
+
+                // pad with 0's
                 for (var i = 0; i < psarOffset - offset; i++)
                 {
                     outputStream.WriteByte(0);
@@ -558,10 +563,20 @@ namespace Popstation.Pbp
 
         const uint PBPMAGIC = 0x50425000;
 
+        /// <summary>
+        /// Ensures that all required resource files are present by extracting them from the base PBP file if they are
+        /// missing.
+        /// </summary>
+        /// <remarks>This method checks for the existence of required resources such as ICON0 and
+        /// DATA.PSP. If any are missing, it attempts to extract them from the specified base PBP file. The method
+        /// assumes that the base PBP file path and related resource information are correctly set in the associated
+        /// conversion information.</remarks>
+        /// <exception cref="Exception">Thrown if the base PBP file is not a valid PBP file.</exception>
         private void EnsureRequiredResourcesExist()
         {
-            byte[] buffer = new byte[1 * 1048576];
             uint[] base_header = new uint[10];
+
+            // Open the base PBP to read required resources if they aren't provided
 
             using (var basePbp = new FileStream(convertInfo.BasePbp, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
@@ -580,7 +595,7 @@ namespace Popstation.Pbp
                     var icon0_buffer = new byte[icon0_size];
 
                     basePbp.Seek(base_header[3], SeekOrigin.Begin);
-                    basePbp.Read(buffer, 0, (int)icon0_size);
+                    basePbp.Read(icon0_buffer, 0, (int)icon0_size);
 
                     convertInfo.Icon0 = new Resource(ResourceType.ICON0, icon0_buffer, icon0_size);
                 }
@@ -595,9 +610,11 @@ namespace Popstation.Pbp
                     var prx_size = psp_header[11];
 
                     basePbp.Seek(base_header[8], SeekOrigin.Begin);
-                    basePbp.Read(buffer, 0, (int)prx_size);
 
-                    convertInfo.DataPsp = new Resource(ResourceType.PSP, buffer, prx_size);
+                    var datapsp_buffer = new byte[prx_size];
+                    basePbp.Read(datapsp_buffer, 0, (int)prx_size);
+
+                    convertInfo.DataPsp = new Resource(ResourceType.PSP, datapsp_buffer, prx_size);
                 }
             }
         }

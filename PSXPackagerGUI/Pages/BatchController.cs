@@ -342,7 +342,13 @@ namespace PSXPackagerGUI.Pages
                             MessageBox.Show(Window, "Conversion completed.", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Information);
                         });
                     }
-
+                }
+                else
+                {
+                    _dispatcher.Invoke(() =>
+                    {
+                        MessageBox.Show(Window, "One or more errors occured during conversion", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    });
                 }
 
             });

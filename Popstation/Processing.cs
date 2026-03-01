@@ -546,11 +546,18 @@ namespace Popstation
 
                 var info = new FileInfo(fileName);
 
-                using (var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
+                try
                 {
-                    var buffer = new byte[info.Length];
-                    stream.Read(buffer, 0, (int)info.Length);
-                    return new Resource(type, buffer, (uint)info.Length);
+                    using (var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
+                    {
+                        var buffer = new byte[info.Length];
+                        stream.Read(buffer, 0, (int)info.Length);
+                        return new Resource(type, buffer, (uint)info.Length);
+                    }
+                }
+                catch
+                {
+                    return Resource.Empty(type);
                 }
             }
 
