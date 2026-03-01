@@ -1121,6 +1121,9 @@ namespace PSXPackagerGUI.Pages
 
                 Model.IsDirty = true;
 
+                var discIndex = Model.Discs.IndexOf(selectedDisc);
+                disc.Index = discIndex;
+
                 Model.Discs[discIndex] = disc;
 
                 Model.SelectedDisc = disc;
