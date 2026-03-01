@@ -955,6 +955,7 @@ namespace PSXPackagerGUI.Pages
                 _settings.LastDiscImageDirectory = fileDirectory;
 
 				var discIndex = Model.Discs.IndexOf(selectedDisc); //Get index from selectedDisc
+
                 var disc = new Disc()  //Create disc with correct index
 				{
 					Index = discIndex, //Index from the begining
@@ -1120,9 +1121,6 @@ namespace PSXPackagerGUI.Pages
                 _model.SelectedDisc = disc;
 
                 Model.IsDirty = true;
-
-                var discIndex = Model.Discs.IndexOf(selectedDisc);
-                disc.Index = discIndex;
 
                 Model.Discs[discIndex] = disc;
 
