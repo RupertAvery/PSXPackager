@@ -8,8 +8,12 @@ namespace Popstation.M3u
         public static M3uFile Read(string file)
         {
             var m3u = new M3uFile();
+            
+            m3u.Path = file;
             m3u.FileEntries = new List<string>();
+
             var cueLines = File.ReadAllLines(file);
+
             foreach (var line in cueLines)
             {
                 if (line.Trim() != string.Empty)
@@ -17,6 +21,7 @@ namespace Popstation.M3u
                     m3u.FileEntries.Add(line.Trim());
                 }
             }
+
             return m3u;
         }
     }

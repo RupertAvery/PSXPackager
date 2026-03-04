@@ -1,4 +1,11 @@
-﻿using System;
+﻿using DiscUtils;
+using Popstation.Database;
+using Popstation.M3u;
+using PSXPackager.Common.Cue;
+using PSXPackagerGUI.Common;
+using PSXPackagerGUI.Models;
+using PSXPackagerGUI.Processing;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -8,14 +15,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Threading;
-using Popstation.Database;
-using Popstation.M3u;
-using PSXPackager.Common.Cue;
-using PSXPackagerGUI.Common;
-using PSXPackagerGUI.Models;
-using PSXPackagerGUI.Processing;
+using CueFileEntry = PSXPackagerGUI.Models.CueFileEntry;
 
 namespace PSXPackagerGUI.Pages
 {
@@ -87,8 +88,250 @@ namespace PSXPackagerGUI.Pages
 
         public Action Cancel { get; set; }
 
+        public static string GetLowestCommonFolder(params string[] paths)
+        {
+            if (paths == null || paths.Length == 0)
+                return string.Empty;
+
+            // Normalize paths
+            var separatedPaths = paths
+                .Select(p => Path.GetFullPath(p)
+                    .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                    .Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))
+                .ToArray();
+
+            var minLength = separatedPaths.Min(p => p.Length);
+            var commonParts = new System.Collections.Generic.List<string>();
+
+            for (int i = 0; i < minLength; i++)
+            {
+                var currentPart = separatedPaths[0][i];
+
+                if (separatedPaths.All(p =>
+                        string.Equals(p[i], currentPart,
+                            OperatingSystem.IsWindows()
+                                ? StringComparison.OrdinalIgnoreCase
+                                : StringComparison.Ordinal)))
+                {
+                    commonParts.Add(currentPart);
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            if (commonParts.Count == 0)
+                return string.Empty;
+
+            return string.Join(Path.DirectorySeparatorChar, commonParts);
+        }
+
+        private FileEntry GetCueFileEntry(string path, string basePath)
+        {
+            var extension = Path.GetExtension(path).ToLower();
+
+            switch (extension)
+            {
+                case ".bin":
+                    return new FileEntry()
+                    {
+                        Path = path,
+                        RelativePath = Path.GetRelativePath(basePath, path),
+                    };
+            }
+
+            throw new Exception("Unsupported file type");
+        }
+
+        private SubEntry GetPlaylistEntry(string path, string basePath)
+        {
+            var extension = Path.GetExtension(path).ToLower();
+
+            switch (extension)
+            {
+                case ".cue":
+                    var cueFiles = CueFileReader.Read(path);
+
+                    var fileEntries = new List<FileEntry>();
+
+                    foreach (var fileEntry in cueFiles.FileEntries)
+                    {
+                        fileEntries.Add(GetCueFileEntry(cueFiles.GetAbsolutePath(fileEntry), Path.GetDirectoryName(path)));
+                    }
+
+                    return new CueFileEntry()
+                    {
+                        Path = path,
+                        RelativePath = Path.GetRelativePath(basePath, path),
+                        FileEntries = fileEntries
+                    };
+
+                case ".bin":
+                    return new FileEntry()
+                    {
+                        Path = path,
+                        RelativePath = Path.GetRelativePath(basePath, path),
+                    };
+                case ".chd":
+                    return new FileEntry()
+                    {
+                        Path = path,
+                        RelativePath = Path.GetRelativePath(basePath, path),
+                    };
+            }
+
+            throw new Exception("Unsupported file type");
+        }
+
+        private string GetDiscPath(string path)
+        {
+            var entryExtension = Path.GetExtension(path).ToLower();
+
+            switch (entryExtension)
+            {
+                case ".m3u":
+                    {
+                        var playlist = M3uFileReader.Read(path);
+                        return GetDiscPath(playlist.GetAbsolutePath(playlist.FileEntries[0]));
+                    }
+                case ".cue":
+                    {
+                        var cueFiles = CueFileReader.Read(path);
+                        return GetDiscPath(cueFiles.GetAbsolutePath(cueFiles.FileEntries[0]));
+                    }
+                default:
+                    return path;
+            }
+        }
+
+        private IEnumerable<string> GetIgnoreFiles(SubEntry subEntry)
+        {
+            switch (subEntry.SubEntryType)
+            {
+                case SubEntryType.PlayList:
+                    {
+                        var playlist = subEntry as PlaylistEntry;
+
+                        foreach (var fileEntry in playlist.FileEntries)
+                        {
+                            foreach (var entry in GetIgnoreFiles(fileEntry))
+                            {
+                                yield return entry;
+                            }
+                        }
+
+                        break;
+                    }
+                case SubEntryType.CueSheet:
+                    {
+                        var cueFileEntry = subEntry as CueFileEntry;
+
+                        foreach (var fileEntry in cueFileEntry.FileEntries)
+                        {
+                            foreach (var entry in GetIgnoreFiles(fileEntry))
+                            {
+                                yield return entry;
+                            }
+                        }
+
+                        break;
+                    }
+                case SubEntryType.File:
+                    yield return subEntry.Path;
+                    break;
+            }
+        }
+
+        private IEnumerable<string> GetIgnoreFiles(ScanEntry scanEntry)
+        {
+            switch (scanEntry.Type)
+            {
+                case ScanEntryType.PlayList:
+                case ScanEntryType.CueSheet:
+                    {
+                        foreach (var subEntry in scanEntry.SubEntries)
+                        {
+                            yield return subEntry.Path;
+
+                            foreach (var entry in GetIgnoreFiles(subEntry))
+                            {
+                                yield return entry;
+                            }
+                        }
+
+                        break;
+                    }
+            }
+
+            //if (scanEntry.Type == ScanEntryType.File)
+            //{
+            //    yield break;
+            //}
+        }
+
+        private ScanEntry GetScanEntry(string path)
+        {
+            var entryExtension = Path.GetExtension(path).ToLower();
+
+            var scanEntry = new ScanEntry()
+            {
+                Path = path
+            };
+
+            var basePath = Path.GetDirectoryName(path);
+
+            switch (entryExtension)
+            {
+                case ".m3u":
+                    {
+                        scanEntry.Type = ScanEntryType.PlayList;
+
+                        var playlist = M3uFileReader.Read(path);
+                        var subEntries = new List<SubEntry>();
+
+                        foreach (var fileEntry in playlist.FileEntries)
+                        {
+                            var absolutePath = playlist.GetAbsolutePath(fileEntry);
+                            subEntries.Add(GetPlaylistEntry(absolutePath, basePath));
+                        }
+
+                        scanEntry.SubEntries = subEntries;
+
+                        break;
+                    }
+                case ".cue":
+                    {
+                        scanEntry.Type = ScanEntryType.CueSheet;
+
+                        var cueFiles = CueFileReader.Read(path);
+                        var subEntries = new List<SubEntry>();
+
+                        foreach (var fileEntry in cueFiles.FileEntries)
+                        {
+                            var absolutePath = cueFiles.GetAbsolutePath(fileEntry);
+                            subEntries.Add(GetCueFileEntry(absolutePath, basePath));
+                        }
+
+                        scanEntry.SubEntries = subEntries;
+
+                        break;
+                    }
+                default:
+                    {
+                        scanEntry.Type = ScanEntryType.File;
+                        break;
+                    }
+
+            }
+
+            return scanEntry;
+        }
+
         private void Scan(object obj)
         {
+            var gamesByMainGameId = _gameDb.GameEntries.ToLookup(d => d.GameID);
+
             if (_model.IsScanning)
             {
                 var result = MessageBox.Show(Window, "Abort scanning?", "Batch", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
@@ -154,6 +397,7 @@ namespace PSXPackagerGUI.Pages
 
 
 
+
             Task.Run(() =>
             {
                 _dispatcher.Invoke(() =>
@@ -176,6 +420,8 @@ namespace PSXPackagerGUI.Pages
                     return Path.Combine(_model.Settings.InputPath, file);
                 }
 
+                var scanEntries = new List<ScanEntry>();
+
                 foreach (var pattern in patterns)
                 {
                     if (_token.IsCancellationRequested) break;
@@ -189,54 +435,134 @@ namespace PSXPackagerGUI.Pages
 
                     var files = Directory.EnumerateFiles(_model.Settings.InputPath, pattern, searchOption);
 
-                    foreach (var file in files.Select(GetFullPath))
+                    foreach (var file in files)
                     {
-                        var currentPath = Path.GetDirectoryName(file);
-
                         if (_token.IsCancellationRequested) break;
 
-                        switch (pattern)
+                        if (ignoreFileSet.Contains(file))
                         {
-                            case "*.m3u":
-                            {
-                                var playlist = M3uFileReader.Read(file);
-                                foreach (var fileEntry in playlist.FileEntries)
-                                {
-                                    ignoreFileSet.Add(GetAbsolutePath(currentPath, fileEntry));
-                                }
-
-                                break;
-                            }
-                            case "*.cue":
-                            {
-                                var cueFiles = CueFileReader.Read(file);
-                                foreach (var fileEntry in cueFiles.FileEntries)
-                                {
-                                    ignoreFileSet.Add(GetAbsolutePath(currentPath, fileEntry.FileName));
-                                }
-
-                                break;
-                            }
+                            continue;
                         }
 
-                        var relativePath = Path.GetRelativePath(_model.Settings.InputPath, file);
-
-                        if (!ignoreFileSet.Contains(file))
+                        try
                         {
-                            _dispatcher.Invoke(() =>
+                            var scanEntry = GetScanEntry(file);
+                            var discPath = GetDiscPath(file);
+                            var ignoreFiles = GetIgnoreFiles(scanEntry);
+
+                            foreach (var ignoreFile in ignoreFiles)
                             {
-                                _model.BatchEntries.Add(new BatchEntryModel()
-                                {
-                                    IsSelected = true,
-                                    RelativePath = relativePath,
-                                    MaxProgress = 100,
-                                    Progress = 0,
-                                    Status = "Ready"
-                                });
+                                ignoreFileSet.Add(ignoreFile);
+                            }
+
+                            var gameId = GameDB.FindGameId(discPath);
+
+                            if (gameId != null)
+                            {
+                                var gameEntry = _gameDb.GetEntryByGameID(gameId);
+
+                                scanEntry.GameEntry = gameEntry;
+                            }
+
+                            scanEntries.Add(scanEntry);
+
+                        }
+                        catch (InvalidFileSystemException)
+                        {
+
+                        }
+                        catch (Exception e)
+                        {
+                            scanEntries.Add(new ScanEntry()
+                            {
+                                Path = file,
+                                HasError = true,
+                                ErrorMesage = e.Message
                             });
                         }
+
+
+
+                        //if (pattern != "*.m3u")
+                        //{
+
+                        //    if (gameEntry != null)
+                        //    {
+                        //        if (_model.Settings.MergeMultiDiscs)
+                        //        {
+                        //            // gamesByMainGameId
+                        //        }
+                        //    }
+                        //}
+
+
+
+
+
                     }
                 }
+
+                //scanEntries = scanEntries.Where(d => ignoreFileSet.Contains(d.Path)).ToList();
+
+                //var gameGroups = scanEntries.Where(d => Path.GetExtension(d.Path).ToLower() != ".m3u").Where(d => d.GameEntry != null).GroupBy(d => d.GameEntry.MainGameID);
+
+                //var multiDiscGames = gameGroups.Where(d => d.Count() > 1).ToList();
+
+
+                //if (multiDiscGames.Any())
+                //{
+                //    foreach (var multiDiscGame in multiDiscGames)
+                //    {
+                //        var discs = multiDiscGame.Select(d => d).OrderBy(d => d.GameEntry.DiscIndex).ToList();
+
+                //        var lowestCommonPath = GetLowestCommonFolder(discs.Select(d => d.Path).ToArray());
+
+                //        var insertIndex = scanEntries.IndexOf(discs[0]);
+
+
+                //        var playlist = new List<string>();
+
+
+                //        foreach (var scanEntry in discs)
+                //        {
+                //            playlist.Add(Path.GetRelativePath(lowestCommonPath, scanEntry.Path));
+                //            ignoreFileSet.Add(scanEntry.Path);
+                //        }
+
+                //        var m3uPath = Path.Combine(lowestCommonPath, $"{discs[0].GameEntry.MainGameTitle}.m3u");
+
+                //        File.WriteAllText(m3uPath, string.Join("\n", playlist));
+
+                //        var newEntry = new ScanEntry() { GameEntry = discs[0].GameEntry, Path = m3uPath };
+
+                //        scanEntries.Insert(insertIndex, newEntry);
+                //    }
+                //}
+
+
+                foreach (var batchEntry in scanEntries.OrderBy(d => d.GameEntry?.MainGameTitle))
+                {
+                    if (!ignoreFileSet.Contains(batchEntry.Path))
+                    {
+                        var relativePath = Path.GetRelativePath(_model.Settings.InputPath, batchEntry.Path);
+                        _dispatcher.Invoke(() =>
+                        {
+                            _model.BatchEntries.Add(new BatchEntryModel()
+                            {
+                                IsSelected = true,
+                                RelativePath = relativePath,
+                                MainGameId = batchEntry.GameEntry?.MainGameID,
+                                GameId = batchEntry.GameEntry?.GameID,
+                                MaxProgress = 100,
+                                Progress = 0,
+                                Status = "Ready",
+                                Type = batchEntry.Type,
+                                SubEntries = batchEntry.SubEntries
+                            });
+                        });
+                    }
+                }
+
 
                 _dispatcher.Invoke(() =>
                 {

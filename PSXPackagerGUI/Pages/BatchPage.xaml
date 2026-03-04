@@ -16,6 +16,74 @@
         <converters:NotConverter x:Key="NotConverter"></converters:NotConverter>
         <converters:BooleanVisibilityConverter x:Key="VisibilityConverter"></converters:BooleanVisibilityConverter>
         <converters:BooleanInvisibilityConverter x:Key="InvisibilityConverter"></converters:BooleanInvisibilityConverter>
+
+        <DataTemplate x:Key="FileEntryTemplate" DataType="{x:Type models:FileEntry}">
+            <Label Content="{Binding RelativePath}" Foreground="DarkGray"></Label>
+        </DataTemplate>
+
+        <DataTemplate x:Key="CueSheetTemplate" DataType="{x:Type models:CueFileEntry}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+
+                <Label Content="{Binding RelativePath}" Foreground="DarkGray"></Label>
+
+                <ItemsControl Grid.Row="1" ItemsSource="{Binding FileEntries}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="30"/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <ContentControl Grid.Column="1" Content="{Binding Path=.}">
+                                    <ContentControl.Style>
+                                        <Style TargetType="ContentControl">
+                                            <Setter Property="ContentTemplate" Value="{StaticResource FileEntryTemplate}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SubEntryType}" Value="{x:Static models:SubEntryType.File}">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource FileEntryTemplate}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ContentControl.Style>
+                                </ContentControl>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </DataTemplate>
+
+
+        <DataTemplate x:Key="PlaylistTemplate" DataType="{x:Type models:BatchEntryModel}">
+            <Grid>
+                <ItemsControl ItemsSource="{Binding SubEntries}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ContentControl Content="{Binding Path=.}">
+                                <ContentControl.Style>
+                                    <Style TargetType="ContentControl">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource FileEntryTemplate}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SubEntryType}" Value="{x:Static models:SubEntryType.File}">
+                                                <Setter Property="ContentTemplate" Value="{StaticResource FileEntryTemplate}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding SubEntryType}" Value="{x:Static models:SubEntryType.CueSheet}">
+                                                <Setter Property="ContentTemplate" Value="{StaticResource CueSheetTemplate}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ContentControl.Style>
+                            </ContentControl>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </DataTemplate>
+
     </Page.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -55,9 +123,7 @@
                 <Label Grid.Column="0" Margin="2,2,2,2"></Label>
                 <StackPanel Grid.Column="1" HorizontalAlignment="Stretch" Orientation="Horizontal" IsEnabled="{Binding ConvertImageToPbp}">
                     <CheckBox Margin="2,8,2,2" IsChecked="{Binding Settings.RecurseFolders}">Search Subfolders</CheckBox>
-                    <!--<CheckBox Margin="2,8,2,2">.7Z</CheckBox>
-                <CheckBox Margin="2,8,2,2">.ZIP</CheckBox>
-                <CheckBox Margin="2,8,2,2">.RAR</CheckBox>-->
+                    <!--<CheckBox Margin="10,8,2,2" IsChecked="{Binding Settings.MergeMultiDiscs}">Merge Multi-disc Games</CheckBox>-->
                 </StackPanel>
             </Grid>
 
@@ -70,7 +136,7 @@
                 <RadioButton Grid.Column="1" Margin="2,8,2,7" IsChecked="{Binding ConvertImageToPbp}">Image to .PBP</RadioButton>
                 <RadioButton Grid.Column="1" Margin="120,8,2,7" IsChecked="{Binding ConvertPbpToImage}">.PBP to .BIN</RadioButton>
                 <RadioButton Grid.Column="1" Margin="230,8,2,7" IsChecked="{Binding GenerateResourceFolders}" ToolTip="See Settings for more info">Generate Resource Folders</RadioButton>
-                <RadioButton Grid.Column="1" Margin="410,8,2,7" IsChecked="{Binding ExtractResources}" ToolTip="See Settings for more info">Extract Resources</RadioButton>
+                <RadioButton Grid.Column="1" Margin="410,8,2,7" IsChecked="{Binding ExtractResources}" ToolTip="See Settings for more info">Extract Resources (PBP)</RadioButton>
             </Grid>
 
             <Grid Grid.Row="3" ColumnSpan="5">
@@ -78,15 +144,15 @@
                     <ColumnDefinition Width="100"/>
                     <ColumnDefinition MinWidth="200"/>
                 </Grid.ColumnDefinitions>
-                <Label Grid.Column="0" Margin="2,2,2,2">Image types:</Label>
+                <Label Grid.Column="0" Margin="2,2,2,2">File types:</Label>
                 <StackPanel Grid.Column="1" HorizontalAlignment="Stretch" Orientation="Horizontal" IsEnabled="{Binding ConvertImageToPbp}">
                     <CheckBox Margin="2,8,2,2" IsChecked="{Binding Settings.IsBinChecked}">.BIN / .CUE</CheckBox>
-                    <CheckBox Margin="2,8,2,2" IsChecked="{Binding Settings.IsM3uChecked}">.M3U</CheckBox>
-                    <CheckBox Margin="2,8,2,2" IsChecked="{Binding Settings.IsImgChecked}">.IMG</CheckBox>
-                    <CheckBox Margin="2,8,2,2" IsChecked="{Binding Settings.IsIsoChecked}">.ISO</CheckBox>
-                    <CheckBox Margin="2,8,2,2" IsChecked="{Binding Settings.Is7zChecked}">.7z</CheckBox>
-                    <CheckBox Margin="2,8,2,2" IsChecked="{Binding Settings.IsZipChecked}">.ZIP</CheckBox>
-                    <CheckBox Margin="2,8,2,2" IsChecked="{Binding Settings.IsRarChecked}">.RAR</CheckBox>
+                    <CheckBox Margin="10,8,2,2" IsChecked="{Binding Settings.IsM3uChecked}">.M3U</CheckBox>
+                    <CheckBox Margin="10,8,2,2" IsChecked="{Binding Settings.IsImgChecked}">.IMG</CheckBox>
+                    <CheckBox Margin="10,8,2,2" IsChecked="{Binding Settings.IsIsoChecked}">.ISO</CheckBox>
+                    <CheckBox Margin="10,8,2,2" IsChecked="{Binding Settings.Is7zChecked}">.7z</CheckBox>
+                    <CheckBox Margin="10,8,2,2" IsChecked="{Binding Settings.IsZipChecked}">.ZIP</CheckBox>
+                    <CheckBox Margin="10,8,2,2" IsChecked="{Binding Settings.IsRarChecked}">.RAR</CheckBox>
                 </StackPanel>
             </Grid>
 
@@ -128,17 +194,17 @@
                     </Image>
                 </Grid>
             </Button>
-			<Button Grid.Column="1" Grid.Row="1" Margin="2,2,2,2" Command="{Binding ProcessCommand}" IsEnabled="{Binding IsScanning, Converter={StaticResource NotConverter}}">
-				<Button.Style>
-					<Style TargetType="Button">
-						<Setter Property="ToolTip" Value="Start"/>
-						<Style.Triggers>
-							<DataTrigger Binding="{Binding IsProcessing}" Value="True">
-								<Setter Property="ToolTip" Value="Stop"/>
-							</DataTrigger>
-						</Style.Triggers>
-					</Style>
-				</Button.Style>
+            <Button Grid.Column="1" Grid.Row="1" Margin="2,2,2,2" Command="{Binding ProcessCommand}" IsEnabled="{Binding IsScanning, Converter={StaticResource NotConverter}}">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="ToolTip" Value="Start"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsProcessing}" Value="True">
+                                <Setter Property="ToolTip" Value="Stop"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
                 <Grid>
                     <Image Margin="5,5,5,5" Visibility="{Binding IsProcessing, Converter={StaticResource InvisibilityConverter}}">
                         <Image.Source>
@@ -163,15 +229,22 @@
                 <Grid Margin="8,2,2,2">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="30"/>
+                        <ColumnDefinition Width="30"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="120"/>
                     </Grid.ColumnDefinitions>
-                    <CheckBox IsThreeState="True" IsChecked="{Binding SelectAll}" VerticalAlignment="Center" HorizontalAlignment="Center"></CheckBox>
-                    <Label Grid.Column="1" VerticalAlignment="Center" Margin="-5,0,0,0">Item</Label>
-                    <Label Grid.Column="2" VerticalAlignment="Center" Margin="-6,0,0,0">Status</Label>
+                    <CheckBox Grid.Column="1" IsThreeState="True" IsChecked="{Binding SelectAll}" VerticalAlignment="Center" HorizontalAlignment="Center"></CheckBox>
+                    <Label Grid.Column="2" VerticalAlignment="Center" Margin="-5,0,0,0">Item</Label>
+                    <Label Grid.Column="3" VerticalAlignment="Center" Margin="-6,0,0,0">Status</Label>
                 </Grid>
             </Border>
-            <ListView Grid.Row="1" ItemsSource="{Binding BatchEntries}">
+            <ListView Grid.Row="1" ItemsSource="{Binding BatchEntries}" ScrollViewer.CanContentScroll="False">
+                <ListView.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Create .M3U"></MenuItem>
+                        <MenuItem Header="Create .CUE"></MenuItem>
+                    </ContextMenu>
+                </ListView.ContextMenu>
                 <ListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem">
                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -183,21 +256,82 @@
                     <DataTemplate>
                         <Border BorderBrush="#30000000" BorderThickness="0,0,0,0" Margin="2,2,0,2">
                             <Grid ToolTip="{Binding ErrorMessage}" Margin="2,2,2,2">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition/>
+                                    <RowDefinition/>
+                                </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="30"/>
                                     <ColumnDefinition Width="30"/>
                                     <ColumnDefinition Width="*" Name="TitleColumnDefinition"/>
                                     <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="120"/>
                                 </Grid.ColumnDefinitions>
-                                <CheckBox IsChecked="{Binding IsSelected}" VerticalAlignment="Center" HorizontalAlignment="Center"></CheckBox>
-                                <TextBlock Grid.Column="1" TextTrimming="CharacterEllipsis" Width="{Binding ActualWidth, ElementName=TitleColumnWidth}" VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding RelativePath}"></TextBlock>
-                                <ProgressBar Grid.Column="2" Maximum="{Binding MaxProgress}" Value="{Binding Progress}" Foreground="{Binding HasError, Converter={StaticResource HasErrorBrushConverter}}"></ProgressBar>
-                                <Label Grid.Column="2" Content="{Binding Status}"></Label>
+                                <Expander IsExpanded="{Binding IsExpanded}" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <Expander.Style>
+                                        <Style TargetType="Expander">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasSubEntries}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"></Setter>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding HasSubEntries}" Value="False">
+                                                    <Setter Property="Visibility" Value="Hidden"></Setter>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Expander.Style>
+
+                                </Expander>
+                                <CheckBox Grid.Column="1" IsChecked="{Binding IsSelected}" VerticalAlignment="Center" HorizontalAlignment="Center"></CheckBox>
+                                <TextBlock Grid.Column="2" TextTrimming="CharacterEllipsis"  VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding RelativePath}"></TextBlock>
+                                <TextBlock Grid.Column="3" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding GameId}"></TextBlock>
+                                <ProgressBar Grid.Column="4" Maximum="{Binding MaxProgress}" Value="{Binding Progress}" Foreground="{Binding HasError, Converter={StaticResource HasErrorBrushConverter}}"></ProgressBar>
+                                <Label Grid.Column="4" Content="{Binding Status}"></Label>
+
+                                <Grid Grid.Row="1" Grid.Column="2">
+                                    <Grid.Style>
+                                        <Style TargetType="Grid">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsExpanded}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"></Setter>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsExpanded}" Value="False">
+                                                    <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Grid.Style>
+                                    <ItemsControl ItemsSource="{Binding SubEntries}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <ContentControl Content="{Binding Path=.}">
+                                                    <ContentControl.Style>
+                                                        <Style TargetType="ContentControl">
+                                                            <Setter Property="ContentTemplate" Value="{StaticResource FileEntryTemplate}" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding SubEntryType}" Value="{x:Static models:SubEntryType.File}">
+                                                                    <Setter Property="ContentTemplate" Value="{StaticResource FileEntryTemplate}" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding SubEntryType}" Value="{x:Static models:SubEntryType.CueSheet}">
+                                                                    <Setter Property="ContentTemplate" Value="{StaticResource CueSheetTemplate}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </ContentControl.Style>
+                                                </ContentControl>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
+
                             </Grid>
                         </Border>
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
             <!--<Grid>
+            Width="{Binding ActualWidth, ElementName=TitleColumnWidth}"
+            
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="180"/>

@@ -12,6 +12,7 @@ using Popstation.Database;
 using PSXPackager.Common;
 using PSXPackager.Common.Cue;
 using PSXPackagerGUI.Models;
+using CueFileEntry = PSXPackager.Common.Cue.CueFileEntry;
 
 namespace PSXPackagerGUI.Pages
 {

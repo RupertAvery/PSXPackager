@@ -211,8 +211,8 @@
 
                         <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
                             <Label VerticalContentAlignment="Center">Files to merge:</Label>
-                            <Button Margin="10,0,0,0" Height="24" Width="120" Click="SelectCUE_Click" Visibility="Collapsed">Select CUE</Button>
-                            <Label Margin="10,0,0,0" VerticalContentAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed">or</Label>
+                            <Button Margin="10,0,0,0" Height="24" Width="120" Click="SelectCUE_Click" Visibility="Visible">Select CUE</Button>
+                            <Label Margin="10,0,0,0" VerticalContentAlignment="Center" HorizontalAlignment="Center" Visibility="Visible">or</Label>
                             <Button Margin="10,0,0,0" Height="24" Width="120" Click="SelectBins_Click">Select Bins</Button>
                         </StackPanel>
 

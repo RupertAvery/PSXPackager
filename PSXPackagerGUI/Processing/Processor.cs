@@ -1,15 +1,17 @@
-﻿using System.Collections.Generic;
+﻿using Popstation;
+using Popstation.Database;
+using PSXPackager.Common;
+using PSXPackager.Common.Notification;
+using PSXPackagerGUI.Models;
+using PSXPackagerGUI.Pages;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using System.Windows.Threading;
-using Popstation.Database;
-using PSXPackager.Common;
-using PSXPackager.Common.Notification;
-using PSXPackagerGUI.Models;
-using PSXPackagerGUI.Pages;
 
 namespace PSXPackagerGUI.Processing
 {
@@ -54,42 +56,54 @@ namespace PSXPackagerGUI.Processing
         {
             var tempPath = Path.Combine(Path.GetTempPath(), "PSXPackager");
 
-            
-            while (await _channel.Reader.WaitToReadAsync(token))
+            try
             {
-                var job = await _channel.Reader.ReadAsync(token);
-
-                var notifier = new ProcessNotifier(_dispatcher);
-                notifier.Entry = job.Entry;
-
-                var processing = new Popstation.Processing(notifier, _eventHandler, _gameDb);
-
-
-                var processOptions = new ProcessOptions()
+                while (await _channel.Reader.WaitToReadAsync(token))
                 {
-                    ////Files = files,
-                    OutputPath = model.Settings.OutputPath,
-                    TempPath = tempPath,
-                    Discs = Enumerable.Range(1, 5).ToList(),
-                    //CheckIfFileExists = !o.OverwriteIfExists,
-                    //SkipIfFileExists = o.SkipIfExists,
-                    FileNameFormat = _settings.FileNameFormat,
-                    CompressionLevel = _settings.CompressionLevel,
-                    ////Verbosity = o.Verbosity,
-                    ////Log = o.Log,
-                    ExtractResources = model.ExtractResources,
-                    ImportResources = _settings.UseCustomResources,
-                    GenerateResourceFolders = model.GenerateResourceFolders,
-                    ResourceFormat = _settings.CustomResourcesFormat,
-                    ResourceRoot = _settings.CustomResourcesPath, 
-                };
+                    var job = await _channel.Reader.ReadAsync(token);
 
-                await Task.Run(() =>
-                {
-                    processing.ProcessFile(Path.Combine(model.Settings.InputPath, job.Entry.RelativePath), processOptions, token);
-                });
+                    var notifier = new ProcessNotifier(_dispatcher);
+                    notifier.Entry = job.Entry;
 
+                    var processing = new Popstation.Processing(notifier, _eventHandler, _gameDb);
+
+
+                    var processOptions = new ProcessOptions()
+                    {
+                        ////Files = files,
+                        OutputPath = model.Settings.OutputPath,
+                        TempPath = tempPath,
+                        Discs = Enumerable.Range(1, 5).ToList(),
+                        //CheckIfFileExists = !o.OverwriteIfExists,
+                        //SkipIfFileExists = o.SkipIfExists,
+                        FileNameFormat = _settings.FileNameFormat,
+                        CompressionLevel = _settings.CompressionLevel,
+                        ////Verbosity = o.Verbosity,
+                        ////Log = o.Log,
+                        ExtractResources = model.ExtractResources,
+                        ImportResources = _settings.UseCustomResources,
+                        GenerateResourceFolders = model.GenerateResourceFolders,
+                        ResourceFormat = _settings.CustomResourcesFormat,
+                        ResourceRoot = _settings.CustomResourcesPath,
+                    };
+
+                    await Task.Run(() =>
+                    {
+                        processing.ProcessFile(Path.Combine(model.Settings.InputPath, job.Entry.RelativePath), processOptions, token);
+                        if (token.IsCancellationRequested)
+                        {
+                            notifier.Notify(PopstationEventEnum.Cancelled, null);
+                        }
+                    });
+
+                }
             }
+            catch (TaskCanceledException e)
+            {
+               
+            }
+            
+           
         }
 
     }

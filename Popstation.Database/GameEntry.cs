@@ -27,5 +27,13 @@
         /// GameID with a no dash
         /// </summary>
         public string GameID { get; set; }
+        /// <summary>
+        /// Gets or sets the index of the disc within a collection or set.
+        /// </summary>
+        public int DiscIndex { get; set; }
+        /// <summary>
+        /// Gets or sets the number of discs in the collection.
+        /// </summary>
+        public int DiscCount { get; set; }
     }
 }

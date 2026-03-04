@@ -27,11 +27,14 @@ namespace PSXPackagerGUI.Processing
                     break;
 
                 case PopstationEventEnum.ProcessingComplete:
+                    Entry.Status = "Complete";
+                    Entry.IsSelected = false;
                     Entry.MaxProgress = 100;
                     Entry.Progress = 0;
                     break;
 
                 case PopstationEventEnum.Cancelled:
+                    Entry.Status = "Cancelled";
                     _cancelled = true;
                     break;
 
@@ -96,6 +99,7 @@ namespace PSXPackagerGUI.Processing
                     else
                     {
                         Entry.Status = "Complete";
+                        Entry.IsSelected = false;
                     }
                     break;
 

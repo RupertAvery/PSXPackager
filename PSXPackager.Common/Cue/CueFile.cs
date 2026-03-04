@@ -17,5 +17,18 @@ namespace PSXPackager.Common.Cue
         {
             FileEntries = cueFileEntry.ToList();
         }
+
+        public string GetAbsolutePath(CueFileEntry fileEntry)
+        {
+            var cuePath = System.IO.Path.GetDirectoryName(Path);
+            if (System.IO.Path.IsPathFullyQualified(fileEntry.FileName))
+            {
+                return fileEntry.FileName;
+            }
+            else
+            {
+                return System.IO.Path.Combine(cuePath, fileEntry.FileName);
+            }
+        }
     }
 }

@@ -12,6 +12,7 @@
         private bool _isZipChecked;
         private bool _isRarChecked;
         private bool _recurseFolders;
+        private bool _mergeMultiDiscs;
 
         public string InputPath
         {
@@ -71,6 +72,13 @@
         {
             get => _recurseFolders;
             set => SetProperty(ref _recurseFolders, value);
+        }
+
+
+        public bool MergeMultiDiscs
+        {
+            get => _mergeMultiDiscs;
+            set => SetProperty(ref _mergeMultiDiscs, value);
         }
     }
 }

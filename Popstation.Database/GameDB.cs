@@ -1,10 +1,11 @@
-﻿using System;
+﻿using DiscUtils.Iso9660;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
-using DiscUtils.Iso9660;
 
 namespace Popstation.Database
 {
@@ -15,19 +16,45 @@ namespace Popstation.Database
         public GameDB(string path)
         {
             GameEntries = new List<GameEntry>();
+            var index = 1;
+            var lastMainGameId = "";
+
+            var totalDiscs = new Dictionary<string, int>();
 
             foreach (var item in File.ReadAllLines(path))
             {
                 var parts = item.Split(new char[] { ';' });
+                var mainGameId = parts[1];
+                
+                if (lastMainGameId == mainGameId)
+                {
+                    index++;
+                }
+                else
+                {
+                    index = 1;
+                }
+
                 GameEntries.Add(new GameEntry()
                 {
                     SerialID = parts[0],
-                    MainGameID = parts[1],
+                    MainGameID = mainGameId,
                     MainGameTitle = parts[2],
                     Title = parts[3],
                     Region = parts[4],
                     GameID = parts[5],
+                    DiscIndex = index
                 });
+
+                totalDiscs[mainGameId] = index;
+            }
+
+            foreach (var gameEntry in GameEntries)
+            {
+                if (totalDiscs.TryGetValue(gameEntry.GameID, out var discCount))
+                {
+                    gameEntry.DiscCount = discCount;
+                }
             }
         }
 
