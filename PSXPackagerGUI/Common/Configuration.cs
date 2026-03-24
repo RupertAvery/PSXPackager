@@ -12,8 +12,10 @@ namespace PSXPackagerGUI.Common
 
         public Configuration(string appName, string configName = "config.json")
         {
-            var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            _settingsPath = Path.Combine(local, appName, configName);
+            var local = ApplicationInfo.AppPath;
+            _settingsPath = Path.Combine(local, configName);
+            //var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            //_settingsPath = Path.Combine(local, appName, configName);
         }
 
         public bool TryLoad(out T obj)
