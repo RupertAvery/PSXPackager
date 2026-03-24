@@ -9,7 +9,8 @@ namespace PSXPackagerGUI
 
         static ApplicationInfo()
         {
-            AppPath = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
+            AppPath = AppContext.BaseDirectory;
+            //AppPath = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
         }
     }
 }
