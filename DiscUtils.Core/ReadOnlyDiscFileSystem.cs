@@ -35,14 +35,14 @@ namespace DiscUtils
         /// <summary>
         /// Initializes a new instance of the ReadOnlyDiscFileSystem class.
         /// </summary>
-        protected ReadOnlyDiscFileSystem() {}
+        protected ReadOnlyDiscFileSystem() { }
 
         /// <summary>
         /// Initializes a new instance of the ReadOnlyDiscFileSystem class.
         /// </summary>
         /// <param name="defaultOptions">The options instance to use for this file system instance.</param>
         protected ReadOnlyDiscFileSystem(DiscFileSystemOptions defaultOptions)
-            : base(defaultOptions) {}
+            : base(defaultOptions) { }
 
         /// <summary>
         /// Indicates whether the file system is read-only or read-write.

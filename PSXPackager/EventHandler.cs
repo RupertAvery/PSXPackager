@@ -4,7 +4,7 @@ using PSXPackager.Common.Notification;
 
 namespace PSXPackager
 {
-    public class EventHandler: IEventHandler
+    public class EventHandler : IEventHandler
     {
         public Action OverwriteAllSelected { get; set; }
         public Action CancelSelected { get; set; }
@@ -24,7 +24,7 @@ namespace PSXPackager
                 switch (key.Key)
                 {
                     case ConsoleKey.Y:
-                        
+
                         return ActionIfFileExistsEnum.Overwrite;
                     case ConsoleKey.N:
                         return ActionIfFileExistsEnum.Skip;

@@ -51,7 +51,7 @@ namespace Popstation.Pbp
 
             foreach (var entry in validEntries)
             {
-               
+
 
                 var entryLength = GetEntryLength(entry.Key, entry.Value);
                 var maxLength = GetMaxLength(entry.Key);

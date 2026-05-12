@@ -105,7 +105,7 @@ namespace PSXPackagerGUI.Controls
         private void ResetLayer(Layer layer)
         {
             Composite.PushState();
-            
+
             layer.Reset();
 
             UpdateSelection();
@@ -121,7 +121,7 @@ namespace PSXPackagerGUI.Controls
             {
                 SelectedLayer = null;
             }
-            
+
             UpdateSelection();
             Update();
         }

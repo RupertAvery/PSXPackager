@@ -45,6 +45,6 @@ namespace DiscUtils.Internal
 
         public abstract string GetExtraInfo();
 
-        protected virtual void Dispose(bool disposing) {}
+        protected virtual void Dispose(bool disposing) { }
     }
 }

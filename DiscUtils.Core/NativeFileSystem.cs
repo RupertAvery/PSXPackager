@@ -757,7 +757,7 @@ namespace DiscUtils
         {
             return new DiscFileSystemInfo(this, path);
         }
-         
+
         /// <summary>
         /// Size of the Filesystem in bytes
         /// </summary>
@@ -769,7 +769,7 @@ namespace DiscUtils
                 return info.TotalSize;
             }
         }
- 
+
         /// <summary>
         /// Used space of the Filesystem in bytes
         /// </summary>
@@ -777,7 +777,7 @@ namespace DiscUtils
         {
             get { return Size - AvailableSpace; }
         }
- 
+
         /// <summary>
         /// Available space of the Filesystem in bytes
         /// </summary>

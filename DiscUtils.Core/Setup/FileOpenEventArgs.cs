@@ -30,7 +30,7 @@ namespace DiscUtils.Setup
     /// <summary>
     /// Event arguments for opening a file
     /// </summary>
-    public class FileOpenEventArgs:EventArgs
+    public class FileOpenEventArgs : EventArgs
     {
         private FileOpenDelegate _opener;
 

@@ -28,7 +28,7 @@ namespace DiscUtils.Streams
     public class BigEndianDataWriter : DataWriter
     {
         public BigEndianDataWriter(Stream stream)
-            : base(stream) {}
+            : base(stream) { }
 
         public override void Write(ushort value)
         {

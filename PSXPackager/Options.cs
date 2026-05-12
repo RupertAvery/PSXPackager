@@ -37,12 +37,12 @@ namespace PSXPackager
         [Option("extract", Required = false, HelpText = "If specified, extract resources using the path specified by resource-format. See README for more details.")]
         public bool ExtractResources { get; set; }
 
-        [Option("import", Required = false,  HelpText = "If specified, import resources using the path specified by resource-format. See README for more details.")]
+        [Option("import", Required = false, HelpText = "If specified, import resources using the path specified by resource-format. See README for more details.")]
         public bool ImportResources { get; set; }
 
         [Option("generate", Required = false, HelpText = "If specified, create empty resources folder specified by resource-format. See README for more details.")]
         public bool GenerateResourceFolders { get; set; }
-        
+
         [Option("resource-format", Required = false, HelpText = "The format to use with extract/import/generate. See README for more details.")]
         public string ResourceFormat { get; set; }
 

@@ -34,7 +34,7 @@ namespace DiscUtils.Iso9660
         public ushort SectorCount;
         public byte SystemType;
 
-        public BootInitialEntry() {}
+        public BootInitialEntry() { }
 
         public BootInitialEntry(byte[] buffer, int offset)
         {

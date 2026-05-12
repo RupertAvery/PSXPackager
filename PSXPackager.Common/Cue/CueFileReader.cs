@@ -39,7 +39,8 @@ namespace PSXPackager.Common.Cue
             {
                 Number = 0,
                 Position =
-                new IndexPosition() {
+                new IndexPosition()
+                {
                     Frames = 0,
                     Minutes = 0,
                     Seconds = 0

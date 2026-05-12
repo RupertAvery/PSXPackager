@@ -52,7 +52,7 @@ public class SFOEntry : BaseNotifyModel
     }
 
     public SFOEntryType EntryType { get; set; }
- 
+
     public Func<string, bool>? Validator { get; set; }
 
     public bool IsValid

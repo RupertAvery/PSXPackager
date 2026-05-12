@@ -29,7 +29,7 @@ namespace DiscUtils.Partitions
     {
         private readonly uint _lbaOffset;
 
-        public BiosPartitionRecord() {}
+        public BiosPartitionRecord() { }
 
         public BiosPartitionRecord(byte[] data, int offset, uint lbaOffset, int index)
         {

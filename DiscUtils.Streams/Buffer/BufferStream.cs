@@ -98,7 +98,7 @@ namespace DiscUtils.Streams
         /// <summary>
         /// Flushes all data to the underlying storage.
         /// </summary>
-        public override void Flush() {}
+        public override void Flush() { }
 
         /// <summary>
         /// Reads a number of bytes from the stream.

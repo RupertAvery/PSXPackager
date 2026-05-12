@@ -30,7 +30,7 @@ namespace DiscUtils.Streams
         private Stream _source;
 
         public BuilderStreamExtent(long start, Stream source)
-            : this(start, source, Ownership.None) {}
+            : this(start, source, Ownership.None) { }
 
         public BuilderStreamExtent(long start, Stream source, Ownership ownership)
             : base(start, source.Length)
@@ -48,7 +48,7 @@ namespace DiscUtils.Streams
             }
         }
 
-        public override void PrepareForRead() {}
+        public override void PrepareForRead() { }
 
         public override int Read(long diskOffset, byte[] block, int offset, int count)
         {
@@ -56,6 +56,6 @@ namespace DiscUtils.Streams
             return _source.Read(block, offset, count);
         }
 
-        public override void DisposeReadState() {}
+        public override void DisposeReadState() { }
     }
 }

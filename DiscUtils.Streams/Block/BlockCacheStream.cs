@@ -49,7 +49,7 @@ namespace DiscUtils.Streams
         /// <param name="toWrap">The stream to wrap.</param>
         /// <param name="ownership">Whether to assume ownership of <c>toWrap</c>.</param>
         public BlockCacheStream(SparseStream toWrap, Ownership ownership)
-            : this(toWrap, ownership, new BlockCacheSettings()) {}
+            : this(toWrap, ownership, new BlockCacheSettings()) { }
 
         /// <summary>
         /// Initializes a new instance of the BlockCacheStream class.

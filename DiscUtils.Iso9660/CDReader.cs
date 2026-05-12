@@ -58,7 +58,8 @@ namespace DiscUtils.Iso9660
         /// <param name="joliet">Whether to read Joliet extensions.</param>
         /// <param name="sectorSize">The size of a sector</param>
         public CDReader(Stream data, bool joliet, int sectorSize)
-            : base(new VfsCDReader(data, joliet, false, sectorSize)) {
+            : base(new VfsCDReader(data, joliet, false, sectorSize))
+        {
         }
 
         /// <summary>
@@ -68,7 +69,7 @@ namespace DiscUtils.Iso9660
         /// <param name="joliet">Whether to read Joliet extensions.</param>
         /// <param name="hideVersions">Hides version numbers (e.g. ";1") from the end of files.</param>
         public CDReader(Stream data, bool joliet, bool hideVersions, int sectorSize)
-            : base(new VfsCDReader(data, joliet, hideVersions, sectorSize)) {}
+            : base(new VfsCDReader(data, joliet, hideVersions, sectorSize)) { }
 
         /// <summary>
         /// Gets which of the Iso9660 variants is being used.

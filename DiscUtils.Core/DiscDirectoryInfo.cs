@@ -39,7 +39,7 @@ namespace DiscUtils
         /// <param name="fileSystem">The file system the directory info relates to.</param>
         /// <param name="path">The path within the file system of the directory.</param>
         internal DiscDirectoryInfo(DiscFileSystem fileSystem, string path)
-            : base(fileSystem, path) {}
+            : base(fileSystem, path) { }
 
         /// <summary>
         /// Gets a value indicating whether the directory exists.

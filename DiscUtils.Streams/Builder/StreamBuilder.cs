@@ -70,7 +70,7 @@ namespace DiscUtils.Streams
                 Build(destStream);
             }
         }
-        
+
         protected abstract List<BuilderExtent> FixExtents(out long totalLength);
     }
 }

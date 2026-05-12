@@ -21,10 +21,10 @@ namespace PSXPackagerGUI.Pages
     /// <summary>
     /// Interaction logic for Single.xaml
     /// </summary>
-    public partial class SinglePage 
+    public partial class SinglePage
     {
 
-        
+
 
         private void LoadResource_OnClick(object sender, RoutedEventArgs e)
         {
@@ -39,7 +39,7 @@ namespace PSXPackagerGUI.Pages
             if (result is true)
             {
                 _settings.LastResourceDirectory = Path.GetDirectoryName(openFileDialog.FileName);
-                ResourceHelper.LoadResource(resource, openFileDialog.FileName).WarnIfErrors(); 
+                ResourceHelper.LoadResource(resource, openFileDialog.FileName).WarnIfErrors();
                 Model.IsDirty = true;
             }
 

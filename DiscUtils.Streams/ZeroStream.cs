@@ -82,7 +82,7 @@ namespace DiscUtils.Streams
             return new StreamExtent[0];
         }
 
-        public override void Flush() {}
+        public override void Flush() { }
 
         public override int Read(byte[] buffer, int offset, int count)
         {

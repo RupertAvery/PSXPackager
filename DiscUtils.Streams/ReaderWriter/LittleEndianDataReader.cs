@@ -31,7 +31,7 @@ namespace DiscUtils.Streams
     public class LittleEndianDataReader : DataReader
     {
         public LittleEndianDataReader(Stream stream)
-            : base(stream) {}
+            : base(stream) { }
 
         public override ushort ReadUInt16()
         {

@@ -353,12 +353,12 @@ namespace DiscUtils
         /// Size of the Filesystem in bytes
         /// </summary>
         long Size { get; }
- 
+
         /// <summary>
         /// Used space of the Filesystem in bytes
         /// </summary>
         long UsedSpace { get; }
- 
+
         /// <summary>
         /// Available space of the Filesystem in bytes
         /// </summary>

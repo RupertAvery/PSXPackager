@@ -43,11 +43,11 @@ namespace PSXPackagerGUI
 
             Logger.LogInfo("Creating Main Model");
             _model = new MainModel();
-            
+
             DataContext = _model;
-            
+
             _model.Mode = AppMode.Single;
-            
+
             CurrentPage.Content = _singlePage;
         }
 
@@ -74,7 +74,7 @@ namespace PSXPackagerGUI
         {
             _singlePage.Save();
         }
-        
+
         private void Settings_OnClick(object sender, RoutedEventArgs e)
         {
             CurrentPage.Content = _settings;

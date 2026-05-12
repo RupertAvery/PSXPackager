@@ -27,7 +27,7 @@ namespace DiscUtils.Streams
     public static class EndianUtilities
     {
         #region Bit Twiddling
-        
+
         public static void WriteBytesLittleEndian(ushort val, byte[] buffer, int offset)
         {
             buffer[offset] = (byte)(val & 0xFF);

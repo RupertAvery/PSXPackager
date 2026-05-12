@@ -100,10 +100,10 @@ namespace PSXPackagerGUI.Processing
             }
             catch (TaskCanceledException e)
             {
-               
+
             }
-            
-           
+
+
         }
 
     }

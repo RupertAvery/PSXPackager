@@ -117,7 +117,7 @@ public class StateManager
             }
         }
     }
-    
+
     private string GetCurrentState()
     {
         var layers = _imageComposite.Layers.ToList();

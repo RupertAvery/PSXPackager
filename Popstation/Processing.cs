@@ -235,7 +235,7 @@ namespace Popstation
                 using var outputStream = new FileStream(mergedBinFilePath, FileMode.Create, FileAccess.Write);
 
                 var mergedCueFile = MergeBins(outputStream, mergedBinFileName, cueFile);
-                
+
                 CueFileWriter.Write(mergedCueFile, mergedCueFilePath);
 
                 tempFiles.Add(mergedBinFilePath);
@@ -538,11 +538,11 @@ namespace Popstation
                 }
 
                 var fileName = GetActualFileName(resourcePath);
-				
-				if (!File.Exists(fileName))
-				{
-					return Resource.Empty(type);
-				}
+
+                if (!File.Exists(fileName))
+                {
+                    return Resource.Empty(type);
+                }
 
                 var info = new FileInfo(fileName);
 

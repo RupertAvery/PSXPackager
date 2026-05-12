@@ -85,7 +85,7 @@ namespace DiscUtils.Streams
             set { _position = value; }
         }
 
-        public override void Flush() {}
+        public override void Flush() { }
 
         public override int Read(byte[] buffer, int offset, int count)
         {
@@ -242,9 +242,9 @@ namespace DiscUtils.Streams
         private class SearchExtent : BuilderExtent
         {
             public SearchExtent(long pos)
-                : base(pos, 1) {}
+                : base(pos, 1) { }
 
-            public override void Dispose() {}
+            public override void Dispose() { }
 
             public override void PrepareForRead()
             {

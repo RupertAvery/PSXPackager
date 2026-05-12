@@ -15,7 +15,7 @@ namespace PSXPackagerGUI.Models
         Playing,
     }
 
-    public class Track : INotifyPropertyChanged 
+    public class Track : INotifyPropertyChanged
     {
         private bool _isSelected;
         private TrackStatus _status;
@@ -51,7 +51,7 @@ namespace PSXPackagerGUI.Models
         public Track()
         {
         }
-        
+
         public Track(CueTrack track)
         {
             DataType = track.DataType;

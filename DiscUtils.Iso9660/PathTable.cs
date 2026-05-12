@@ -46,7 +46,7 @@ namespace DiscUtils.Iso9660
             _locations = locations;
         }
 
-        public override void Dispose() {}
+        public override void Dispose() { }
 
         public override void PrepareForRead()
         {

@@ -49,7 +49,8 @@ namespace DiscUtils.Iso9660
         /// <param name="joliet">Whether to read Joliet extensions.</param>
         /// <param name="hideVersions">Hides version numbers (e.g. ";1") from the end of files.</param>
         public VfsCDReader(Stream data, bool joliet, bool hideVersions, int sectorSize)
-            : this(data, joliet ? DefaultVariantsWithJoliet : DefaultVariantsNoJoliet, hideVersions, sectorSize) {
+            : this(data, joliet ? DefaultVariantsWithJoliet : DefaultVariantsNoJoliet, hideVersions, sectorSize)
+        {
         }
 
         /// <summary>
@@ -94,7 +95,7 @@ namespace DiscUtils.Iso9660
                     break;
                 }
 
-                var offset = 24; 
+                var offset = 24;
 
                 bvd = new BaseVolumeDescriptor(buffer, offset);
 
@@ -306,7 +307,7 @@ namespace DiscUtils.Iso9660
         {
             get { throw new NotSupportedException("Filesystem size is not (yet) supported"); }
         }
-  
+
         /// <summary>
         /// Available space of the Filesystem in bytes
         /// </summary>

@@ -55,9 +55,9 @@ namespace PSXPackagerGUI.Models
                 }
             }
 
-            else if (e.PropertyName is nameof(BatchModel.ConvertImageToPbp) 
-                     or nameof(BatchModel.ConvertPbpToImage) 
-                     or nameof(BatchModel.GenerateResourceFolders) 
+            else if (e.PropertyName is nameof(BatchModel.ConvertImageToPbp)
+                     or nameof(BatchModel.ConvertPbpToImage)
+                     or nameof(BatchModel.GenerateResourceFolders)
                      or nameof(BatchModel.ExtractResources))
             {
                 foreach (var entry in BatchEntries)

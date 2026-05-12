@@ -25,5 +25,5 @@ using System;
 namespace DiscUtils.Partitions
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-    internal sealed class PartitionTableFactoryAttribute : Attribute {}
+    internal sealed class PartitionTableFactoryAttribute : Attribute { }
 }

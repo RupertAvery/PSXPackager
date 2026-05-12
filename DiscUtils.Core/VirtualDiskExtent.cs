@@ -73,6 +73,6 @@ namespace DiscUtils
         /// <param name="disposing"><c>true</c> if running inside Dispose(), indicating
         /// graceful cleanup of all managed objects should be performed, or <c>false</c>
         /// if running inside destructor.</param>
-        protected virtual void Dispose(bool disposing) {}
+        protected virtual void Dispose(bool disposing) { }
     }
 }

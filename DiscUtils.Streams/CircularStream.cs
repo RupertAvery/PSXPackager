@@ -30,7 +30,7 @@ namespace DiscUtils.Streams
     public sealed class CircularStream : WrappingStream
     {
         public CircularStream(SparseStream toWrap, Ownership ownership)
-            : base(toWrap, ownership) {}
+            : base(toWrap, ownership) { }
 
         public override int Read(byte[] buffer, int offset, int count)
         {
