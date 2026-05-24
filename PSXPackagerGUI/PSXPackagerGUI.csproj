@@ -12,6 +12,7 @@
 		<PublishReadyToRun>false</PublishReadyToRun>
 		<EnableWindowsTargeting>true</EnableWindowsTargeting>
 		<Nullable>enable</Nullable>
+		<NoWarn>$(NoWarn);nullable;CS0168;CS0169;CS8321</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -43,6 +44,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="SharpCompress" Version="0.48.1" />
 	</ItemGroup>
 
 	<ItemGroup>
