@@ -30,7 +30,7 @@ namespace DiscUtils.Streams
         private readonly bool _fixedBuffer;
 
         public BuilderBufferExtent(long start, long length)
-            : base(start, length) {}
+            : base(start, length) { }
 
         public BuilderBufferExtent(long start, byte[] buffer)
             : base(start, buffer.Length)
@@ -39,7 +39,7 @@ namespace DiscUtils.Streams
             _buffer = buffer;
         }
 
-        public override void Dispose() {}
+        public override void Dispose() { }
 
         public override void PrepareForRead()
         {

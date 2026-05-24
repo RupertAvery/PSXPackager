@@ -18,7 +18,7 @@ namespace PSXPackager
 
         public void Notify(PopstationEventEnum @event, object value)
         {
-            
+
             switch (@event)
             {
                 case PopstationEventEnum.ProcessingStart:

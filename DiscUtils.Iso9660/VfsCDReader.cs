@@ -94,7 +94,7 @@ namespace DiscUtils.Iso9660
                     break;
                 }
 
-                var offset = 24; 
+                var offset = 24;
 
                 bvd = new BaseVolumeDescriptor(buffer, offset);
 
@@ -306,7 +306,7 @@ namespace DiscUtils.Iso9660
         {
             get { throw new NotSupportedException("Filesystem size is not (yet) supported"); }
         }
-  
+
         /// <summary>
         /// Available space of the Filesystem in bytes
         /// </summary>

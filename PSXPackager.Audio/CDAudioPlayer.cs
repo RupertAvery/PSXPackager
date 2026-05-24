@@ -80,7 +80,7 @@ namespace PSXPackager.Audio
             cts?.Cancel();
             resetEvent.WaitOne(100);
             cts = new CancellationTokenSource();
-            
+
             PlayCueTrack(track, cts.Token);
         }
 

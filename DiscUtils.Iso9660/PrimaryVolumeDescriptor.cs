@@ -29,7 +29,7 @@ namespace DiscUtils.Iso9660
     internal class PrimaryVolumeDescriptor : CommonVolumeDescriptor
     {
         public PrimaryVolumeDescriptor(byte[] src, int offset)
-            : base(src, offset, Encoding.ASCII) {}
+            : base(src, offset, Encoding.ASCII) { }
 
         public PrimaryVolumeDescriptor(
             uint volumeSpaceSize,
@@ -38,7 +38,7 @@ namespace DiscUtils.Iso9660
             uint typeMPathTableLocation,
             uint rootDirExtentLocation,
             uint rootDirDataLength,
-            DateTime buildTime, 
+            DateTime buildTime,
             int sectorSize)
             : base(
                 VolumeDescriptorType.Primary, 1, volumeSpaceSize, pathTableSize, typeLPathTableLocation,

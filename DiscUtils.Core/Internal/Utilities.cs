@@ -106,7 +106,7 @@ namespace DiscUtils.Internal
         {
             return !((xLast.CompareTo(yFirst) <= 0) || (xFirst.CompareTo(yLast) >= 0));
         }
-        
+
         #region Bit Twiddling
 
         public static bool IsAllZeros(byte[] buffer, int offset, int count)
@@ -201,7 +201,7 @@ namespace DiscUtils.Internal
         {
             return (long)BitSwap((ulong)value);
         }
-        
+
         #endregion
 
         #region Path Manipulation
@@ -360,7 +360,7 @@ namespace DiscUtils.Internal
         }
 
         #endregion
-        
+
         #region Filesystem Support
 
         /// <summary>

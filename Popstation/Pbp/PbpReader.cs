@@ -162,7 +162,7 @@ namespace Popstation.Pbp
         }
 
         const uint PBPMAGIC = 0x50425000;
-        
+
         public PbpReader(Stream stream)
         {
             var buffer = new byte[16];

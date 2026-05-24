@@ -19,7 +19,7 @@
             get => _inputPath;
             set => SetProperty(ref _inputPath, value);
         }
-        
+
         public string OutputPath
         {
             get => _outputPath;
@@ -37,7 +37,7 @@
             get => _isM3UChecked;
             set => SetProperty(ref _isM3UChecked, value);
         }
-        
+
         public bool IsIsoChecked
         {
             get => _isIsoChecked;

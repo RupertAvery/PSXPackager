@@ -107,7 +107,7 @@ namespace Popstation.Pbp
                 }
 
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
             }

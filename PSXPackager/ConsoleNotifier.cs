@@ -151,7 +151,7 @@ namespace PSXPackager
                     //Console.SetCursorPosition(0, _cursorYPos);
                     if (DateTime.Now.Ticks - _lastTicks > 100000)
                     {
-                        Overwrite($"{Math.Round(Convert.ToInt32(value) / (double)_total * 100, 0) }%");
+                        Overwrite($"{Math.Round(Convert.ToInt32(value) / (double)_total * 100, 0)}%");
                         _lastTicks = DateTime.Now.Ticks;
                     }
                     break;

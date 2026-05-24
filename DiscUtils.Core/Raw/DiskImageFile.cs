@@ -39,7 +39,7 @@ namespace DiscUtils.Raw
         /// </summary>
         /// <param name="stream">The stream to interpret.</param>
         public DiskImageFile(Stream stream)
-            : this(stream, Ownership.None, null) {}
+            : this(stream, Ownership.None, null) { }
 
         /// <summary>
         /// Initializes a new instance of the DiskImageFile class.

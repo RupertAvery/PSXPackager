@@ -31,7 +31,7 @@ namespace DiscUtils
     /// </summary>
     public abstract class DiscFileSystem :
 #if !NETSTANDARD
-        MarshalByRefObject, 
+        MarshalByRefObject,
 #endif
         IFileSystem, IDisposable
     {
@@ -476,12 +476,12 @@ namespace DiscUtils
         /// Size of the Filesystem in bytes
         /// </summary>
         public abstract long Size { get; }
- 
+
         /// <summary>
         /// Used space of the Filesystem in bytes
         /// </summary>
         public abstract long UsedSpace { get; }
- 
+
         /// <summary>
         /// Available space of the Filesystem in bytes
         /// </summary>
@@ -502,7 +502,7 @@ namespace DiscUtils
         /// Disposes of this instance.
         /// </summary>
         /// <param name="disposing">The value <c>true</c> if Disposing.</param>
-        protected virtual void Dispose(bool disposing) {}
+        protected virtual void Dispose(bool disposing) { }
 
         #endregion
     }

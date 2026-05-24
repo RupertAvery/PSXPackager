@@ -25,7 +25,7 @@ namespace Popstation.Database
             {
                 var parts = item.Split(new char[] { ';' });
                 var mainGameId = parts[1];
-                
+
                 if (lastMainGameId == mainGameId)
                 {
                     index++;

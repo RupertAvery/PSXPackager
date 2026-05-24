@@ -22,7 +22,7 @@ namespace PSXPackagerGUI.Controls
                 typeof(string),
                 typeof(ResourceButton),
                 new PropertyMetadata(null));
-        
+
         public static readonly DependencyProperty IsActiveProperty =
             DependencyProperty.Register(nameof(IsActive),
                 typeof(bool),

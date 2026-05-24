@@ -121,7 +121,7 @@ namespace Popstation
             TryExtract(ResourceType.PIC0);
             TryExtract(ResourceType.PIC1);
             TryExtract(ResourceType.SND0);
-       }
+        }
 
         private string GetResourcePath(ExtractOptions options, GameEntry entry, ResourceType type, string ext)
         {

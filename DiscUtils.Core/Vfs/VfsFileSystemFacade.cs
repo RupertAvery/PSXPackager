@@ -518,7 +518,7 @@ namespace DiscUtils.Vfs
         {
             get { return _wrapped.Size; }
         }
- 
+
         /// <summary>
         /// Used space of the Filesystem in bytes
         /// </summary>
@@ -526,7 +526,7 @@ namespace DiscUtils.Vfs
         {
             get { return _wrapped.UsedSpace; }
         }
- 
+
         /// <summary>
         /// Available space of the Filesystem in bytes
         /// </summary>

@@ -25,6 +25,6 @@ namespace DiscUtils.Iso9660
     internal class VolumeDescriptorSetTerminator : BaseVolumeDescriptor
     {
         public VolumeDescriptorSetTerminator(int sectorSize)
-            : base(VolumeDescriptorType.SetTerminator, 1, sectorSize) {}
+            : base(VolumeDescriptorType.SetTerminator, 1, sectorSize) { }
     }
 }

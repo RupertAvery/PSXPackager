@@ -35,11 +35,11 @@ namespace DiscUtils.Streams
         }
 
         protected BuilderBytesExtent(long start, long length)
-            : base(start, length) {}
+            : base(start, length) { }
 
-        public override void Dispose() {}
+        public override void Dispose() { }
 
-        public override void PrepareForRead() {}
+        public override void PrepareForRead() { }
 
         public override int Read(long diskOffset, byte[] block, int offset, int count)
         {
@@ -51,6 +51,6 @@ namespace DiscUtils.Streams
             return numRead;
         }
 
-        public override void DisposeReadState() {}
+        public override void DisposeReadState() { }
     }
 }
