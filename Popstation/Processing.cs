@@ -12,6 +12,7 @@ using PSXPackager.Common.Notification;
 
 using SharpCompress.Archives;
 using SharpCompress.Common;
+using SharpCompress.Readers;
 
 namespace Popstation
 {
@@ -349,34 +350,28 @@ namespace Popstation
             List<string> files;
 
             using (Stream stream = File.OpenRead(file))
-            using (var archive = ArchiveFactory.Open(stream))
+            using (var archive = ArchiveFactory.OpenArchive(stream, new ReaderOptions()
+            {
+                Progress = new Progress<ProgressReport>(ArchiveFileOnExtracting)
+            }))
             {
                 var fileNames = archive.Entries.Select(x => x.Key).ToList();
                 files = fileNames.Select(x => Path.Combine(tempPath, x)).ToList();
 
-                // https://github.com/RupertAvery/PSXPackager/pull/40
-                archive.EntryExtractionBegin += (sender, args) =>
-                {
-                    _notifier.Notify(PopstationEventEnum.DecompressStart, args.Item.Key);
-                    _currentFileDecompressedSize = args.Item.Size;
-                };
-
-                archive.EntryExtractionEnd += (sender, args) =>
-                {
-                    _notifier.Notify(PopstationEventEnum.DecompressProgress, 100);
-                    _notifier.Notify(PopstationEventEnum.DecompressComplete, null);
-                };
-
-                archive.CompressedBytesRead += ArchiveFileOnExtracting;
                 foreach (var entry in archive.Entries.Where(entry => !entry.IsDirectory))
                 {
+                    _notifier.Notify(PopstationEventEnum.DecompressStart, entry.Key);
+                    _currentFileDecompressedSize = entry.Size;
+
                     entry.WriteToDirectory(tempPath, new ExtractionOptions()
                     {
                         ExtractFullPath = true,
                         Overwrite = true
                     });
+
+                    _notifier.Notify(PopstationEventEnum.DecompressProgress, 100);
+                    _notifier.Notify(PopstationEventEnum.DecompressComplete, null);
                 }
-                archive.CompressedBytesRead -= ArchiveFileOnExtracting;
 
             }
 
@@ -384,10 +379,14 @@ namespace Popstation
         }
 
 
-        private void ArchiveFileOnExtracting(object sender, CompressedBytesReadEventArgs e)
+        private void ArchiveFileOnExtracting(ProgressReport progress)
         {
-            var percentage = ((double)e.CompressedBytesRead / (double)_currentFileDecompressedSize) * 100;
-            _notifier.Notify(PopstationEventEnum.DecompressProgress, (int)percentage);
+            var percentage = progress.PercentComplete
+                ?? (_currentFileDecompressedSize > 0
+                    ? ((double)progress.BytesTransferred / _currentFileDecompressedSize) * 100
+                    : 0);
+
+            _notifier.Notify(PopstationEventEnum.DecompressProgress, (int)Math.Clamp(percentage, 0, 100));
         }
 
 

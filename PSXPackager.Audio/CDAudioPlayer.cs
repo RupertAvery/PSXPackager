@@ -12,7 +12,7 @@ namespace PSXPackager.Audio
 
     public class CDAudioPlayerStarted
     {
-        public CueTrack Track { get; set; }
+        public CueTrack Track { get; set; } = null!;
     }
 
     public enum CDAudioPlayerStatus
@@ -28,8 +28,8 @@ namespace PSXPackager.Audio
         private readonly WaveOutEvent _waveOutEvent;
         private readonly BufferedWaveProvider _buffer;
 
-        public event EventHandler<CDAudioPlayerStarted> Started;
-        public event EventHandler<CDAudioPlayerStopped> Stopped;
+        public event EventHandler<CDAudioPlayerStarted>? Started;
+        public event EventHandler<CDAudioPlayerStopped>? Stopped;
 
         public CDAudioPlayer()
         {
@@ -67,7 +67,7 @@ namespace PSXPackager.Audio
         }
 
         private CancellationTokenSource? cts;
-        private AutoResetEvent resetEvent = new AutoResetEvent(false);
+        private readonly AutoResetEvent resetEvent = new AutoResetEvent(false);
 
         public void PlayCueTrack(CueTrack track)
         {
@@ -97,7 +97,7 @@ namespace PSXPackager.Audio
             {
                 if (!Path.IsPathFullyQualified(binPath))
                 {
-                    binPath = Path.Combine(Path.GetDirectoryName(track.FileEntry.CueFile.Path), binPath);
+                    binPath = Path.Combine(Path.GetDirectoryName(track.FileEntry.CueFile.Path) ?? string.Empty, binPath);
                 }
             }
 
@@ -127,6 +127,7 @@ namespace PSXPackager.Audio
 
             _buffer.ClearBuffer();
             _waveOutEvent.Play();
+            Started?.Invoke(this, new CDAudioPlayerStarted { Track = track });
 
             Play(GetStream(), startSector, endSector, cancellationToken);
         }

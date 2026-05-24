@@ -62,7 +62,7 @@ public static class FileAbstraction
     {
         if (TryGetPbpDiscEntryFromUri(uri, out var discEntry))
         {
-            return discEntry.GetDiscStream();
+            return discEntry!.GetDiscStream();
         }
         else
         {

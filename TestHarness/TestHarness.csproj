@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="SharpCompress" Version="0.48.1" />
   </ItemGroup>
 
   <ItemGroup>

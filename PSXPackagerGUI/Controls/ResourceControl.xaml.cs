@@ -21,14 +21,14 @@ namespace PSXPackagerGUI.Controls
                 typeof(ResourceControl),
                 new PropertyMetadata(null, OnResourceChanged));
 
-        public static readonly DependencyProperty ToolTipProperty =
+        public new static readonly DependencyProperty ToolTipProperty =
             DependencyProperty.Register(
                 nameof(ToolTip),
                 typeof(string),
                 typeof(ResourceControl),
                 new PropertyMetadata(string.Empty));
 
-        public string ToolTip
+        public new string ToolTip
         {
             get => (string)GetValue(ToolTipProperty);
             set => SetValue(ToolTipProperty, value);
