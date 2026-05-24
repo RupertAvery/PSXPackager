@@ -31,20 +31,20 @@ namespace DiscUtils.Archives
         private readonly BuilderExtentSource _source;
 
         public UnixBuildFileRecord(string name, byte[] buffer)
-            : this(name, new BuilderBufferExtentSource(buffer), 0, 0, 0, DateTimeOffsetExtensions.UnixEpoch) {}
+            : this(name, new BuilderBufferExtentSource(buffer), 0, 0, 0, DateTimeOffsetExtensions.UnixEpoch) { }
 
         public UnixBuildFileRecord(string name, Stream stream)
-            : this(name, new BuilderStreamExtentSource(stream), 0, 0, 0, DateTimeOffsetExtensions.UnixEpoch) {}
+            : this(name, new BuilderStreamExtentSource(stream), 0, 0, 0, DateTimeOffsetExtensions.UnixEpoch) { }
 
         public UnixBuildFileRecord(
             string name, byte[] buffer, UnixFilePermissions fileMode, int ownerId, int groupId,
             DateTime modificationTime)
-            : this(name, new BuilderBufferExtentSource(buffer), fileMode, ownerId, groupId, modificationTime) {}
+            : this(name, new BuilderBufferExtentSource(buffer), fileMode, ownerId, groupId, modificationTime) { }
 
         public UnixBuildFileRecord(
             string name, Stream stream, UnixFilePermissions fileMode, int ownerId, int groupId,
             DateTime modificationTime)
-            : this(name, new BuilderStreamExtentSource(stream), fileMode, ownerId, groupId, modificationTime) {}
+            : this(name, new BuilderStreamExtentSource(stream), fileMode, ownerId, groupId, modificationTime) { }
 
         public UnixBuildFileRecord(string name, BuilderExtentSource fileSource, UnixFilePermissions fileMode,
                                    int ownerId, int groupId, DateTime modificationTime)

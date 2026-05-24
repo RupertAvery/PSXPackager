@@ -22,7 +22,7 @@ namespace Popstation.Pbp
                 int bytesRead;
 
                 var length = pbpStreamReader.Seek(ResourceType.PSAR, stream);
-                while((bytesRead = stream.Read(buffer, 0, BUFFER_SIZE)) > 0)
+                while ((bytesRead = stream.Read(buffer, 0, BUFFER_SIZE)) > 0)
                 {
                     outputStream.Write(buffer, 0, bytesRead);
                 }

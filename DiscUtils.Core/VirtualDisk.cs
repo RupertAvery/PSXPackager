@@ -35,7 +35,7 @@ namespace DiscUtils
     /// </summary>
     public abstract class VirtualDisk :
 #if !NETSTANDARD
-        MarshalByRefObject, 
+        MarshalByRefObject,
 #endif
         IDisposable
     {

@@ -42,7 +42,7 @@ namespace DiscUtils.Raw
         /// <param name="stream">The stream to read.</param>
         /// <param name="ownsStream">Indicates if the new instance should control the lifetime of the stream.</param>
         public Disk(Stream stream, Ownership ownsStream)
-            : this(stream, ownsStream, null) {}
+            : this(stream, ownsStream, null) { }
 
         /// <summary>
         /// Initializes a new instance of the Disk class.
@@ -60,7 +60,7 @@ namespace DiscUtils.Raw
         /// </summary>
         /// <param name="path">The path to the disk image.</param>
         public Disk(string path)
-            :this(path, FileAccess.ReadWrite) {}
+            : this(path, FileAccess.ReadWrite) { }
 
         /// <summary>
         /// Initializes a new instance of the Disk class.

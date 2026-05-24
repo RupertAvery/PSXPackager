@@ -41,7 +41,7 @@ public static class FileAbstraction
     public static long GetFileSizeFromUri(string uri)
     {
         // Ugh, need to dispose the disc entry after getting the size
-        if (TryGetPbpDiscEntryFromUri(uri,  out var discEntry))
+        if (TryGetPbpDiscEntryFromUri(uri, out var discEntry))
         {
             try
             {

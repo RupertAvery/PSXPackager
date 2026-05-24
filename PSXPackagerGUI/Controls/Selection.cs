@@ -17,7 +17,7 @@ public class Selection : BaseNotifyModel
 
     public Selection()
     {
-        C1= new Point();
+        C1 = new Point();
         C2 = new Point();
         C3 = new Point();
         C4 = new Point();

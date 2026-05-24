@@ -40,7 +40,7 @@ namespace DiscUtils.Internal
         }
 
         public Crc32BigEndian(Crc32Algorithm algorithm)
-            : base(Tables[(int)algorithm]) {}
+            : base(Tables[(int)algorithm]) { }
 
         public static uint Compute(Crc32Algorithm algorithm, byte[] buffer, int offset, int count)
         {

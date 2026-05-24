@@ -40,14 +40,14 @@ namespace DiscUtils
         /// <summary>
         /// Initializes a new instance of the InvalidFileSystemException class.
         /// </summary>
-        public InvalidFileSystemException() {}
+        public InvalidFileSystemException() { }
 
         /// <summary>
         /// Initializes a new instance of the InvalidFileSystemException class.
         /// </summary>
         /// <param name="message">The exception message.</param>
         public InvalidFileSystemException(string message)
-            : base(message) {}
+            : base(message) { }
 
         /// <summary>
         /// Initializes a new instance of the InvalidFileSystemException class.
@@ -55,6 +55,6 @@ namespace DiscUtils
         /// <param name="message">The exception message.</param>
         /// <param name="innerException">The inner exception.</param>
         public InvalidFileSystemException(string message, Exception innerException)
-            : base(message, innerException) {}
+            : base(message, innerException) { }
     }
 }

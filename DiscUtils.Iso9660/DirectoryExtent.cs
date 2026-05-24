@@ -44,7 +44,7 @@ namespace DiscUtils.Iso9660
             _enc = enc;
         }
 
-        public override void Dispose() {}
+        public override void Dispose() { }
 
         public override void PrepareForRead()
         {

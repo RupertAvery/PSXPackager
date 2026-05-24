@@ -175,7 +175,7 @@ namespace DiscUtils.Streams
                 set { _wrapped.Position = value; }
             }
 
-            public override void Flush() {}
+            public override void Flush() { }
 
             public override int Read(byte[] buffer, int offset, int count)
             {

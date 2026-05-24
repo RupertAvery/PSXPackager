@@ -25,7 +25,7 @@ public partial class SinglePage
     {
         if (TryGetFilename(e.Data, imageExtensions, out var filename))
         {
-            ResourceHelper.LoadResource(Model.Icon1, filename).WarnIfErrors(); 
+            ResourceHelper.LoadResource(Model.Icon1, filename).WarnIfErrors();
             return;
         }
         MessageBox.Show(Window, "Invalid fie type", "PSXPackager", MessageBoxButton.OK, MessageBoxImage.Warning);

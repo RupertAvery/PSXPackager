@@ -60,7 +60,7 @@ namespace Popstation.Pbp
             outputStream.WriteInt32(0, 2);
 
             outputStream.Write(Popstation.data3, 0, Popstation.data3.Length);
-            
+
             // Write title and pad to 128 
             outputStream.Write(title, 0, title.Length);
             outputStream.WriteChar(0, 0x80 - title.Length);

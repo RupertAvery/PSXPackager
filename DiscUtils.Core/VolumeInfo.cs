@@ -35,7 +35,7 @@ namespace DiscUtils
         : MarshalByRefObject
 #endif
     {
-        internal VolumeInfo() {}
+        internal VolumeInfo() { }
 
         /// <summary>
         /// Gets the one-byte BIOS type for this volume, which indicates the content.

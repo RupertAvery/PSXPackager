@@ -29,7 +29,7 @@ namespace DiscUtils.Iso9660
     internal class SupplementaryVolumeDescriptor : CommonVolumeDescriptor
     {
         public SupplementaryVolumeDescriptor(byte[] src, int offset)
-            : base(src, offset, IsoUtilities.EncodingFromBytes(src, offset + 88)) {}
+            : base(src, offset, IsoUtilities.EncodingFromBytes(src, offset + 88)) { }
 
         public SupplementaryVolumeDescriptor(
             uint volumeSpaceSize,
@@ -39,7 +39,7 @@ namespace DiscUtils.Iso9660
             uint rootDirExtentLocation,
             uint rootDirDataLength,
             DateTime buildTime,
-            Encoding enc, 
+            Encoding enc,
             int sectorSize)
             : base(
                 VolumeDescriptorType.Supplementary, 1, volumeSpaceSize, pathTableSize, typeLPathTableLocation,

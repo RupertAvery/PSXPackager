@@ -8,7 +8,7 @@ namespace Popstation.M3u
         public static M3uFile Read(string file)
         {
             var m3u = new M3uFile();
-            
+
             m3u.Path = file;
             m3u.FileEntries = new List<string>();
 
