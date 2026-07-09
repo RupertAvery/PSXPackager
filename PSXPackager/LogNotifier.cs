@@ -6,28 +6,27 @@ using PSXPackager.Common.Notification;
 
 namespace PSXPackager
 {
-    public class LogNotifier : INotifier
+    public class LogNotifier : NotifierBase
     {
         private readonly string _path;
-        private DateTime _startDateTime;
 
         public LogNotifier(string path)
         {
             _path = path;
         }
 
-        public void Notify(PopstationEventEnum @event, object value)
+        public override void Notify(PopstationEventEnum @event, object value)
         {
 
             switch (@event)
             {
                 case PopstationEventEnum.ProcessingStart:
-                    _startDateTime = DateTime.Now;
-                    WriteLine(@event, $"Processing started: {_startDateTime.Hour:00}:{_startDateTime.Minute:00}:{_startDateTime.Second:00}");
+                    StartDateTime = DateTime.Now;
+                    WriteLine(@event, $"Processing started: {StartDateTime.Hour:00}:{StartDateTime.Minute:00}:{StartDateTime.Second:00}");
                     break;
 
                 case PopstationEventEnum.ProcessingComplete:
-                    var elapsedSpan = DateTime.Now - _startDateTime;
+                    var elapsedSpan = DateTime.Now - StartDateTime;
                     WriteLine(@event, $"Processing completed in {elapsedSpan.TotalHours:00}h {elapsedSpan.Minutes:00}m {elapsedSpan.Seconds:00}s");
                     break;
 
@@ -64,18 +63,8 @@ namespace PSXPackager
 
         private string TimeStamp(PopstationEventEnum @event)
         {
-            var currentTime = DateTime.Now;
-            switch (@event)
-            {
-                case PopstationEventEnum.ConvertProgress:
-                case PopstationEventEnum.ExtractProgress:
-                case PopstationEventEnum.WriteProgress:
-                case PopstationEventEnum.DecompressProgress:
-                    break;
-                default:
-                    return $"[{currentTime.Hour:00}:{currentTime.Minute:00}:{currentTime.Second:00}]: ";
-            }
-            return string.Empty;
+            if (IsProgressEvent(@event)) return string.Empty;
+            return FormatTimestamp(DateTime.Now);
         }
     }
 }

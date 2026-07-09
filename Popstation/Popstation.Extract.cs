@@ -34,31 +34,22 @@ namespace Popstation
     public partial class Popstation
     {
 
+        private static readonly string[] BasePlaceholders =
+        {
+            "%FILENAME%", "%GAMEID%", "%MAINGAMEID%", "%TITLE%", "%MAINTITLE%", "%REGION%"
+        };
+
         public static bool CheckFormat(string filenameFormat)
         {
-            var output = filenameFormat.Contains("%FILENAME%");
-            output |= filenameFormat.Contains("%GAMEID%");
-            output |= filenameFormat.Contains("%MAINGAMEID%");
-            output |= filenameFormat.Contains("%TITLE%");
-            output |= filenameFormat.Contains("%MAINTITLE%");
-            output |= filenameFormat.Contains("%REGION%");
-            return output;
+            return BasePlaceholders.Any(filenameFormat.Contains);
         }
 
         public static bool CheckResourceFormat(string filenameFormat)
         {
-            var output = filenameFormat.Contains("%FILENAME%");
-            output |= filenameFormat.Contains("%GAMEID%");
-            output |= filenameFormat.Contains("%MAINGAMEID%");
-            output |= filenameFormat.Contains("%TITLE%");
-            output |= filenameFormat.Contains("%MAINTITLE%");
-            output |= filenameFormat.Contains("%REGION%");
-            output |= filenameFormat.Contains("%RESOURCE%");
-            return output;
+            return CheckFormat(filenameFormat) || filenameFormat.Contains("%RESOURCE%");
         }
 
-
-        public static string GetFilename(string filenameFormat, string sourceFilename, string gameid, string maingameId, string title, string maintitle, string region)
+        private static string ReplaceBasePlaceholders(string filenameFormat, string sourceFilename, string gameid, string maingameId, string title, string maintitle, string region)
         {
             var output = filenameFormat.ReplaceIngoreCase("%FILENAME%", Path.GetFileNameWithoutExtension(sourceFilename));
             output = output.ReplaceIngoreCase("%GAMEID%", gameid);
@@ -67,16 +58,16 @@ namespace Popstation
             output = output.ReplaceIngoreCase("%MAINTITLE%", maintitle);
             output = output.ReplaceIngoreCase("%REGION%", region);
             return output;
+        }
+
+        public static string GetFilename(string filenameFormat, string sourceFilename, string gameid, string maingameId, string title, string maintitle, string region)
+        {
+            return ReplaceBasePlaceholders(filenameFormat, sourceFilename, gameid, maingameId, title, maintitle, region);
         }
 
         public static string GetResourceFilename(string filenameFormat, string sourceFilename, string gameid, string maingameId, string title, string maintitle, string region, ResourceType resourceType, string ext)
         {
-            var output = filenameFormat.ReplaceIngoreCase("%FILENAME%", Path.GetFileNameWithoutExtension(sourceFilename));
-            output = output.ReplaceIngoreCase("%GAMEID%", gameid);
-            output = output.ReplaceIngoreCase("%MAINGAMEID%", maingameId);
-            output = output.ReplaceIngoreCase("%TITLE%", title);
-            output = output.ReplaceIngoreCase("%MAINTITLE%", maintitle);
-            output = output.ReplaceIngoreCase("%REGION%", region);
+            var output = ReplaceBasePlaceholders(filenameFormat, sourceFilename, gameid, maingameId, title, maintitle, region);
             output = output.ReplaceIngoreCase("%RESOURCE%", resourceType.ToString());
             output = output.ReplaceIngoreCase("%EXT%", ext);
             return output;
@@ -84,13 +75,7 @@ namespace Popstation
 
         public static string GetResourceFolder(string filenameFormat, string sourceFilename, string gameid, string maingameId, string title, string maintitle, string region)
         {
-            var output = filenameFormat.ReplaceIngoreCase("%FILENAME%", Path.GetFileNameWithoutExtension(sourceFilename));
-            output = output.ReplaceIngoreCase("%GAMEID%", gameid);
-            output = output.ReplaceIngoreCase("%MAINGAMEID%", maingameId);
-            output = output.ReplaceIngoreCase("%TITLE%", title);
-            output = output.ReplaceIngoreCase("%MAINTITLE%", maintitle);
-            output = output.ReplaceIngoreCase("%REGION%", region);
-            return output;
+            return ReplaceBasePlaceholders(filenameFormat, sourceFilename, gameid, maingameId, title, maintitle, region);
         }
 
         private void ExtractResources(Stream stream, Func<ResourceType, string, string> getResourcePath)

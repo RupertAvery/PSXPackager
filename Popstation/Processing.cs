@@ -187,9 +187,11 @@ namespace Popstation
             }
             catch (Exception ex)
             {
+                // Intentionally swallowed: ProcessFile is called in a loop over a batch of
+                // files (see PSXPackager/Program.cs and PSXPackagerGUI/Processing/Processor.cs),
+                // so one failing file must not abort the rest of the batch.
                 _notifier?.Notify(PopstationEventEnum.Error, ex.Message);
                 return false;
-                //throw;
             }
             finally
             {
