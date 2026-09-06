@@ -285,7 +285,7 @@
                         <MenuItem Header="Create .M3U" Command="{Binding CreateM3U}" Visibility="{Binding CanCreateM3U, Converter={StaticResource VisibilityCollapsedConverter}}"></MenuItem>
                         <MenuItem Header="Delete .M3U" Command="{Binding DeleteM3U}" Visibility="{Binding CanDeleteM3U, Converter={StaticResource VisibilityCollapsedConverter}}"></MenuItem>
                         <MenuItem Header="Create .CUE" Command="{Binding CreateCUE}" Visibility="{Binding CanCreateCUE, Converter={StaticResource VisibilityCollapsedConverter}}"></MenuItem>
-                        <MenuItem Header="Create .CUE" Command="{Binding DeleteCUE}" Visibility="{Binding CanDeleteCUE, Converter={StaticResource VisibilityCollapsedConverter}}"></MenuItem>
+                        <MenuItem Header="Delete .CUE" Command="{Binding DeleteCUE}" Visibility="{Binding CanDeleteCUE, Converter={StaticResource VisibilityCollapsedConverter}}"></MenuItem>
                     </ContextMenu>
                 </ListView.ContextMenu>
                 <ListView.ItemContainerStyle>

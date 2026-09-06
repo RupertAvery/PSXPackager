@@ -101,10 +101,17 @@ namespace PSXPackagerGUI.Pages
         {
             var entries = _model.SelectedItems;
             var path = Path.GetDirectoryName(entries[0].FullPath);
-            var gameId = GameDB.FindGameId(entries[0].FullPath);
-            var gameEntry = _gameDb.GetEntryByGameID(gameId);
+            var discPath = GetDiscPath(entries[0].FullPath);
+            var fileName = Path.GetFileNameWithoutExtension(entries[0].FullPath);
+            
+            if (File.Exists(discPath))
+            {
+                var gameId = GameDB.FindGameId(discPath);
+                var gameEntry = _gameDb.GetEntryByGameID(gameId);
+                fileName = gameEntry.MainGameTitle;
+            }
 
-            var m3uFileName = Path.Combine(_model.Settings.InputPath, $"{gameEntry.MainGameTitle}.m3u");
+            var m3uFileName = Path.Combine(_model.Settings.InputPath, $"{fileName}.m3u");
 
             var m3uFile = new M3uFile(path);
 
@@ -226,10 +233,10 @@ namespace PSXPackagerGUI.Pages
 
             _model.CanDeleteCUE = entries.Count == 1 && entries[0].RelativePath.EndsWith(".cue", StringComparison.InvariantCultureIgnoreCase);
 
-            _model.CanCreateM3U = entries.All(d => !d.RelativePath.EndsWith(".m3u", StringComparison.InvariantCultureIgnoreCase)
-                                                   && !d.RelativePath.EndsWith(".zip", StringComparison.InvariantCultureIgnoreCase)
-                                                   && !d.RelativePath.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase)
-                                                   && !d.RelativePath.EndsWith(".rar", StringComparison.InvariantCultureIgnoreCase));
+            _model.CanCreateM3U = entries.Count > 1 && entries.All(d => !d.RelativePath.EndsWith(".m3u", StringComparison.InvariantCultureIgnoreCase)
+                                                                         && !d.RelativePath.EndsWith(".zip", StringComparison.InvariantCultureIgnoreCase)
+                                                                         && !d.RelativePath.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase)
+                                                                         && !d.RelativePath.EndsWith(".rar", StringComparison.InvariantCultureIgnoreCase));
 
             _model.CanDeleteM3U = entries.Count == 1 && entries[0].RelativePath.EndsWith(".m3u", StringComparison.InvariantCultureIgnoreCase);
         }

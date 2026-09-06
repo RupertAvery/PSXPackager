@@ -263,6 +263,21 @@ namespace PSXPackagerGUI.Pages
                     {
                         var game = _gameDb.GetEntryByGameID(d.DiscID);
 
+                        if (game == null)
+                        {
+                            game = new GameEntry()
+                            {
+                                MainGameTitle = "GAME",
+                                DiscCount = 1,
+                                GameID = "UNKNOWN",
+                                MainGameID = "UNKNOWN",
+                                Region = "UNKNOWN",
+                                SerialID = "UNKNOWN",
+                                DiscIndex = i,
+                                Title = "Unknown Game"
+                            };
+                        }
+
                         var disc = new Disc()
                         {
                             Index = i,
