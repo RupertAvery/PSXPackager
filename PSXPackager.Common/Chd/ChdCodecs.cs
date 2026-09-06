@@ -147,7 +147,7 @@ namespace PSXPackager.Common.Chd
         public override void Decompress(byte[] source, int sourceOffset, int sourceLength, byte[] destination, int destinationLength)
         {
             using (var input = new MemoryStream(source, sourceOffset, sourceLength, false))
-            using (var lzma = new LzmaStream(_properties, input, sourceLength, destinationLength))
+            using (var lzma = LzmaStream.Create(_properties, input, sourceLength, destinationLength, null, false))
             {
                 ChdCodecStream.ReadExactly(lzma, destination, destinationLength, "LZMA");
             }

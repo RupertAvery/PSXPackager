@@ -1,4 +1,5 @@
 using PSXPackager.Common.Chd;
+using SharpCompress.Compressors.LZMA;
 using UnitTestProject.Chd;
 
 namespace UnitTestProject
@@ -212,8 +213,8 @@ namespace UnitTestProject
         {
             using var output = new MemoryStream();
 
-            using (var encoder = new SharpCompress.Compressors.LZMA.LzmaStream(
-                       new SharpCompress.Compressors.LZMA.LzmaEncoderProperties(false, DictionarySize(HunkBytes)),
+            using (var encoder = LzmaStream.Create(
+                       new LzmaEncoderProperties(false, DictionarySize(HunkBytes)),
                        false,
                        output))
             {
@@ -252,8 +253,8 @@ namespace UnitTestProject
         {
             using var output = new MemoryStream();
 
-            using (var encoder = new SharpCompress.Compressors.LZMA.LzmaStream(
-                       new SharpCompress.Compressors.LZMA.LzmaEncoderProperties(false, DictionarySize(hunkBytes)),
+            using (var encoder = LzmaStream.Create(
+                       new LzmaEncoderProperties(false, DictionarySize(hunkBytes)),
                        false,
                        output))
             {
