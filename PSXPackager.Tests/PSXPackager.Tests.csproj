@@ -21,5 +21,6 @@
     <ProjectReference Include="..\PSXPackager.Common\PSXPackager.Common.csproj" />
     <ProjectReference Include="..\Popstation\Popstation.csproj" />
     <ProjectReference Include="..\Popstation.Database\Popstation.Database.csproj" />
+    <ProjectReference Include="..\PSXPackager.Audio\PSXPackager.Audio.csproj" />
   </ItemGroup>
 </Project>

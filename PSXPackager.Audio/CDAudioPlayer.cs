@@ -49,7 +49,12 @@ namespace PSXPackager.Audio
 
         private void WaveOutEventOnPlaybackStopped(object? sender, StoppedEventArgs e)
         {
-            Stopped?.Invoke(this, new CDAudioPlayerStopped() { Exception = e.Exception });
+            // The end of a track is reported by the reader, which is the only part that knows
+            // which track it was. Only a fault in the device itself is left to report here.
+            if (e.Exception != null)
+            {
+                Stopped?.Invoke(this, new CDAudioPlayerStopped() { Exception = e.Exception });
+            }
         }
 
         public void Pause()
@@ -64,6 +69,9 @@ namespace PSXPackager.Audio
 
         public void Stop()
         {
+            // The reader has to be told as well, or it sits waiting for room in a buffer that
+            // nothing is draining any more
+            cts?.Cancel();
             _waveOutEvent.Stop();
         }
 
@@ -97,7 +105,7 @@ namespace PSXPackager.Audio
                 _buffer.ClearBuffer();
                 _waveOutEvent.Play();
 
-                Play(source, startSector, endSector, cancellationToken);
+                Play(source, track, startSector, endSector, cancellationToken);
             }
             catch
             {
@@ -106,10 +114,12 @@ namespace PSXPackager.Audio
             }
         }
 
-        private void Play(DiscSource source, int startSector, int endSector, CancellationToken cancellationToken)
+        private void Play(DiscSource source, CueTrack track, int startSector, int endSector, CancellationToken cancellationToken)
         {
             Task.Run(() =>
             {
+                Exception? exception = null;
+
                 try
                 {
                     source.Stream.Seek((long)startSector * SectorSize, SeekOrigin.Begin);
@@ -148,11 +158,23 @@ namespace PSXPackager.Audio
                         Thread.Sleep(5); // wait for space
                     }
                 }
+                catch (Exception e)
+                {
+                    exception = e;
+                }
                 finally
                 {
                     // The disc stays open only for as long as it is being read
                     source.Dispose();
-                    Stop();
+
+                    // A cancelled read no longer owns the device: either it has already been
+                    // stopped, or the track that replaced this one is playing through it
+                    if (!cancellationToken.IsCancellationRequested)
+                    {
+                        _waveOutEvent.Stop();
+                    }
+
+                    Stopped?.Invoke(this, new CDAudioPlayerStopped() { Track = track, Exception = exception });
                 }
             });
         }

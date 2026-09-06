@@ -1396,8 +1396,144 @@ namespace PSXPackagerGUI.Pages
 
         private void PlayerOnStopped(object? sender, CDAudioPlayerStopped e)
         {
-            if (e.Track is not null)
+            if (e.Track is null) return;
+
+            // The player reports from the thread that was reading the disc
+            Dispatcher.Invoke(() =>
             {
+                // The track that stopped is not always the selected one: it may have been left
+                // playing while another disc was picked
+                var track = Model.Discs
+                    .Where(disc => disc.Tracks != null)
+                    .SelectMany(disc => disc.Tracks)
+                    .FirstOrDefault(t => t.CueTrack == e.Track);
+
+                if (track is not null)
+                {
+                    track.Status = TrackStatus.Stopped;
+                }
+            });
+        }
+
+        private void SaveTrackAsMp3_OnClick(object sender, RoutedEventArgs e)
+        {
+            SaveTrack(sender, CDAudioFormat.Mp3);
+        }
+
+        private void SaveTrackAsWav_OnClick(object sender, RoutedEventArgs e)
+        {
+            SaveTrack(sender, CDAudioFormat.Wav);
+        }
+
+        private void SaveTrack(object sender, CDAudioFormat format)
+        {
+            if (((MenuItem)sender).DataContext is not Track { DataType: "AUDIO" } track) return;
+
+            var extension = CDAudioExtractor.GetExtension(format);
+
+            var saveFileDialog = new Microsoft.Win32.SaveFileDialog();
+            saveFileDialog.OverwritePrompt = true;
+            saveFileDialog.FileName = GetTrackFilename(track) + extension;
+            saveFileDialog.Filter = format == CDAudioFormat.Mp3
+                ? "MP3 files|*.mp3|All files|*.*"
+                : "WAV files|*.wav|All files|*.*";
+            saveFileDialog.DefaultExt = extension;
+            saveFileDialog.AddExtension = true;
+
+            var result = saveFileDialog.ShowDialog(Window);
+
+            if (result is not true) return;
+
+            var filename = saveFileDialog.FileName;
+
+            _cancellationTokenSource?.Dispose();
+            _cancellationTokenSource = new CancellationTokenSource();
+            var cancellationToken = _cancellationTokenSource.Token;
+
+            // Created here so the reports come back on the UI thread
+            var progress = new Progress<CDAudioExtractProgress>(p =>
+            {
+                Model.MaxProgress = p.TotalBytes;
+                Model.Progress = p.BytesRead;
+                Model.Status = $"Saving track {track.Number}... ({p.Percent:F0}%)";
+            });
+
+            Task.Run(() =>
+            {
+                try
+                {
+                    Dispatcher.Invoke(() => { Model.IsBusy = true; });
+
+                    CDAudioExtractor.Extract(track.CueTrack, filename, format, 192, progress, cancellationToken);
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        MessageBox.Show(Window, $"Track {track.Number} has been saved to \"{filename}\"",
+                            "PSXPackager",
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+                    });
+                }
+                catch (OperationCanceledException)
+                {
+                    // A half-written track is of no use to anyone
+                    TryDelete(filename);
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        MessageBox.Show(Window, "The operation was cancelled",
+                            "PSXPackager",
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+                    });
+                }
+                catch (Exception e)
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        MessageBox.Show(Window, e.Message,
+                            "PSXPackager",
+                            MessageBoxButton.OK, MessageBoxImage.Error);
+                    });
+                }
+                finally
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        Model.Status = "";
+                        Model.MaxProgress = 100;
+                        Model.Progress = 0;
+                        Model.IsBusy = false;
+                    });
+                }
+            });
+        }
+
+        /// <summary>
+        /// The name a track is offered under, without an extension: the disc title if there is one,
+        /// followed by the track number.
+        /// </summary>
+        private string GetTrackFilename(Track track)
+        {
+            var title = _model.SelectedDisc?.Title;
+
+            var name = string.IsNullOrWhiteSpace(title)
+                ? $"Track {track.Number:D2}"
+                : $"{title} - Track {track.Number:D2}";
+
+            return string.Join("_", name.Split(Path.GetInvalidFileNameChars()));
+        }
+
+        private static void TryDelete(string filename)
+        {
+            try
+            {
+                if (File.Exists(filename))
+                {
+                    File.Delete(filename);
+                }
+            }
+            catch
+            {
+                // Nothing useful to do about a file we cannot clean up
             }
         }
 

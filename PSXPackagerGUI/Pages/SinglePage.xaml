@@ -24,6 +24,11 @@
             <MenuItem Header="Load Disc Image" x:Name="LoadISO" Click="LoadISO_OnClick" />
             <MenuItem Header="Save As..." x:Name="SaveImage" Click="SaveImage_OnClick" />
         </ContextMenu>
+        <ContextMenu x:Key="AudioTrackContextMenu"
+                     DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+            <MenuItem Header="Save As MP3..." Click="SaveTrackAsMp3_OnClick" />
+            <MenuItem Header="Save As WAV..." Click="SaveTrackAsWav_OnClick" />
+        </ContextMenu>
     </Page.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -161,6 +166,10 @@
                                                 <Trigger Property="IsMouseOver" Value="True">
                                                     <Setter Property="Tag" Value="Hovered"/>
                                                 </Trigger>
+                                                <!-- Only an audio track can be played or saved out -->
+                                                <DataTrigger Binding="{Binding DataType}" Value="AUDIO">
+                                                    <Setter Property="ContextMenu" Value="{StaticResource AudioTrackContextMenu}"/>
+                                                </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </ListView.ItemContainerStyle>
