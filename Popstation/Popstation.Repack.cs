@@ -63,13 +63,5 @@ namespace Popstation
 
             }
         }
-
-        private void TryDelete(string path)
-        {
-            if (File.Exists(path))
-            {
-                File.Delete(path);
-            }
-        }
     }
 }

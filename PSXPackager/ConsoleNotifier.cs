@@ -5,13 +5,12 @@ using PSXPackager.Common.Notification;
 
 namespace PSXPackager
 {
-    public class ConsoleNotifier : INotifier
+    public class ConsoleNotifier : NotifierBase
     {
         private int _cursorYPos;
         private long _total;
         private long _lastTicks;
         private int _charsToDelete;
-        private DateTime _startDateTime;
         private readonly int _logLevel;
 
         public ConsoleNotifier(int logLevel)
@@ -65,19 +64,19 @@ namespace PSXPackager
             return -1;
         }
 
-        public void Notify(PopstationEventEnum @event, object value)
+        public override void Notify(PopstationEventEnum @event, object value)
         {
             if (GetLogLevel(@event) > _logLevel) return;
 
             switch (@event)
             {
                 case PopstationEventEnum.ProcessingStart:
-                    _startDateTime = DateTime.Now;
-                    WriteLine(@event, $"Processing started: {_startDateTime.Hour:00}:{_startDateTime.Minute:00}:{_startDateTime.Second:00}");
+                    StartDateTime = DateTime.Now;
+                    WriteLine(@event, $"Processing started: {StartDateTime.Hour:00}:{StartDateTime.Minute:00}:{StartDateTime.Second:00}");
                     break;
 
                 case PopstationEventEnum.ProcessingComplete:
-                    var elapsedSpan = DateTime.Now - _startDateTime;
+                    var elapsedSpan = DateTime.Now - StartDateTime;
                     WriteLine(@event, $"Processing completed: {elapsedSpan.TotalHours:00}h {elapsedSpan.Minutes:00}m {elapsedSpan.Seconds:00}s");
                     break;
 
@@ -151,7 +150,7 @@ namespace PSXPackager
                     //Console.SetCursorPosition(0, _cursorYPos);
                     if (DateTime.Now.Ticks - _lastTicks > 100000)
                     {
-                        Overwrite($"{Math.Round(Convert.ToInt32(value) / (double)_total * 100, 0) }%");
+                        Overwrite($"{Math.Round(Convert.ToInt32(value) / (double)_total * 100, 0)}%");
                         _lastTicks = DateTime.Now.Ticks;
                     }
                     break;
@@ -169,18 +168,8 @@ namespace PSXPackager
         private string TimeStamp(PopstationEventEnum @event)
         {
             if (_logLevel < 4) return string.Empty;
-            var currentTime = DateTime.Now;
-            switch (@event)
-            {
-                case PopstationEventEnum.ConvertProgress:
-                case PopstationEventEnum.ExtractProgress:
-                case PopstationEventEnum.WriteProgress:
-                case PopstationEventEnum.DecompressProgress:
-                    break;
-                default:
-                    return $"[{currentTime.Hour:00}:{currentTime.Minute:00}:{currentTime.Second:00}]: ";
-            }
-            return string.Empty;
+            if (IsProgressEvent(@event)) return string.Empty;
+            return FormatTimestamp(DateTime.Now);
         }
 
         private void WriteLine(PopstationEventEnum @event, string text)

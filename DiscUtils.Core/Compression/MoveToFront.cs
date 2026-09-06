@@ -27,7 +27,7 @@ namespace DiscUtils.Compression
         private readonly byte[] _buffer;
 
         public MoveToFront()
-            : this(256, false) {}
+            : this(256, false) { }
 
         public MoveToFront(int size, bool autoInit)
         {

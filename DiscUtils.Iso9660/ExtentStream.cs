@@ -79,7 +79,7 @@ namespace DiscUtils.Iso9660
             set { _position = value; }
         }
 
-        public override void Flush() {}
+        public override void Flush() { }
 
         public override int Read(byte[] buffer, int offset, int count)
         {

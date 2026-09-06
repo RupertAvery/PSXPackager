@@ -12,6 +12,7 @@ using PSXPackager.Common.Notification;
 
 using SharpCompress.Archives;
 using SharpCompress.Common;
+using SharpCompress.Readers;
 
 namespace Popstation
 {
@@ -191,9 +192,11 @@ namespace Popstation
             }
             catch (Exception ex)
             {
+                // Intentionally swallowed: ProcessFile is called in a loop over a batch of
+                // files (see PSXPackager/Program.cs and PSXPackagerGUI/Processing/Processor.cs),
+                // so one failing file must not abort the rest of the batch.
                 _notifier?.Notify(PopstationEventEnum.Error, ex.Message);
                 return false;
-                //throw;
             }
             finally
             {
@@ -240,7 +243,7 @@ namespace Popstation
                 using var outputStream = new FileStream(mergedBinFilePath, FileMode.Create, FileAccess.Write);
 
                 var mergedCueFile = MergeBins(outputStream, mergedBinFileName, cueFile);
-                
+
                 CueFileWriter.Write(mergedCueFile, mergedCueFilePath);
 
                 tempFiles.Add(mergedBinFilePath);
@@ -354,34 +357,28 @@ namespace Popstation
             List<string> files;
 
             using (Stream stream = File.OpenRead(file))
-            using (var archive = ArchiveFactory.Open(stream))
+            using (var archive = ArchiveFactory.OpenArchive(stream, new ReaderOptions()
+            {
+                Progress = new Progress<ProgressReport>(ArchiveFileOnExtracting)
+            }))
             {
                 var fileNames = archive.Entries.Select(x => x.Key).ToList();
                 files = fileNames.Select(x => Path.Combine(tempPath, x)).ToList();
 
-                // https://github.com/RupertAvery/PSXPackager/pull/40
-                archive.EntryExtractionBegin += (sender, args) =>
-                {
-                    _notifier.Notify(PopstationEventEnum.DecompressStart, args.Item.Key);
-                    _currentFileDecompressedSize = args.Item.Size;
-                };
-
-                archive.EntryExtractionEnd += (sender, args) =>
-                {
-                    _notifier.Notify(PopstationEventEnum.DecompressProgress, 100);
-                    _notifier.Notify(PopstationEventEnum.DecompressComplete, null);
-                };
-
-                archive.CompressedBytesRead += ArchiveFileOnExtracting;
                 foreach (var entry in archive.Entries.Where(entry => !entry.IsDirectory))
                 {
+                    _notifier.Notify(PopstationEventEnum.DecompressStart, entry.Key);
+                    _currentFileDecompressedSize = entry.Size;
+
                     entry.WriteToDirectory(tempPath, new ExtractionOptions()
                     {
                         ExtractFullPath = true,
                         Overwrite = true
                     });
+
+                    _notifier.Notify(PopstationEventEnum.DecompressProgress, 100);
+                    _notifier.Notify(PopstationEventEnum.DecompressComplete, null);
                 }
-                archive.CompressedBytesRead -= ArchiveFileOnExtracting;
 
             }
 
@@ -389,10 +386,14 @@ namespace Popstation
         }
 
 
-        private void ArchiveFileOnExtracting(object sender, CompressedBytesReadEventArgs e)
+        private void ArchiveFileOnExtracting(ProgressReport progress)
         {
-            var percentage = ((double)e.CompressedBytesRead / (double)_currentFileDecompressedSize) * 100;
-            _notifier.Notify(PopstationEventEnum.DecompressProgress, (int)percentage);
+            var percentage = progress.PercentComplete
+                ?? (_currentFileDecompressedSize > 0
+                    ? ((double)progress.BytesTransferred / _currentFileDecompressedSize) * 100
+                    : 0);
+
+            _notifier.Notify(PopstationEventEnum.DecompressProgress, (int)Math.Clamp(percentage, 0, 100));
         }
 
 
@@ -543,11 +544,11 @@ namespace Popstation
                 }
 
                 var fileName = GetActualFileName(resourcePath);
-				
-				if (!File.Exists(fileName))
-				{
-					return Resource.Empty(type);
-				}
+
+                if (!File.Exists(fileName))
+                {
+                    return Resource.Empty(type);
+                }
 
                 var info = new FileInfo(fileName);
 

@@ -330,8 +330,6 @@ namespace PSXPackagerGUI.Pages
 
         private void Scan(object obj)
         {
-            var gamesByMainGameId = _gameDb.GameEntries.ToLookup(d => d.GameID);
-
             if (_model.IsScanning)
             {
                 var result = MessageBox.Show(Window, "Abort scanning?", "Batch", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
@@ -473,7 +471,9 @@ namespace PSXPackagerGUI.Pages
                         }
                         catch (InvalidFileSystemException)
                         {
-
+                            // Not a valid disc image (e.g. an incidental .bin/.img file that
+                            // matched the scan pattern but isn't a PS1 disc) - skip it silently
+                            // rather than reporting it as a scan error.
                         }
                         catch (Exception e)
                         {
@@ -484,65 +484,8 @@ namespace PSXPackagerGUI.Pages
                                 ErrorMesage = e.Message
                             });
                         }
-
-
-
-                        //if (pattern != "*.m3u")
-                        //{
-
-                        //    if (gameEntry != null)
-                        //    {
-                        //        if (_model.Settings.MergeMultiDiscs)
-                        //        {
-                        //            // gamesByMainGameId
-                        //        }
-                        //    }
-                        //}
-
-
-
-
-
                     }
                 }
-
-                //scanEntries = scanEntries.Where(d => ignoreFileSet.Contains(d.Path)).ToList();
-
-                //var gameGroups = scanEntries.Where(d => Path.GetExtension(d.Path).ToLower() != ".m3u").Where(d => d.GameEntry != null).GroupBy(d => d.GameEntry.MainGameID);
-
-                //var multiDiscGames = gameGroups.Where(d => d.Count() > 1).ToList();
-
-
-                //if (multiDiscGames.Any())
-                //{
-                //    foreach (var multiDiscGame in multiDiscGames)
-                //    {
-                //        var discs = multiDiscGame.Select(d => d).OrderBy(d => d.GameEntry.DiscIndex).ToList();
-
-                //        var lowestCommonPath = GetLowestCommonFolder(discs.Select(d => d.Path).ToArray());
-
-                //        var insertIndex = scanEntries.IndexOf(discs[0]);
-
-
-                //        var playlist = new List<string>();
-
-
-                //        foreach (var scanEntry in discs)
-                //        {
-                //            playlist.Add(Path.GetRelativePath(lowestCommonPath, scanEntry.Path));
-                //            ignoreFileSet.Add(scanEntry.Path);
-                //        }
-
-                //        var m3uPath = Path.Combine(lowestCommonPath, $"{discs[0].GameEntry.MainGameTitle}.m3u");
-
-                //        File.WriteAllText(m3uPath, string.Join("\n", playlist));
-
-                //        var newEntry = new ScanEntry() { GameEntry = discs[0].GameEntry, Path = m3uPath };
-
-                //        scanEntries.Insert(insertIndex, newEntry);
-                //    }
-                //}
-
 
                 foreach (var batchEntry in scanEntries.OrderBy(d => d.GameEntry?.MainGameTitle))
                 {

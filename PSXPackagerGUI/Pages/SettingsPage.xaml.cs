@@ -170,6 +170,6 @@ namespace PSXPackagerGUI.Pages
             Process.Start(startInfo);
         }
 
-       
+
     }
 }

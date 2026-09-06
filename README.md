@@ -1,6 +1,6 @@
-﻿# PSXPackager
+# PSXPackager
 
-PSXPackager is tool for converting PlayStation 1 Disc images to the EBOOT.PBP format and back.
+PSXPackager is a tool for converting PlayStation 1 Disc images to the EBOOT.PBP format and back.
 
 EBOOT.PBP is a Sony Playstation file format for PS1 Classics on the PSP and PS3 Playstation emulators. The format is also supported by PS1 emulators such as ePSXe, PCSX, Beetle PSX (Mednafen/RetroArch) and DuckStation.
 
@@ -62,7 +62,7 @@ psxpackager -i "Final Fantasy VII - Disc 1.cue"
 will process `Final Fantasy VII - Disc 1.bin` and `Final Fantasy VII - Disc 1.cue` and output `Final Fantasy VII - Disc 1.pbp`.
 
 
-The `-o` or `output` parameter is optional. It specifies the folder where the the converted or extracted files will be placed. If not specified, the folder specified on the input is ued.
+The `-o` or `output` parameter is optional. It specifies the folder where the the converted or extracted files will be placed. If not specified, the folder specified in the input is used.
 
 If the input is a file and the output is also a file, the output will be renamed, instead of reusing the input filename.
 
@@ -124,7 +124,7 @@ PSXPackager will prompt if a file exists before overwriting it. Use the `-x` arg
 
 Set the compression level to a value from 0 to 9, with 0 being no compression and 9 being the highest compression level. If not specified, it will default to 5.
 
-PSXPackager can automatically extract files from compressed files (archives) anc convert the contents into a PBP. The following formats are supported:
+PSXPackager can automatically extract files from compressed files (archives) and convert the contents into a PBP. The following formats are supported:
 
 * .zip
 * .7z

@@ -97,7 +97,7 @@ namespace DiscUtils.Iso9660
             uint rootDirExtentLocation,
             uint rootDirDataLength,
             DateTime buildTime,
-            Encoding enc, 
+            Encoding enc,
             int sectorSize)
             : base(type, version, sectorSize)
         {

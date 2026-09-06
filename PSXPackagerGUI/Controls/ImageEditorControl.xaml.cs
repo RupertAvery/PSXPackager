@@ -95,7 +95,7 @@ namespace PSXPackagerGUI.Controls
             add => AddHandler(SelectEvent, value);
             remove => RemoveHandler(SelectEvent, value);
         }
-        
+
         public ImageComposite Composite
         {
             get => (ImageComposite)GetValue(CompositeProperty);
@@ -258,7 +258,7 @@ namespace PSXPackagerGUI.Controls
                 }
 
                 var slayer = SelectedLayer;
-                
+
                 if (slayer != null)
                 {
                     startOffsetX = slayer.OffsetX;
@@ -341,7 +341,7 @@ namespace PSXPackagerGUI.Controls
                         Update();
                     }
                 }
-    
+
             }
 
         }
@@ -571,7 +571,7 @@ namespace PSXPackagerGUI.Controls
                             }
                             Composite.Layers = new ObservableCollection<Layer>(resourceTemplate.Layers);
                             Update();
-                        } 
+                        }
                         else
                         {
                             var messages = string.Join("\r\n", errorList);

@@ -6,8 +6,8 @@ namespace PSXPackagerGUI.Models.Resource;
 
 public static class TextFormattingHelper
 {
-    public static Visual Visual = null!; 
-    
+    public static Visual Visual = null!;
+
     public static double GetPixelsPerDip()
     {
         return VisualTreeHelper.GetDpi(Visual).PixelsPerDip;

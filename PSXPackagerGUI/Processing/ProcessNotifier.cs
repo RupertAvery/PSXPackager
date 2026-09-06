@@ -43,7 +43,7 @@ namespace PSXPackagerGUI.Processing
                     Entry.MaxProgress = 100;
                     Entry.Progress = 100;
                     Entry.HasError = true;
-                    Entry.ErrorMessage += (string) value + "\r\n";
+                    Entry.ErrorMessage += (string)value + "\r\n";
 
                     break;
 

@@ -20,7 +20,7 @@ namespace PSXPackagerGUI.Models
             get => _inputPath;
             set => SetProperty(ref _inputPath, value);
         }
-        
+
         public string OutputPath
         {
             get => _outputPath;
@@ -38,7 +38,7 @@ namespace PSXPackagerGUI.Models
             get => _isM3UChecked;
             set => SetProperty(ref _isM3UChecked, value);
         }
-        
+
         public bool IsIsoChecked
         {
             get => _isIsoChecked;

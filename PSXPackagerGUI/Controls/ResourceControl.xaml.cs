@@ -21,14 +21,14 @@ namespace PSXPackagerGUI.Controls
                 typeof(ResourceControl),
                 new PropertyMetadata(null, OnResourceChanged));
 
-        public static readonly DependencyProperty ToolTipProperty =
+        public new static readonly DependencyProperty ToolTipProperty =
             DependencyProperty.Register(
                 nameof(ToolTip),
                 typeof(string),
                 typeof(ResourceControl),
                 new PropertyMetadata(string.Empty));
 
-        public string ToolTip
+        public new string ToolTip
         {
             get => (string)GetValue(ToolTipProperty);
             set => SetValue(ToolTipProperty, value);
@@ -55,7 +55,7 @@ namespace PSXPackagerGUI.Controls
             //        //control.InvalidateVisual();
             //    }
             //}
-            newValue.Cleared += (s,e) => ResourceOnCleared(d, e);
+            newValue.Cleared += (s, e) => ResourceOnCleared(d, e);
 
             newValue.RefreshIcon();
         }
@@ -149,7 +149,7 @@ namespace PSXPackagerGUI.Controls
             if (result is true)
             {
                 Settings.LastResourceDirectory = Path.GetDirectoryName(openFileDialog.FileName);
-                ResourceHelper.LoadResource(Resource, openFileDialog.FileName).WarnIfErrors(); 
+                ResourceHelper.LoadResource(Resource, openFileDialog.FileName).WarnIfErrors();
             }
         }
 
@@ -164,7 +164,7 @@ namespace PSXPackagerGUI.Controls
             if (result is true)
             {
                 Settings.LastResourceDirectory = Path.GetDirectoryName(openFileDialog.FileName);
-                ResourceHelper.LoadResource(Resource, openFileDialog.FileName).WarnIfErrors(); 
+                ResourceHelper.LoadResource(Resource, openFileDialog.FileName).WarnIfErrors();
             }
         }
 
