@@ -8,6 +8,7 @@ using System.Threading;
 using Popstation.Iso;
 using PSXPackager.Common;
 using PSXPackager.Common.Cue;
+using PSXPackager.Common.Iso;
 
 namespace Popstation.Pbp
 {
@@ -99,8 +100,7 @@ namespace Popstation.Pbp
                 {
                     if (File.Exists(disc.SourceIso))
                     {
-                        var t = new FileInfo(disc.SourceIso);
-                        var isosize = (uint)t.Length;
+                        var isosize = (uint)GetSourceSize(disc);
                         disc.IsoSize = isosize;
                         totSize += isosize;
                     }
@@ -128,6 +128,12 @@ namespace Popstation.Pbp
         }
 
         public abstract void WritePSAR(Stream outputStream, uint psarOffset, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// The size a disc occupies in the PSAR, in raw 2352-byte sectors. A source image with
+        /// 2048-byte sectors is expanded on the way in, so this is larger than the file on disk.
+        /// </summary>
+        protected virtual long GetSourceSize(DiscInfo disc) => DiscImage.GetRawSize(disc.SourceIso);
 
         int nextPatchPos;
 
@@ -233,8 +239,17 @@ namespace Popstation.Pbp
         {
             var isoPosition = outputStream.Position - psarOffset;
 
-            var t = new FileInfo(disc.SourceIso);
-            var isoSize = (uint)t.Length;
+            var imageInfo = DiscImage.GetInfo(disc.SourceIso);
+
+            if (imageInfo.IsCooked)
+            {
+                Notify?.Invoke(PopstationEventEnum.Info,
+                    "Image has 2048-byte sectors, expanding to raw 2352-byte sectors");
+                Notify?.Invoke(PopstationEventEnum.Warning,
+                    "A 2048-byte sector image does not store CD-XA subheaders, so streaming audio and FMV cannot be rebuilt. Use a .bin/.cue if this game has XA audio.");
+            }
+
+            var isoSize = (uint)imageInfo.RawSize;
             var actualIsoSize = isoSize;
             uint curSize;
             uint totSize;
@@ -359,7 +374,7 @@ namespace Popstation.Pbp
             Notify?.Invoke(PopstationEventEnum.WriteSize, disc.IsoSize);
 
 
-            using (var inputStream = new FileStream(disc.SourceIso, FileMode.Open, FileAccess.Read))
+            using (var inputStream = DiscImage.OpenRead(disc.SourceIso))
             {
                 if (convertInfo.CompressionLevel == 0)
                 {
@@ -623,8 +638,7 @@ namespace Popstation.Pbp
         {
             foreach (var disc in convertInfo.DiscInfos)
             {
-                var t = new FileInfo(disc.SourceIso);
-                var isosize = (uint)t.Length;
+                var isosize = (uint)GetSourceSize(disc);
                 if (!string.IsNullOrEmpty(disc.SourceToc))
                 {
                     if (File.Exists(disc.SourceToc))

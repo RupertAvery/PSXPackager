@@ -134,6 +134,17 @@ PSXPackager can automatically extract files from compressed files (archives) anc
 
 Archives will be decompressed to a temporary folder in `%TEMP%\PSXPackager`, and will be cleaned up on exit.
 
+### Sector formats
+
+PlayStation discs store 2352 bytes per sector, and a PBP expects the disc data in that raw form. Images come in two flavours:
+
+* **Raw** images (usually `.bin`, sometimes `.img`) hold the complete 2352-byte sectors.
+* **Cooked** images (usually `.iso`) hold only the 2048 bytes of user data per sector, discarding the sync pattern, header, subheader and the EDC/ECC error correction fields.
+
+PSXPackager works out which one you have from the contents of the file rather than from its extension, so a `.iso` that is really a raw image, and a `.bin` that is really cooked, are both handled correctly. A cooked image is expanded back to Mode 2 Form 1 sectors as it is read, regenerating the sync pattern, the MSF header, the subheader and the EDC/ECC fields.
+
+> **Prefer `.bin` / `.cue` where you have the choice.** A cooked `.iso` cannot store CD-XA subheaders, and an XA sector holds 2324 bytes of data where a `.iso` keeps only 2048. Streaming audio and FMV therefore cannot be rebuilt from a `.iso`, and games that use them will lose that audio and video. PSXPackager warns you when it converts a cooked image. The game data itself is reconstructed exactly.
+
 ## Extract a .PBP to a .BIN + .CUE
 
 PSXPackager checks the file extension to decide whether to extract or convert, so the syntax remains the same. The output will always be a `.bin` + `.cue`.

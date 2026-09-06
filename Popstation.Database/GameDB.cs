@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using PSXPackager.Common.Iso;
 
 namespace Popstation.Database
 {
@@ -106,9 +107,10 @@ namespace Popstation.Database
 
         public static string FindGameId(string srcIso)
         {
-            using (var stream = new FileStream(srcIso, FileMode.Open, FileAccess.Read))
+            // A cooked .iso is expanded to raw sectors on the fly, so the reader always sees 2352
+            using (var stream = DiscImage.OpenRead(srcIso))
             {
-                var cdReader = new CDReader(stream, false, 2352);
+                var cdReader = new CDReader(stream, false, DiscImage.RawSectorSize);
 
                 // Why doesn't a root file check not work?
                 //foreach (var file in cdReader.GetFiles("\\"))
