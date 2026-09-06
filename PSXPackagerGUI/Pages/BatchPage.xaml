@@ -1,4 +1,4 @@
-﻿<Page x:Class="PSXPackagerGUI.Pages.BatchPage"
+<Page x:Class="PSXPackagerGUI.Pages.BatchPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -150,6 +150,7 @@
                     <CheckBox Margin="10,8,2,2" IsChecked="{Binding Settings.IsM3uChecked}">.M3U</CheckBox>
                     <CheckBox Margin="10,8,2,2" IsChecked="{Binding Settings.IsImgChecked}">.IMG</CheckBox>
                     <CheckBox Margin="10,8,2,2" IsChecked="{Binding Settings.IsIsoChecked}">.ISO</CheckBox>
+                    <CheckBox Margin="10,8,2,2" IsChecked="{Binding Settings.IsChdChecked}">.CHD</CheckBox>
                     <CheckBox Margin="10,8,2,2" IsChecked="{Binding Settings.Is7zChecked}">.7z</CheckBox>
                     <CheckBox Margin="10,8,2,2" IsChecked="{Binding Settings.IsZipChecked}">.ZIP</CheckBox>
                     <CheckBox Margin="10,8,2,2" IsChecked="{Binding Settings.IsRarChecked}">.RAR</CheckBox>

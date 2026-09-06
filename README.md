@@ -110,7 +110,7 @@ If the input is a file and the output is also a file, the output will be renamed
   --version                  Display version information.
 ```
 
-## Convert a .BIN, .CUE, .ISO, .IMG or archive to a .PBP
+## Convert a .BIN, .CUE, .ISO, .IMG, .CHD or archive to a .PBP
 
 PSXPackager supports several input formats. Simply pass the path to the archive, CUE sheet, or image with the `-i` parameter.
 
@@ -133,6 +133,30 @@ PSXPackager can automatically extract files from compressed files (archives) anc
 * .gz
 
 Archives will be decompressed to a temporary folder in `%TEMP%\PSXPackager`, and will be cleaned up on exit.
+
+### Sector formats
+
+PlayStation discs store 2352 bytes per sector, and a PBP expects the disc data in that raw form. Images come in two flavours:
+
+* **Raw** images (usually `.bin`, sometimes `.img`) hold the complete 2352-byte sectors.
+* **Cooked** images (usually `.iso`) hold only the 2048 bytes of user data per sector, discarding the sync pattern, header, subheader and the EDC/ECC error correction fields.
+
+PSXPackager works out which one you have from the contents of the file rather than from its extension, so a `.iso` that is really a raw image, and a `.bin` that is really cooked, are both handled correctly. A cooked image is expanded back to Mode 2 Form 1 sectors as it is read, regenerating the sync pattern, the MSF header, the subheader and the EDC/ECC fields.
+
+> **Prefer `.bin` / `.cue` where you have the choice.** A cooked `.iso` cannot store CD-XA subheaders, and an XA sector holds 2324 bytes of data where a `.iso` keeps only 2048. Streaming audio and FMV therefore cannot be rebuilt from a `.iso`, and games that use them will lose that audio and video. PSXPackager warns you when it converts a cooked image. The game data itself is reconstructed exactly.
+
+### CHD images
+
+A `.chd` (Compressed Hunks of Data) holds a whole disc, audio tracks and all, in one compressed file. PSXPackager reads them directly - there is no need to run `chdman` first, and nothing is written out to a temporary `.bin`.
+
+The disc is rebuilt as it is read: the padding CHD inserts between tracks is skipped, pregaps that were never stored are regenerated, and audio, which a CHD holds in the opposite byte order from a `.bin`, is swapped back. The track list comes from the CHD's own metadata, so a game with CD audio gets a PBP with the right table of contents without you supplying a cue sheet.
+
+Versions 3, 4 and 5 are supported, with the `zlib`, `lzma`, `zstd`, `cdzl`, `cdlz`, `cdfl` and `cdzs` codecs. Two things are not supported:
+
+* **Delta CHDs**, which store only the difference from a parent file. PSXPackager will tell you if it meets one.
+* **Subcode data**, which is discarded. A PBP has nowhere to keep it.
+
+CHDs made from a `.bin` / `.cue` are lossless, so the PBP you get is the same one you would get by extracting the CHD to a `.bin` / `.cue` first. A CHD made from a `.iso` carries the same limitation the `.iso` did.
 
 ## Extract a .PBP to a .BIN + .CUE
 

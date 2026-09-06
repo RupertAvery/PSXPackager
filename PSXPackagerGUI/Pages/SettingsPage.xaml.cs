@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -44,6 +44,7 @@ namespace PSXPackagerGUI.Pages
                         IsImgChecked = true,
                         IsM3uChecked = true,
                         IsIsoChecked = true,
+                        IsChdChecked = true,
                     }
                 };
                 _configuration.Save(settings);
@@ -75,6 +76,7 @@ namespace PSXPackagerGUI.Pages
                     IsImgChecked = true,
                     IsM3uChecked = true,
                     IsIsoChecked = true,
+                    IsChdChecked = true,
                 };
             }
 

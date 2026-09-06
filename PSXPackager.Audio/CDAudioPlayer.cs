@@ -1,4 +1,5 @@
 ﻿using NAudio.Wave;
+using Popstation.Media;
 using PSXPackager.Common.Cue;
 using System;
 
@@ -86,64 +87,59 @@ namespace PSXPackager.Audio
 
         public void PlayCueTrack(CueTrack track, CancellationToken cancellationToken)
         {
-            var binPath = track.FileEntry.FileName;
-            bool isPbp = false;
+            // Whether the track lives in a .bin, a .chd or a disc inside an EBOOT, it reads the same
+            var source = DiscSource.ForTrack(track);
 
-            if (FileAbstraction.TryGetPbpDiscEntryFromUri(binPath, out var discEntry))
+            try
             {
-                isPbp = true;
+                var (startSector, endSector) = track.GetSectorRange(source.Length);
+
+                _buffer.ClearBuffer();
+                _waveOutEvent.Play();
+
+                Play(source, startSector, endSector, cancellationToken);
             }
-            else
+            catch
             {
-                if (!Path.IsPathFullyQualified(binPath))
-                {
-                    binPath = Path.Combine(Path.GetDirectoryName(track.FileEntry.CueFile.Path), binPath);
-                }
+                source.Dispose();
+                throw;
             }
-
-            long GetFileSize()
-            {
-                return isPbp ? discEntry!.IsoSize : new FileInfo(binPath).Length;
-            }
-
-            Stream GetStream()
-            {
-                return isPbp ? discEntry!.GetDiscStream() : File.OpenRead(binPath);
-            }
-
-            // Skip pre-gap
-            var startIndex = track.Indexes.First(i => i.Number == 1);
-            int startSector = startIndex.Position.ToSector();
-
-            int endSector;
-
-            if (track.Next != null)
-                endSector = track.Next.Indexes.First(i => i.Number == 1).Position.ToSector();
-            else
-            {
-                var fileSize = GetFileSize();
-                endSector = (int)(fileSize / SectorSize);
-            }
-
-            _buffer.ClearBuffer();
-            _waveOutEvent.Play();
-
-            Play(GetStream(), startSector, endSector, cancellationToken);
         }
 
-        private void Play(Stream stream, int startSector, int endSector, CancellationToken cancellationToken)
+        private void Play(DiscSource source, int startSector, int endSector, CancellationToken cancellationToken)
         {
             Task.Run(() =>
             {
-                stream.Seek((long)startSector * SectorSize, SeekOrigin.Begin);
-
-                byte[] sector = new byte[SectorSize];
-                int currentSector = startSector;
-
-                while (currentSector < endSector &&
-                       stream.Read(sector, 0, sector.Length) == sector.Length)
+                try
                 {
-                    while (_buffer.BufferedBytes > _buffer.BufferLength - sector.Length)
+                    source.Stream.Seek((long)startSector * SectorSize, SeekOrigin.Begin);
+
+                    byte[] sector = new byte[SectorSize];
+                    int currentSector = startSector;
+
+                    while (currentSector < endSector &&
+                           source.Stream.Read(sector, 0, sector.Length) == sector.Length)
+                    {
+                        while (_buffer.BufferedBytes > _buffer.BufferLength - sector.Length)
+                        {
+                            if (cancellationToken.IsCancellationRequested)
+                            {
+                                break;
+                            }
+                            Thread.Sleep(5); // wait for space
+                        }
+                        if (cancellationToken.IsCancellationRequested)
+                        {
+                            break;
+                        }
+
+                        _buffer.AddSamples(sector, 0, sector.Length);
+
+                        currentSector++;
+                    }
+
+
+                    while (_buffer.BufferedBytes > 0)
                     {
                         if (cancellationToken.IsCancellationRequested)
                         {
@@ -151,27 +147,13 @@ namespace PSXPackager.Audio
                         }
                         Thread.Sleep(5); // wait for space
                     }
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        break;
-                    }
-
-                    _buffer.AddSamples(sector, 0, sector.Length);
-
-                    currentSector++;
                 }
-
-
-                while (_buffer.BufferedBytes > 0)
+                finally
                 {
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        break;
-                    }
-                    Thread.Sleep(5); // wait for space
+                    // The disc stays open only for as long as it is being read
+                    source.Dispose();
+                    Stop();
                 }
-
-                Stop();
             });
         }
 

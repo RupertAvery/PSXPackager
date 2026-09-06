@@ -144,11 +144,16 @@ namespace Popstation
                                 else if (FileExtensionHelper.IsImageFile(fileEntry))
                                 {
                                     files.Add(Path.Combine(filePath, fileEntry));
+
+                                    // The two lists are paired up by position, so an entry that
+                                    // brings no cue sheet still has to take its place. A .chd
+                                    // carries its own TOC and needs no entry here either.
+                                    tocs.Add("");
                                 }
                                 else
                                 {
                                     _notifier?.Notify(PopstationEventEnum.Error, $"Unsupported playlist entry '{fileEntry}'");
-                                    _notifier?.Notify(PopstationEventEnum.Error, "Only the following are supported: .cue .img .bin .iso");
+                                    _notifier?.Notify(PopstationEventEnum.Error, "Only the following are supported: .cue .img .bin .iso .chd");
                                     return false;
                                 }
                             }
