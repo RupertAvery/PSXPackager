@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using PSXPackager.Common.Chd;
 
 namespace PSXPackager.Common.Iso
 {
@@ -11,6 +12,8 @@ namespace PSXPackager.Common.Iso
     /// while "cooked" images (usually .iso) hold only the 2048 bytes of user data per sector.
     /// The PBP writer, the TOC and the game ID reader all work in raw sectors, so a cooked image
     /// is wrapped in a <see cref="Mode2Form1Stream"/> that rebuilds the missing sector framing.
+    /// A .chd is a compressed container rather than a sector image, so it is handed to
+    /// <see cref="ChdDiscStream"/>, which rebuilds the disc it holds.
     /// The extension is not trusted - the layout is detected from the content.
     /// </remarks>
     public static class DiscImage
@@ -86,6 +89,14 @@ namespace PSXPackager.Common.Iso
         /// </summary>
         public static DiscImageInfo GetInfo(string path)
         {
+            if (ChdFile.IsChd(path))
+            {
+                using (var disc = ChdDiscStream.Open(path))
+                {
+                    return new DiscImageInfo(disc.DataTrackSectorSize, disc.Length);
+                }
+            }
+
             using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read))
             {
                 var sectorSize = DetectSectorSize(stream);
@@ -110,6 +121,11 @@ namespace PSXPackager.Common.Iso
         /// </summary>
         public static Stream OpenRead(string path)
         {
+            if (ChdFile.IsChd(path))
+            {
+                return ChdDiscStream.Open(path);
+            }
+
             var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
 
             try

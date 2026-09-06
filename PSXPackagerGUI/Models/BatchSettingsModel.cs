@@ -1,4 +1,4 @@
-﻿namespace PSXPackagerGUI.Models
+namespace PSXPackagerGUI.Models
 {
     public class BatchSettingsModel : BaseNotifyModel
     {
@@ -7,6 +7,7 @@
         private bool _isBinChecked;
         private bool _isM3UChecked;
         private bool _isIsoChecked;
+        private bool _isChdChecked;
         private bool _isImgChecked;
         private bool _is7zChecked;
         private bool _isZipChecked;
@@ -42,6 +43,12 @@
         {
             get => _isIsoChecked;
             set => SetProperty(ref _isIsoChecked, value);
+        }
+
+        public bool IsChdChecked
+        {
+            get => _isChdChecked;
+            set => SetProperty(ref _isChdChecked, value);
         }
 
         public bool IsImgChecked

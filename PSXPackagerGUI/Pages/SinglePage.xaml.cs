@@ -1,4 +1,4 @@
-﻿using DiscUtils;
+using DiscUtils;
 using DiscUtils.Raw;
 using Popstation;
 using Popstation.Database;
@@ -945,7 +945,7 @@ namespace PSXPackagerGUI.Pages
 
             var openFileDialog = new Microsoft.Win32.OpenFileDialog();
             openFileDialog.InitialDirectory = _settings.LastDiscImageDirectory;
-            openFileDialog.Filter = "Supported files|*.bin;*.cue;*.img|All files|*.*";
+            openFileDialog.Filter = "Supported files|*.bin;*.cue;*.img;*.chd|All files|*.*";
             var dlgResult = openFileDialog.ShowDialog();
 
             if (dlgResult is true)

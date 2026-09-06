@@ -59,22 +59,37 @@ namespace PSXPackager.Common.Iso
         /// </param>
         public static void WriteEcc(byte[] sector, bool zeroAddress)
         {
+            WriteEcc(sector, 0, zeroAddress);
+        }
+
+        /// <summary>
+        /// Computes the P and Q parity of a sector in place, where the sector starts partway into
+        /// a larger buffer.
+        /// </summary>
+        /// <param name="buffer">A buffer holding a full 2352-byte sector at <paramref name="sectorOffset"/>.</param>
+        /// <param name="sectorOffset">The offset of the sector within the buffer.</param>
+        /// <param name="zeroAddress">
+        /// True for Mode 2 sectors, whose parity is computed with the 4-byte header treated as zero.
+        /// False for Mode 1 sectors, whose parity covers the header as written.
+        /// </param>
+        public static void WriteEcc(byte[] buffer, int sectorOffset, bool zeroAddress)
+        {
             var address = new byte[4];
 
             if (zeroAddress)
             {
-                System.Array.Copy(sector, 12, address, 0, 4);
-                System.Array.Clear(sector, 12, 4);
+                System.Array.Copy(buffer, sectorOffset + 12, address, 0, 4);
+                System.Array.Clear(buffer, sectorOffset + 12, 4);
             }
 
             // P parity: 86 columns of 24 bytes, written to 0x81C
-            ComputeBlock(sector, 0x0C, 86, 24, 2, 86, 0x81C);
+            ComputeBlock(buffer, sectorOffset + 0x0C, 86, 24, 2, 86, sectorOffset + 0x81C);
             // Q parity: 52 diagonals of 43 bytes (covering the P parity too), written to 0x8C8
-            ComputeBlock(sector, 0x0C, 52, 43, 86, 88, 0x8C8);
+            ComputeBlock(buffer, sectorOffset + 0x0C, 52, 43, 86, 88, sectorOffset + 0x8C8);
 
             if (zeroAddress)
             {
-                System.Array.Copy(address, 0, sector, 12, 4);
+                System.Array.Copy(address, 0, buffer, sectorOffset + 12, 4);
             }
         }
 

@@ -1,4 +1,4 @@
-﻿using DiscUtils;
+using DiscUtils;
 using Popstation.Database;
 using Popstation.M3u;
 using PSXPackager.Common.Cue;
@@ -374,6 +374,10 @@ namespace PSXPackagerGUI.Pages
                 if (_model.Settings.IsIsoChecked)
                 {
                     patterns.Add("*.iso");
+                }
+                if (_model.Settings.IsChdChecked)
+                {
+                    patterns.Add("*.chd");
                 }
                 if (_model.Settings.Is7zChecked)
                 {

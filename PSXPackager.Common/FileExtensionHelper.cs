@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 
 namespace PSXPackager.Common
 {
@@ -30,6 +30,11 @@ namespace PSXPackager.Common
             Path.GetExtension(filename).ToLower() == ".7z";
         }
 
+        public static bool IsChd(string filename)
+        {
+            return Path.GetExtension(filename).ToLower() == ".chd";
+        }
+
         public static bool IsBin(string filename)
         {
             return Path.GetExtension(filename).ToLower() == ".bin";
@@ -39,7 +44,8 @@ namespace PSXPackager.Common
         {
             return Path.GetExtension(filename).ToLower() == ".bin" ||
             Path.GetExtension(filename).ToLower() == ".img" ||
-            Path.GetExtension(filename).ToLower() == ".iso";
+            Path.GetExtension(filename).ToLower() == ".iso" ||
+            Path.GetExtension(filename).ToLower() == ".chd";
         }
 
     }

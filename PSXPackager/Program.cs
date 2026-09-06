@@ -1,4 +1,4 @@
-﻿using CommandLine;
+using CommandLine;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -185,7 +185,7 @@ namespace PSXPackager
             // https://github.com/adamhathcock/sharpcompress/blob/master/FORMATS.md
             var supportedFiles = new List<string>() {
                 ".rar", ".zip", ".tar", ".gz", ".7z",
-                ".bin", ".cue", ".img", ".pbp"
+                ".bin", ".cue", ".img", ".chd", ".pbp"
             };
 
             if (string.IsNullOrEmpty(filterExpression))
