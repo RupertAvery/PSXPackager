@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using Popstation.Iso;
 using PSXPackager.Common;
+using PSXPackager.Common.Chd;
 using PSXPackager.Common.Cue;
 using PSXPackager.Common.Iso;
 
@@ -639,27 +640,43 @@ namespace Popstation.Pbp
             foreach (var disc in convertInfo.DiscInfos)
             {
                 var isosize = (uint)GetSourceSize(disc);
-                if (!string.IsNullOrEmpty(disc.SourceToc))
-                {
-                    if (File.Exists(disc.SourceToc))
-                    {
-                        var cue = CueFileReader.Read(disc.SourceToc);
-                        disc.TocData = cue.GetTOCData(isosize);
-                    }
-                    else
-                    {
-                        Notify?.Invoke(PopstationEventEnum.Warning, $"{disc.SourceToc} not found, using default");
-                        var cue = CueFileExtensions.GetDummyCueFile();
-                        disc.TocData = cue.GetTOCData(isosize);
-                    }
-                }
-                else
-                {
-                    Notify?.Invoke(PopstationEventEnum.Warning, $"TOC not specified, using default");
-                    var cue = CueFileExtensions.GetDummyCueFile();
-                    disc.TocData = cue.GetTOCData(isosize);
-                }
+
+                disc.TocData = GetTOC(disc).GetTOCData(isosize);
             }
+        }
+
+        /// <summary>
+        /// Finds the disc's table of contents. A cue sheet is used when one was supplied, but a
+        /// CHD carries its own track list and does not need one.
+        /// </summary>
+        private CueFile GetTOC(DiscInfo disc)
+        {
+            if (!string.IsNullOrEmpty(disc.SourceToc))
+            {
+                if (File.Exists(disc.SourceToc))
+                {
+                    return CueFileReader.Read(disc.SourceToc);
+                }
+
+                Notify?.Invoke(PopstationEventEnum.Warning, $"{disc.SourceToc} not found, using default");
+
+                return CueFileExtensions.GetDummyCueFile();
+            }
+
+            if (!string.IsNullOrEmpty(disc.SourceIso) && File.Exists(disc.SourceIso) && ChdFile.IsChd(disc.SourceIso))
+            {
+                var cue = ChdCueSheet.FromChd(disc.SourceIso);
+                var tracks = cue.FileEntries.Sum(entry => entry.Tracks.Count);
+
+                Notify?.Invoke(PopstationEventEnum.Info,
+                    $"Using the CHD's own TOC, {tracks} track{(tracks == 1 ? "" : "s")}");
+
+                return cue;
+            }
+
+            Notify?.Invoke(PopstationEventEnum.Warning, "TOC not specified, using default");
+
+            return CueFileExtensions.GetDummyCueFile();
         }
 
 

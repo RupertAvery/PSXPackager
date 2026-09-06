@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using PSXPackager.Common.Cue;
 
 namespace PSXPackager.Common.Chd
@@ -13,6 +13,28 @@ namespace PSXPackager.Common.Chd
     /// </remarks>
     public static class ChdCueSheet
     {
+        /// <summary>
+        /// Reads the track list straight out of a .chd and describes it as a cue sheet.
+        /// </summary>
+        /// <param name="path">The .chd to read.</param>
+        /// <param name="fileName">
+        /// The name to put in the FILE entry. Defaults to the CHD's own name, since the disc it
+        /// describes is not written out to a separate file.
+        /// </param>
+        public static CueFile FromChd(string path, string fileName = null)
+        {
+            using (var chd = ChdFile.Open(path))
+            {
+                var cue = FromToc(ChdCdToc.Parse(chd), fileName ?? System.IO.Path.GetFileName(path));
+
+                // Anything that resolves the FILE entry relative to the sheet lands back on the
+                // CHD, which is where the disc actually is
+                cue.Path = path;
+
+                return cue;
+            }
+        }
+
         public static CueFile FromToc(ChdCdToc toc, string fileName)
         {
             var cueFile = new CueFile();

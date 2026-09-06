@@ -19,5 +19,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PSXPackager.Common\PSXPackager.Common.csproj" />
+    <ProjectReference Include="..\Popstation\Popstation.csproj" />
   </ItemGroup>
 </Project>

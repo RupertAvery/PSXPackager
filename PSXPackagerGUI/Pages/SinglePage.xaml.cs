@@ -1,11 +1,14 @@
-using DiscUtils;
+﻿using DiscUtils;
 using DiscUtils.Raw;
 using Popstation;
 using Popstation.Database;
+using Popstation.Media;
 using Popstation.Pbp;
 using PSXPackager.Audio;
 using PSXPackager.Common;
+using PSXPackager.Common.Chd;
 using PSXPackager.Common.Cue;
+using PSXPackager.Common.Iso;
 using PSXPackager.Common.Notification;
 using PSXPackagerGUI.Common;
 using PSXPackagerGUI.Models;
@@ -970,6 +973,7 @@ namespace PSXPackagerGUI.Pages
                 var imagePath = openFileDialog.FileName;
 
                 var isCue = false;
+                var isChd = FileExtensionHelper.IsChd(imagePath);
 
                 if (Path.GetExtension(openFileDialog.FileName).Equals(".cue", StringComparison.InvariantCultureIgnoreCase))
                 {
@@ -980,6 +984,25 @@ namespace PSXPackagerGUI.Pages
                     disc.SourceTOC = openFileDialog.FileName;
                     disc.Tracks = new ObservableCollection<Track>(sheet.FileEntries.SelectMany(d => d.Tracks).Select(d => new Track(d)));
                     isCue = true;
+                }
+                else if (isChd)
+                {
+                    // A CHD carries its own track list, so there is no cue sheet to look for and
+                    // any that happens to sit beside it describes a separate copy of the disc
+                    CueFile sheet;
+
+                    try
+                    {
+                        sheet = ChdCueSheet.FromChd(imagePath);
+                    }
+                    catch (InvalidChdException ex)
+                    {
+                        MessageBox.Show(Window, ex.Message, "PSXPackager",
+                            MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+
+                    disc.Tracks = new ObservableCollection<Track>(sheet.FileEntries.SelectMany(d => d.Tracks).Select(d => new Track(d)));
                 }
                 else
                 {
@@ -1036,8 +1059,12 @@ namespace PSXPackagerGUI.Pages
                 }
                 else
                 {
-                    var fileInfo = new FileInfo(imagePath);
-                    fileSize = (uint)fileInfo.Length;
+                    // A CHD holds the disc compressed, so the file on disk is smaller than the
+                    // image it will produce
+                    fileSize = isChd
+                        ? (uint)DiscImage.GetRawSize(imagePath)
+                        : (uint)new FileInfo(imagePath).Length;
+
                     disc.SourceUrl = imagePath;
                 }
 
@@ -1132,7 +1159,6 @@ namespace PSXPackagerGUI.Pages
         private void SaveImage_OnClick(object sender, RoutedEventArgs e)
         {
             var context = ((MenuItem)sender).DataContext as Disc;
-            var pbpRegex = new Regex("pbp://(?<pbp>.*\\.pbp)/disc(?<disc>\\d)", RegexOptions.IgnoreCase);
 
             var game = _gameDb.GetEntryByGameID(context.GameID);
 
@@ -1149,13 +1175,9 @@ namespace PSXPackagerGUI.Pages
             {
                 var sourceUrl = Model.Discs.Single(d => d.Index == context.Index).SourceUrl;
 
-                var match = pbpRegex.Match(sourceUrl);
-
-                if (match.Success)
+                // The "pbp://" form is owned by DiscSource, which knows how to read it
+                if (DiscSource.TryParsePbpUri(sourceUrl, out var pbpPath, out var discIndex))
                 {
-                    var discIndex = int.Parse(match.Groups["disc"].Value);
-                    var pbpPath = match.Groups["pbp"].Value;
-
                     Task.Run(() =>
                     {
                         using (var stream = new FileStream(pbpPath, FileMode.Open, FileAccess.Read))

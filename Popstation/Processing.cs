@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,7 +7,6 @@ using Popstation.Database;
 using Popstation.M3u;
 using Popstation.Pbp;
 using PSXPackager.Common;
-using PSXPackager.Common.Chd;
 using PSXPackager.Common.Cue;
 using PSXPackager.Common.Notification;
 
@@ -114,12 +113,6 @@ namespace Popstation
 
                             result = ConvertIso(originalFile, outfile, srcToc, options, cancellationToken);
                         }
-                        else if (FileExtensionHelper.IsChd(file))
-                        {
-                            var srcToc = PreProcessChd(file, options.TempPath);
-
-                            result = ConvertIso(originalFile, file, srcToc, options, cancellationToken);
-                        }
                         else if (FileExtensionHelper.IsM3u(file))
                         {
                             var filePath = Path.GetDirectoryName(file);
@@ -148,15 +141,14 @@ namespace Popstation
                                     files.Add(outfile);
                                     tocs.Add(srcToc);
                                 }
-                                else if (FileExtensionHelper.IsChd(fileEntry))
-                                {
-                                    var chdPath = Path.Combine(filePath, fileEntry);
-                                    files.Add(chdPath);
-                                    tocs.Add(PreProcessChd(chdPath, options.TempPath));
-                                }
                                 else if (FileExtensionHelper.IsImageFile(fileEntry))
                                 {
                                     files.Add(Path.Combine(filePath, fileEntry));
+
+                                    // The two lists are paired up by position, so an entry that
+                                    // brings no cue sheet still has to take its place. A .chd
+                                    // carries its own TOC and needs no entry here either.
+                                    tocs.Add("");
                                 }
                                 else
                                 {
@@ -269,37 +261,6 @@ namespace Popstation
             }
         }
 
-
-        /// <summary>
-        /// Pre-processes a CHD image. A CHD keeps its track list in metadata rather than in a cue
-        /// sheet, so one is written out for the PBP writer to build the disc's TOC from.
-        /// </summary>
-        /// <param name="chdFilePath">The .chd to read the track list from</param>
-        /// <param name="tempPath">Where the generated cue sheet is written</param>
-        /// <returns>The path of the generated cue sheet</returns>
-        public string PreProcessChd(string chdFilePath, string tempPath)
-        {
-            ChdCdToc toc;
-
-            using (var chd = ChdFile.Open(chdFilePath))
-            {
-                toc = ChdCdToc.Parse(chd);
-            }
-
-            var fileName = Path.GetFileNameWithoutExtension(chdFilePath);
-
-            _notifier?.Notify(PopstationEventEnum.Info,
-                $"CHD contains {toc.Tracks.Count} track{(toc.Tracks.Count == 1 ? "" : "s")}");
-
-            var cueFile = ChdCueSheet.FromToc(toc, Path.GetFileName(chdFilePath));
-            var cueFilePath = Path.Combine(tempPath, fileName + "_chd.cue");
-
-            CueFileWriter.Write(cueFile, cueFilePath);
-
-            tempFiles.Add(cueFilePath);
-
-            return cueFilePath;
-        }
 
         /// <summary>
         /// Merges multiple .bin files referenced in a cue sheet into a single .bin file

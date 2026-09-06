@@ -144,6 +144,32 @@ namespace UnitTestProject
             Assert.AreEqual("00:00:12", tracks[1].Indexes[1].Position.ToString());
         }
 
+        /// <summary>
+        /// The PBP writer and the GUI both take a CHD's table of contents straight from the file,
+        /// without a cue sheet on disk to read it from.
+        /// </summary>
+        [TestMethod]
+        public void BuildsACueSheetStraightFromAChdFile()
+        {
+            var path = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".chd");
+
+            try
+            {
+                File.WriteAllBytes(path, BuildTwoTrackChd(dataFrames: 10, audioFrames: 6, pregap: 2, pregapStored: true));
+
+                var tracks = ChdCueSheet.FromChd(path).FileEntries.Single().Tracks;
+
+                Assert.AreEqual(2, tracks.Count);
+                Assert.AreEqual("MODE2/2352", tracks[0].DataType);
+                Assert.AreEqual("AUDIO", tracks[1].DataType);
+                Assert.AreEqual("00:00:12", tracks[1].Indexes.Single(i => i.Number == 1).Position.ToString());
+            }
+            finally
+            {
+                File.Delete(path);
+            }
+        }
+
         [TestMethod]
         public void RejectsAChdThatIsNotACdImage()
         {
@@ -185,6 +211,13 @@ namespace UnitTestProject
         /// </summary>
         private static ChdDiscStream BuildTwoTrackDisc(int dataFrames, int audioFrames, int pregap, bool pregapStored)
         {
+            var image = BuildTwoTrackChd(dataFrames, audioFrames, pregap, pregapStored);
+
+            return new ChdDiscStream(ChdFile.Open(new MemoryStream(image)));
+        }
+
+        private static byte[] BuildTwoTrackChd(int dataFrames, int audioFrames, int pregap, bool pregapStored)
+        {
             var builder = new ChdBuilder { HunkBytes = HunkBytes, UnitBytes = FrameSize };
             builder.Compressors[0] = 0x63647A6C; // "cdzl"
 
@@ -210,7 +243,7 @@ namespace UnitTestProject
             builder.AddTrack(1, "MODE2_RAW", dataFrames);
             builder.AddTrack(2, "AUDIO", audioFrames, pregap, pregapStored ? "V_AUDIO" : "AUDIO");
 
-            return new ChdDiscStream(ChdFile.Open(new MemoryStream(builder.Build())));
+            return builder.Build();
         }
 
         private static int Pad(int frames)
