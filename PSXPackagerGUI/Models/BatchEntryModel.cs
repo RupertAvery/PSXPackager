@@ -22,6 +22,8 @@ namespace PSXPackagerGUI.Models
         public abstract SubEntryType SubEntryType { get; }
         public string Path { get; set; }
         public string RelativePath { get; set; }
+        public bool HasError { get; set; }
+        public string ErrorMessage { get; set; }
     }
 
     public class FileEntry : SubEntry
@@ -55,7 +57,11 @@ namespace PSXPackagerGUI.Models
         private string _gameId;
         private List<SubEntry> _subEntries;
         private bool _isExpanded;
-
+        public string FullPath
+        {
+            get;
+            set;
+        }
         public string RelativePath
         {
             get => _relativePath;

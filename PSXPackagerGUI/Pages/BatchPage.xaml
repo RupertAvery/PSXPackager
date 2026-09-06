@@ -15,10 +15,39 @@
         <converters:HasErrorBrushConverter x:Key="HasErrorBrushConverter"></converters:HasErrorBrushConverter>
         <converters:NotConverter x:Key="NotConverter"></converters:NotConverter>
         <converters:BooleanVisibilityConverter x:Key="VisibilityConverter"></converters:BooleanVisibilityConverter>
+        <converters:BooleanVisibilityCollapsedConverter x:Key="VisibilityCollapsedConverter"></converters:BooleanVisibilityCollapsedConverter>
         <converters:BooleanInvisibilityConverter x:Key="InvisibilityConverter"></converters:BooleanInvisibilityConverter>
 
         <DataTemplate x:Key="FileEntryTemplate" DataType="{x:Type models:FileEntry}">
-            <Label Content="{Binding RelativePath}" Foreground="DarkGray"></Label>
+            <StackPanel Orientation="Horizontal">
+                <Label Content="{Binding RelativePath}">
+                    <Label.Style>
+                        <Style TargetType="Label">
+                            <Setter Property="Foreground" Value="Blue"></Setter>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasError}" Value="True">
+                                    <Setter Property="Foreground" Value="Red"></Setter>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Label.Style>
+                </Label>
+                <Label Content="{Binding ErrorMessage}">
+                    <Label.Style>
+                        <Style TargetType="Label">
+                            <Setter Property="Foreground" Value="Black"></Setter>
+                            <Setter Property="Visibility" Value="Collapsed"></Setter>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasError}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"></Setter>
+                                    <Setter Property="Foreground" Value="Red"></Setter>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Label.Style>
+                </Label>
+            </StackPanel>
+
         </DataTemplate>
 
         <DataTemplate x:Key="CueSheetTemplate" DataType="{x:Type models:CueFileEntry}">
@@ -28,7 +57,18 @@
                     <RowDefinition/>
                 </Grid.RowDefinitions>
 
-                <Label Content="{Binding RelativePath}" Foreground="DarkGray"></Label>
+                <Label Content="{Binding RelativePath}">
+                    <Label.Style>
+                        <Style TargetType="Label">
+                            <Setter Property="Foreground" Value="Blue"></Setter>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasError}" Value="True">
+                                    <Setter Property="Foreground" Value="Red"></Setter>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Label.Style>
+                </Label>
 
                 <ItemsControl Grid.Row="1" ItemsSource="{Binding FileEntries}">
                     <ItemsControl.ItemTemplate>
@@ -239,11 +279,13 @@
                     <Label Grid.Column="3" VerticalAlignment="Center" Margin="-6,0,0,0">Status</Label>
                 </Grid>
             </Border>
-            <ListView Grid.Row="1" ItemsSource="{Binding BatchEntries}" ScrollViewer.CanContentScroll="False">
+            <ListView Grid.Row="1" ItemsSource="{Binding BatchEntries}" SelectionChanged="Selector_OnSelectionChanged" ScrollViewer.CanContentScroll="False">
                 <ListView.ContextMenu>
                     <ContextMenu>
-                        <MenuItem Header="Create .M3U"></MenuItem>
-                        <MenuItem Header="Create .CUE"></MenuItem>
+                        <MenuItem Header="Create .M3U" Command="{Binding CreateM3U}" Visibility="{Binding CanCreateM3U, Converter={StaticResource VisibilityCollapsedConverter}}"></MenuItem>
+                        <MenuItem Header="Delete .M3U" Command="{Binding DeleteM3U}" Visibility="{Binding CanDeleteM3U, Converter={StaticResource VisibilityCollapsedConverter}}"></MenuItem>
+                        <MenuItem Header="Create .CUE" Command="{Binding CreateCUE}" Visibility="{Binding CanCreateCUE, Converter={StaticResource VisibilityCollapsedConverter}}"></MenuItem>
+                        <MenuItem Header="Create .CUE" Command="{Binding DeleteCUE}" Visibility="{Binding CanDeleteCUE, Converter={StaticResource VisibilityCollapsedConverter}}"></MenuItem>
                     </ContextMenu>
                 </ListView.ContextMenu>
                 <ListView.ItemContainerStyle>
@@ -283,8 +325,28 @@
                                     </Expander.Style>
 
                                 </Expander>
-                                <CheckBox Grid.Column="1" IsChecked="{Binding IsSelected}" VerticalAlignment="Center" HorizontalAlignment="Center"></CheckBox>
-                                <TextBlock Grid.Column="2" TextTrimming="CharacterEllipsis"  VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding RelativePath}"></TextBlock>
+                                <CheckBox Grid.Column="1" IsChecked="{Binding IsSelected}" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <CheckBox.Style>
+                                        <Style TargetType="CheckBox">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasError}" Value="True">
+                                                    <Setter Property="IsEnabled" Value="False"></Setter>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </CheckBox.Style>
+                                </CheckBox>
+                                <TextBlock Grid.Column="2" TextTrimming="CharacterEllipsis"  VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding RelativePath}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasError}" Value="True">
+                                                    <Setter Property="Foreground" Value="Red"></Setter>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                                 <TextBlock Grid.Column="3" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding GameId}"></TextBlock>
                                 <ProgressBar Grid.Column="4" Maximum="{Binding MaxProgress}" Value="{Binding Progress}" Foreground="{Binding HasError, Converter={StaticResource HasErrorBrushConverter}}"></ProgressBar>
                                 <Label Grid.Column="4" Content="{Binding Status}"></Label>

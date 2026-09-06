@@ -12,9 +12,9 @@ namespace Popstation.M3u
             m3u.Path = file;
             m3u.FileEntries = new List<string>();
 
-            var cueLines = File.ReadAllLines(file);
+            var lines = File.ReadAllLines(file);
 
-            foreach (var line in cueLines)
+            foreach (var line in lines)
             {
                 if (line.Trim() != string.Empty)
                 {
@@ -23,6 +23,14 @@ namespace Popstation.M3u
             }
 
             return m3u;
+        }
+    }
+
+    public class M3uFileWriter
+    {
+        public static void Write(M3uFile m3uFile, string path)
+        {
+            File.WriteAllLines(path, m3uFile.FileEntries);
         }
     }
 }

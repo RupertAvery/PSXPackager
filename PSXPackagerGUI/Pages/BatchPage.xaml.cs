@@ -1,5 +1,8 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -30,6 +33,7 @@ namespace PSXPackagerGUI.Pages
             };
 
             _controller = new BatchController(_model, settings, _window, Dispatcher, gameDb, _cancellationTokenSource.Token);
+
             _controller.Cancel = () =>
             {
                 _cancellationTokenSource.Cancel();
@@ -37,6 +41,7 @@ namespace PSXPackagerGUI.Pages
                 _cancellationTokenSource = new CancellationTokenSource();
                 _controller.UpdateToken(_cancellationTokenSource.Token);
             };
+            
             DataContext = _model;
         }
 
@@ -59,6 +64,15 @@ namespace PSXPackagerGUI.Pages
                 _cancellationTokenSource.Cancel();
             }
             _cancellationTokenSource.Dispose();
+        }
+
+        private void Selector_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var listView = (ListView)sender;
+
+            _model.SelectedItems =
+                new ObservableCollection<BatchEntryModel>(listView.SelectedItems.Cast<BatchEntryModel>());
+
         }
     }
 }

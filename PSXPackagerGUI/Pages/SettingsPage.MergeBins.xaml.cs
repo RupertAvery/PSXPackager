@@ -123,7 +123,14 @@ namespace PSXPackagerGUI.Pages
                 }
                 else if (Model.Converter.ConvertMode == ConvertMode.BINS)
                 {
-                    cueFile = GenerateCue(binPaths);
+                    if (!CueBuilder.CheckPaths(binPaths))
+                    {
+                        throw new Exception("All .bin files must be in the same folder");
+                    }
+
+                    cueFile = CueBuilder.GenerateCue(binPaths);
+
+                    cueFile.Path = Path.GetDirectoryName(binPaths.First());
                 }
 
                 var gameIds = new HashSet<string>();
@@ -221,71 +228,6 @@ namespace PSXPackagerGUI.Pages
                 Model.Converter.BinPaths.Move(Model.Converter.SelectedIndex, Model.Converter.SelectedIndex + 1);
             }
         }
-
-        private CueFile GenerateCue(List<string> binPaths)
-        {
-            var cueFile = new CueFile();
-
-            var index = 1;
-
-            var folderGroups = binPaths.Select(d => Path.GetDirectoryName(d))
-                .GroupBy(d => d);
-
-            if (folderGroups.Count() > 1)
-            {
-                throw new Exception("All .bin files must be in the same folder");
-            }
-
-            var baseFolder = folderGroups.First().Key;
-
-            foreach (var binPath in binPaths)
-            {
-                var fileName = Path.GetFileName(binPath);
-
-                cueFile.FileEntries.Add(new CueFileEntry()
-                {
-                    FileName = fileName,
-                    FileType = "BINARY",
-                    Tracks = index == 1
-                        ?
-                        [
-                            // Data track 
-                            new CueTrack()
-                            {
-                                DataType = CueTrackType.Data,
-                                Number = index,
-                                Indexes = new List<CueIndex>()
-                                {
-                                    // No pre-gap for first track
-                                    new CueIndex() { Number = 1, Position = new IndexPosition(0, 0, 0) }
-                                }
-                            }
-                        ]
-                        :
-                        [
-                            // Audio track
-                            new CueTrack()
-                            {
-                                DataType = CueTrackType.Audio,
-                                Number = index,
-                                Indexes = new List<CueIndex>()
-                                {
-                                    // Pre-gap index
-                                    new CueIndex() { Number = 0, Position = new IndexPosition(0, 0, 0) },
-                                    new CueIndex() { Number = 1, Position = new IndexPosition(0, 2, 0) }
-                                }
-                            }
-                        ]
-                });
-
-                index++;
-            }
-
-            cueFile.Path = Path.Combine(baseFolder, "DUMMY.CUE");
-
-            return cueFile;
-        }
-
 
     }
 }

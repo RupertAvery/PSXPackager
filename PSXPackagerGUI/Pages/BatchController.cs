@@ -1,6 +1,7 @@
 using DiscUtils;
 using Popstation.Database;
 using Popstation.M3u;
+using PSXPackager.Common.Chd;
 using PSXPackager.Common.Cue;
 using PSXPackagerGUI.Common;
 using PSXPackagerGUI.Models;
@@ -16,7 +17,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
+using static System.Net.WebRequestMethods;
 using CueFileEntry = PSXPackagerGUI.Models.CueFileEntry;
+using File = System.IO.File;
 
 namespace PSXPackagerGUI.Pages
 {
@@ -45,14 +48,190 @@ namespace PSXPackagerGUI.Pages
 
             _model.ConvertImageToPbp = true;
 
-
+            _model.PropertyChanged += ModelOnPropertyChanged;
             _model.BatchEntries = new ObservableCollection<BatchEntryModel>();
             _model.BatchEntries.CollectionChanged += BatchEntriesOnCollectionChanged;
+
+            _model.SelectedItems = new ObservableCollection<BatchEntryModel>();
+            _model.SelectedItems.CollectionChanged += SelectedItemsOnCollectionChanged;
 
             _model.ScanCommand = new RelayCommand(Scan);
             _model.ProcessCommand = new RelayCommand((o) => ProcessFiles(_token));
             _model.BrowseInputCommand = new RelayCommand(BrowseInput);
             _model.BrowseOutputCommand = new RelayCommand(BrowseOutput);
+
+            _model.CreateCUE = new RelayCommand(CreateCUE);
+            _model.DeleteCUE = new RelayCommand(DeleteCUE);
+            _model.CreateM3U = new RelayCommand(CreateM3U);
+            _model.DeleteM3U = new RelayCommand(DeleteM3U);
+        }
+
+
+        private void InsertEntries(int index, string directory, IEnumerable<ScanEntry> scanEntries, HashSet<string> ignoreFileSet)
+        {
+            foreach (var batchEntry in scanEntries.OrderBy(d => d.GameEntry?.MainGameTitle))
+            {
+                if (!ignoreFileSet.Contains(batchEntry.Path))
+                {
+                    var fullPath = Path.Combine(directory, batchEntry.Path);
+                    var relativePath = Path.GetRelativePath(directory, batchEntry.Path);
+                    _dispatcher.Invoke(() =>
+                    {
+                        _model.BatchEntries.Insert(index, new BatchEntryModel()
+                        {
+                            IsSelected = !batchEntry.HasError,
+                            RelativePath = relativePath,
+                            FullPath = fullPath,
+                            MainGameId = batchEntry.GameEntry?.MainGameID,
+                            HasError = batchEntry.HasError,
+                            GameId = batchEntry.GameEntry?.GameID,
+                            MaxProgress = 100,
+                            Progress = 0,
+                            Status = "Ready",
+                            Type = batchEntry.Type,
+                            SubEntries = batchEntry.SubEntries
+                        });
+                        index++;
+                    });
+                }
+            }
+        }
+
+        private void CreateM3U(object obj)
+        {
+            var entries = _model.SelectedItems;
+            var path = Path.GetDirectoryName(entries[0].FullPath);
+            var gameId = GameDB.FindGameId(entries[0].FullPath);
+            var gameEntry = _gameDb.GetEntryByGameID(gameId);
+
+            var m3uFileName = Path.Combine(_model.Settings.InputPath, $"{gameEntry.MainGameTitle}.m3u");
+
+            var m3uFile = new M3uFile(path);
+
+            foreach (var entry in entries.OrderBy(d => d.RelativePath))
+            {
+                m3uFile.AddFileEntry(entry.FullPath);
+            }
+
+            M3uFileWriter.Write(m3uFile, m3uFileName);
+
+            HashSet<string> ignoreFileSet = new HashSet<string>();
+            var scanEntries = new List<ScanEntry>();
+
+            HandleFiles([m3uFileName], scanEntries, ignoreFileSet);
+            var index = _model.BatchEntries.IndexOf(entries[0]);
+            InsertEntries(index, _model.Settings.InputPath, scanEntries, ignoreFileSet);
+
+            foreach (var entry in entries)
+            {
+                _model.BatchEntries.Remove(entry);
+            }
+        }
+
+        private void DeleteM3U(object obj)
+        {
+            var result = MessageBox.Show(this.Window,
+                "Are you sure you want to delete this file? Only do this if you created it or you are sure you know what you are doing.",
+                "Delete Playlist", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                var entries = _model.SelectedItems;
+                var m3uFile = M3uFileReader.Read(entries[0].FullPath);
+                HashSet<string> ignoreFileSet = new HashSet<string>();
+                var scanEntries = new List<ScanEntry>();
+                HandleFiles(m3uFile.FileEntries.Select(m3uFile.GetAbsolutePath), scanEntries, ignoreFileSet);
+                var index = _model.BatchEntries.IndexOf(entries[0]);
+                InsertEntries(index, _model.Settings.InputPath, scanEntries, ignoreFileSet);
+                _model.BatchEntries.Remove(entries[0]);
+                File.Delete(entries[0].FullPath);
+            }
+        }
+
+        private void CreateCUE(object obj)
+        {
+            var entries = _model.SelectedItems;
+            var path = Path.GetDirectoryName(entries[0].FullPath);
+            var gameId = GameDB.FindGameId(entries[0].FullPath);
+            var gameEntry = _gameDb.GetEntryByGameID(gameId);
+
+            var cueFileName = Path.Combine(_model.Settings.InputPath, $"{gameEntry.MainGameTitle}.cue");
+
+            var binPaths = entries.Select(d => d.FullPath).ToList();
+
+            if (!CueBuilder.CheckPaths(binPaths))
+            {
+                MessageBox.Show(Window, "All .bin files must be in the same folder", "Create CUE", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            var cueFile = CueBuilder.GenerateCue(binPaths);
+
+            cueFile.Path = Path.GetDirectoryName(binPaths.First());
+
+            CueFileWriter.Write(cueFile, cueFileName);
+
+            HashSet<string> ignoreFileSet = new HashSet<string>();
+            var scanEntries = new List<ScanEntry>();
+
+            HandleFiles([cueFileName], scanEntries, ignoreFileSet);
+            var index = _model.BatchEntries.IndexOf(entries[0]);
+            InsertEntries(index, _model.Settings.InputPath, scanEntries, ignoreFileSet);
+
+            foreach (var entry in entries)
+            {
+                _model.BatchEntries.Remove(entry);
+            }
+        }
+
+        private void DeleteCUE(object obj)
+        {
+            var result = MessageBox.Show(this.Window,
+                "Are you sure you want to delete this file? Only do this if you created it or you are sure you know what you are doing.",
+                "Delete CUE", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                var entries = _model.SelectedItems;
+                var cueFile = CueFileReader.Read(entries[0].FullPath);
+                HashSet<string> ignoreFileSet = new HashSet<string>();
+                var scanEntries = new List<ScanEntry>();
+                HandleFiles(cueFile.FileEntries.Select(d => cueFile.GetAbsolutePath(d)), scanEntries, ignoreFileSet);
+                var index = _model.BatchEntries.IndexOf(entries[0]);
+                InsertEntries(index, _model.Settings.InputPath, scanEntries, ignoreFileSet);
+                _model.BatchEntries.Remove(entries[0]);
+                File.Delete(entries[0].FullPath);
+            }
+        }
+
+        private void SelectedItemsOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            UpdateMenuItems();
+        }
+
+        private void ModelOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(BatchModel.SelectedItems))
+            {
+                UpdateMenuItems();
+            }
+        }
+
+        private void UpdateMenuItems()
+        {
+            var entries = _model.SelectedItems;
+
+            _model.CanCreateCUE = entries.All(d => d.Type == ScanEntryType.File &&
+                                                   d.RelativePath.EndsWith(".bin", StringComparison.InvariantCultureIgnoreCase));
+
+            _model.CanDeleteCUE = entries.Count == 1 && entries[0].RelativePath.EndsWith(".cue", StringComparison.InvariantCultureIgnoreCase);
+
+            _model.CanCreateM3U = entries.All(d => !d.RelativePath.EndsWith(".m3u", StringComparison.InvariantCultureIgnoreCase)
+                                                   && !d.RelativePath.EndsWith(".zip", StringComparison.InvariantCultureIgnoreCase)
+                                                   && !d.RelativePath.EndsWith(".7z", StringComparison.InvariantCultureIgnoreCase)
+                                                   && !d.RelativePath.EndsWith(".rar", StringComparison.InvariantCultureIgnoreCase));
+
+            _model.CanDeleteM3U = entries.Count == 1 && entries[0].RelativePath.EndsWith(".m3u", StringComparison.InvariantCultureIgnoreCase);
         }
 
         private void BatchEntriesOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -293,7 +472,21 @@ namespace PSXPackagerGUI.Pages
                         foreach (var fileEntry in playlist.FileEntries)
                         {
                             var absolutePath = playlist.GetAbsolutePath(fileEntry);
-                            subEntries.Add(GetPlaylistEntry(absolutePath, basePath));
+
+                            if (File.Exists(absolutePath))
+                            {
+                                subEntries.Add(GetPlaylistEntry(absolutePath, basePath));
+                            }
+                            else
+                            {
+                                subEntries.Add(new FileEntry()
+                                {
+                                    HasError = true,
+                                    ErrorMessage = "File not found",
+                                    Path = absolutePath,
+                                    RelativePath = fileEntry
+                                });
+                            }
                         }
 
                         scanEntry.SubEntries = subEntries;
@@ -323,6 +516,77 @@ namespace PSXPackagerGUI.Pages
                         break;
                     }
 
+            }
+
+            scanEntry.HasError = scanEntry.SubEntries != null && scanEntry.SubEntries.Any(d => d.HasError);
+
+            return scanEntry;
+        }
+
+        private void HandleFiles(IEnumerable<string> files, List<ScanEntry> scanEntries, HashSet<string> ignoreFileSet)
+        {
+            foreach (var file in files)
+            {
+                if (_token.IsCancellationRequested) break;
+
+                if (ignoreFileSet.Contains(file))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    var scanEntry = HandleFile(file, ignoreFileSet);
+                    scanEntries.Add(scanEntry);
+                }
+                catch (InvalidFileSystemException)
+                {
+                    // Not a valid disc image (e.g. an incidental .bin/.img file that
+                    // matched the scan pattern but isn't a PS1 disc) - skip it silently
+                    // rather than reporting it as a scan error.
+                }
+                catch (Exception e)
+                {
+                    scanEntries.Add(new ScanEntry()
+                    {
+                        Path = file,
+                        HasError = true,
+                        ErrorMesage = e.Message
+                    });
+                }
+            }
+        }
+
+
+        private ScanEntry HandleFile(string file, HashSet<string> ignoreFileSet)
+        {
+            var scanEntry = GetScanEntry(file);
+            try
+            {
+                var discPath = GetDiscPath(file);
+
+
+                var ignoreFiles = GetIgnoreFiles(scanEntry);
+
+                foreach (var ignoreFile in ignoreFiles)
+                {
+                    ignoreFileSet.Add(ignoreFile);
+                }
+
+                var gameId = GameDB.FindGameId(discPath);
+
+                if (gameId != null)
+                {
+                    var gameEntry = _gameDb.GetEntryByGameID(gameId);
+
+                    scanEntry.GameEntry = gameEntry;
+                }
+
+            }
+            catch (Exception e)
+            {
+                scanEntry.HasError = true;
+                scanEntry.ErrorMesage = e.Message;
             }
 
             return scanEntry;
@@ -437,54 +701,7 @@ namespace PSXPackagerGUI.Pages
 
                     var files = Directory.EnumerateFiles(_model.Settings.InputPath, pattern, searchOption);
 
-                    foreach (var file in files)
-                    {
-                        if (_token.IsCancellationRequested) break;
-
-                        if (ignoreFileSet.Contains(file))
-                        {
-                            continue;
-                        }
-
-                        try
-                        {
-                            var scanEntry = GetScanEntry(file);
-                            var discPath = GetDiscPath(file);
-                            var ignoreFiles = GetIgnoreFiles(scanEntry);
-
-                            foreach (var ignoreFile in ignoreFiles)
-                            {
-                                ignoreFileSet.Add(ignoreFile);
-                            }
-
-                            var gameId = GameDB.FindGameId(discPath);
-
-                            if (gameId != null)
-                            {
-                                var gameEntry = _gameDb.GetEntryByGameID(gameId);
-
-                                scanEntry.GameEntry = gameEntry;
-                            }
-
-                            scanEntries.Add(scanEntry);
-
-                        }
-                        catch (InvalidFileSystemException)
-                        {
-                            // Not a valid disc image (e.g. an incidental .bin/.img file that
-                            // matched the scan pattern but isn't a PS1 disc) - skip it silently
-                            // rather than reporting it as a scan error.
-                        }
-                        catch (Exception e)
-                        {
-                            scanEntries.Add(new ScanEntry()
-                            {
-                                Path = file,
-                                HasError = true,
-                                ErrorMesage = e.Message
-                            });
-                        }
-                    }
+                    HandleFiles(files, scanEntries, ignoreFileSet);
                 }
 
                 foreach (var batchEntry in scanEntries.OrderBy(d => d.GameEntry?.MainGameTitle))
@@ -496,10 +713,12 @@ namespace PSXPackagerGUI.Pages
                         {
                             _model.BatchEntries.Add(new BatchEntryModel()
                             {
-                                IsSelected = true,
+                                IsSelected = !batchEntry.HasError,
                                 RelativePath = relativePath,
+                                FullPath = batchEntry.Path,
                                 MainGameId = batchEntry.GameEntry?.MainGameID,
                                 GameId = batchEntry.GameEntry?.GameID,
+                                HasError = batchEntry.HasError,
                                 MaxProgress = 100,
                                 Progress = 0,
                                 Status = "Ready",

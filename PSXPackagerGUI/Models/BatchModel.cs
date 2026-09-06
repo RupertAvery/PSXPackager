@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Input;
+using PSXPackagerGUI.Common;
 
 namespace PSXPackagerGUI.Models
 {
@@ -22,6 +23,19 @@ namespace PSXPackagerGUI.Models
         private bool _generateResourceFolders;
         private bool _extractResources;
         private bool? _selectAll;
+        private bool _isM3U;
+        
+        private bool _canCreateCue;
+        private bool _canCreateM3U;
+        private bool _canDeleteCue;
+        private bool _canDeleteM3U;
+
+        private ICommand _createCue;
+        private ICommand _deleteCue;
+        private ICommand _deleteM3U;
+        private ICommand _createM3U;
+
+        private ObservableCollection<BatchEntryModel> _selectedItems;
 
         public BatchModel()
         {
@@ -29,6 +43,7 @@ namespace PSXPackagerGUI.Models
             {
                 new BatchEntryModel() { RelativePath = "Final Fantasy VII - Disc 1.bin", MaxProgress = 100, Progress = 50, Status = "Writing (50%)..."}
             };
+            _selectedItems = new ObservableCollection<BatchEntryModel>();
             PropertyChanged += OnPropertyChanged;
         }
 
@@ -99,6 +114,65 @@ namespace PSXPackagerGUI.Models
         {
             get => _processCommand;
             set => SetProperty(ref _processCommand, value);
+        }
+
+        public bool IsM3U
+        {
+            get => _isM3U;
+            set => SetProperty(ref _isM3U, value);
+        }
+
+        public ObservableCollection<BatchEntryModel> SelectedItems
+        {
+            get => _selectedItems;
+            set => SetProperty(ref _selectedItems, value);
+        }
+
+
+        public ICommand CreateM3U
+        {
+            get => _createM3U;
+            set => SetProperty(ref _createM3U, value);
+        }
+
+        public ICommand DeleteM3U
+        {
+            get => _deleteM3U;
+            set => SetProperty(ref _deleteM3U, value);
+        }
+
+        public bool CanCreateM3U
+        {
+            get => _canCreateM3U;
+            set => SetProperty(ref _canCreateM3U, value);
+        }
+
+        public bool CanDeleteM3U
+        {
+            get => _canDeleteM3U;
+            set => SetProperty(ref _canDeleteM3U, value);
+        }
+
+        public ICommand CreateCUE
+        {
+            get => _createCue;
+            set => SetProperty(ref _createCue, value);
+        }
+
+        public ICommand DeleteCUE
+        {
+            get => _deleteCue;
+            set => SetProperty(ref _deleteCue, value);
+        }
+        public bool CanCreateCUE
+        {
+            get => _canCreateCue;
+            set => SetProperty(ref _canCreateCue, value);
+        }
+        public bool CanDeleteCUE
+        {
+            get => _canDeleteCue;
+            set => SetProperty(ref _canDeleteCue, value);
         }
 
         public bool IsScanning

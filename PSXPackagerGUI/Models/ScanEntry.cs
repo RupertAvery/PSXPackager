@@ -11,5 +11,5 @@ public class ScanEntry
     public bool HasError { get; set; }
     public string ErrorMesage { get; set; }
     public List<string> Discs { get; set; }
-    public List<SubEntry> SubEntries { get; set; }
+    public List<SubEntry>? SubEntries { get; set; }
 }
