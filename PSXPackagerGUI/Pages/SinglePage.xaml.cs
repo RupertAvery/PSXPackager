@@ -43,6 +43,7 @@ namespace PSXPackagerGUI.Pages
         private readonly SettingsModel _settings;
         private readonly GameDB _gameDb;
         private readonly CDAudioPlayer _player;
+        private Timer _playTimer;
 
         private IEnumerable<Disc> DummyDisc(int start, int count)
         {
@@ -106,11 +107,19 @@ namespace PSXPackagerGUI.Pages
 
             timer = new Timer(Callback, null, new TimeSpan(0, 0, 1), new TimeSpan(0, 0, 1));
             Window.Closed += Window_Closed;
+            _playTimer = new Timer(PlayCallback, null, 250, 250);
+        }
 
+        private void PlayCallback(object? state)
+        {
+            _model.CurrentAudioPosition = (int)_player.CurrentTime.TotalSeconds;
+            _model.TotalAudioLength = (int)_player.TotalTime.TotalSeconds;
+            _model.CurrentAudioTime = _player.CurrentTime;
         }
 
         private void Window_Closed(object? sender, EventArgs e)
         {
+            _playTimer?.Dispose();
             timer?.Dispose();
         }
 
@@ -171,6 +180,9 @@ namespace PSXPackagerGUI.Pages
                     break;
                 case nameof(SingleModel.SaveTitle):
                     Model.SFOEntries.FirstOrDefault(d => d.Key == SFOKeys.TITLE).Value = Model.SaveTitle;
+                    break;
+                case nameof(SingleModel.Volume):
+                    _player.SetVolume(_model.Volume / 100);
                     break;
             }
         }
@@ -1377,6 +1389,8 @@ namespace PSXPackagerGUI.Pages
                 _model.SelectedTrack.Status = TrackStatus.Stopped;
                 _model.SelectedTrack.IsSelected = false;
             }
+
+            _model.CurrentTrack = track;
 
             switch (track.Status)
             {

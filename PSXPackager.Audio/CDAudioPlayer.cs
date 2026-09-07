@@ -14,6 +14,12 @@ namespace PSXPackager.Audio
     public class CDAudioPlayerStarted
     {
         public CueTrack Track { get; set; }
+        public int Total { get; set; }
+    }
+
+    public class CDAudioPlayerProgress
+    {
+        public int Current { get; set; }
     }
 
     public enum CDAudioPlayerStatus
@@ -21,6 +27,44 @@ namespace PSXPackager.Audio
         Stopped,
         Playing,
         Paused
+    }
+
+    public class ProgressTrackingStream : WaveStream
+    {
+        private readonly IWaveProvider sourceProvider;
+        private long totalBytesRead;
+
+        public ProgressTrackingStream(IWaveProvider sourceProvider)
+        {
+            this.sourceProvider = sourceProvider ?? throw new ArgumentNullException(nameof(sourceProvider));
+        }
+
+        public override WaveFormat WaveFormat => sourceProvider.WaveFormat;
+
+        // This property keeps track of exactly how much audio has been sent to the speaker
+        public override long Position
+        {
+            get => totalBytesRead;
+            set => throw new NotSupportedException("Seeking is not supported on a live buffered stream.");
+        }
+
+        // Since it's a live buffer, the total length is technically unknown or indefinite
+        public override long Length => 0;
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            int bytesRead = sourceProvider.Read(buffer, offset, count);
+            totalBytesRead += bytesRead;
+            return bytesRead;
+        }
+
+        // Helper helper to get the elapsed playback time safely
+        public TimeSpan CurrentTime => TimeSpan.FromSeconds((double)totalBytesRead / WaveFormat.AverageBytesPerSecond);
+
+        public void Reset()
+        {
+            totalBytesRead = 0;
+        }
     }
 
     public class CDAudioPlayer : IDisposable
@@ -31,6 +75,9 @@ namespace PSXPackager.Audio
 
         public event EventHandler<CDAudioPlayerStarted> Started;
         public event EventHandler<CDAudioPlayerStopped> Stopped;
+        public event EventHandler<CDAudioPlayerProgress> Progress;
+
+        private readonly ProgressTrackingStream _trackingStream;
 
         public CDAudioPlayer()
         {
@@ -41,11 +88,16 @@ namespace PSXPackager.Audio
                 DiscardOnBufferOverflow = false
             };
 
+            _trackingStream = new ProgressTrackingStream(_buffer);
+
             _waveOutEvent = new WaveOutEvent();
-            _waveOutEvent.Init(_buffer);
+            _waveOutEvent.Init(_trackingStream);
 
             _waveOutEvent.PlaybackStopped += WaveOutEventOnPlaybackStopped;
         }
+
+        public TimeSpan CurrentTime => _trackingStream.CurrentTime;
+        public TimeSpan TotalTime { get; private set; }
 
         private void WaveOutEventOnPlaybackStopped(object? sender, StoppedEventArgs e)
         {
@@ -55,6 +107,11 @@ namespace PSXPackager.Audio
             {
                 Stopped?.Invoke(this, new CDAudioPlayerStopped() { Exception = e.Exception });
             }
+        }
+
+        public void SetVolume(float volume)
+        {
+            _waveOutEvent.Volume = volume;
         }
 
         public void Pause()
@@ -89,7 +146,7 @@ namespace PSXPackager.Audio
             cts?.Cancel();
             resetEvent.WaitOne(100);
             cts = new CancellationTokenSource();
-            
+
             PlayCueTrack(track, cts.Token);
         }
 
@@ -126,6 +183,12 @@ namespace PSXPackager.Audio
 
                     byte[] sector = new byte[SectorSize];
                     int currentSector = startSector;
+
+                    var size = (endSector - startSector) * SectorSize;
+
+                    _trackingStream.Reset();
+
+                    TotalTime = TimeSpan.FromSeconds(size / _buffer.WaveFormat.AverageBytesPerSecond);
 
                     while (currentSector < endSector &&
                            source.Stream.Read(sector, 0, sector.Length) == sector.Length)
@@ -185,6 +248,7 @@ namespace PSXPackager.Audio
             {
                 Stop();
             }
+
             _buffer.ClearBuffer();
             _waveOutEvent.PlaybackStopped -= WaveOutEventOnPlaybackStopped;
             _waveOutEvent.Dispose();

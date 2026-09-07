@@ -1,4 +1,5 @@
-﻿using PSXPackagerGUI.Models.Resource;
+﻿using System;
+using PSXPackagerGUI.Models.Resource;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows.Media.Imaging;
@@ -31,6 +32,11 @@ namespace PSXPackagerGUI.Models
         private string _currentResourceName;
         private string _saveId;
         private string _saveTitle;
+        private Track _currentTrack;
+        private float _volume;
+        private int _totalSeconds;
+        private int _currentAudioPosition;
+        private TimeSpan _currentAudioTime;
 
         public SettingsModel Settings
         {
@@ -124,6 +130,36 @@ namespace PSXPackagerGUI.Models
         {
             get => _saveTitle;
             set => SetProperty(ref _saveTitle, value);
+        }
+
+        public Track CurrentTrack
+        {
+            get => _currentTrack;
+            set => SetProperty(ref _currentTrack, value);
+        }
+
+        public float Volume
+        {
+            get => _volume;
+            set => SetProperty(ref _volume, value);
+        }
+
+        public int TotalAudioLength
+        {
+            get => _totalSeconds;
+            set => SetProperty(ref _totalSeconds, value);
+        }
+
+        public int CurrentAudioPosition
+        {
+            get => _currentAudioPosition;
+            set => SetProperty(ref _currentAudioPosition, value);
+        }
+
+        public TimeSpan CurrentAudioTime
+        {
+            get => _currentAudioTime;
+            set => SetProperty(ref _currentAudioTime, value);
         }
     }
 }

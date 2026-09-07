@@ -49,10 +49,13 @@
                     <Label Grid.Row="1" Grid.Column="3">Max</Label>
                     <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="5" Margin="50,50,50,0" Width="500">
                         <TextBlock TextWrapping="Wrap">
-                            NOTE:<LineBreak/>
+                            <Bold>NOTE:</Bold>
                             <LineBreak/>
-                            Compression level 9 usually offers only slightly better compression (hundreds of Kbs to a few MBs smaller) compared to level 5 when it comes to single-disc games, 
-                            and can take a bit longer to compress. However, this may vary from game to game. Compression level usually has no dramatic noticeable effect on loading times on a PSP.
+                            <LineBreak/>
+                            Higher compression levels, especially level 9, may cause stuttering, audio crackling or crashes on the PSP due to its limited CPU power and memory.
+                            <LineBreak/>
+                            <LineBreak/>
+                            The recommended compression levels are 1-3. Beyond 5, the size reduction is minimal while the load on the CPU increases.
                         </TextBlock>
                     </Grid>
                 </Grid>

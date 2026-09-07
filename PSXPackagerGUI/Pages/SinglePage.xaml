@@ -142,7 +142,7 @@
                                         <LineBreak/>
                                     </TextBlock>
                                 </ScrollViewer>
-                               
+
                             </Grid>
                         </TabItem>
                         <TabItem Header="Tracks">
@@ -154,6 +154,7 @@
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="30"/>
                                     <RowDefinition Height="*"/>
+                                    <RowDefinition Height="38"/>
                                 </Grid.RowDefinitions>
                                 <Label Grid.Column="0">Track #</Label>
                                 <Label Grid.Column="1">Type</Label>
@@ -212,8 +213,22 @@
                                         </DataTemplate>
                                     </ListView.ItemTemplate>
                                 </ListView>
+                                <Grid Grid.Row="2" Grid.ColumnSpan="2" Margin="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition/>
+                                    </Grid.RowDefinitions>
+                                    <Grid Grid.Row="0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="50"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding CurrentAudioTime, StringFormat={}{0:hh\\:mm\\:ss}}" FontSize="12"></TextBlock>
+                                        <Slider Grid.Column="1"  Minimum="0" Maximum="{Binding TotalAudioLength}" Value="{Binding CurrentAudioPosition}" TickPlacement="None" TickFrequency="2" Orientation="Horizontal"></Slider>
+                                    </Grid>
+                                    <!--<Label Content="{Binding CurrentTrack.Number}" FontSize="20"></Label>
+                                    <Slider Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Minimum="0" Maximum="100" Value="{Binding Volume}" TickPlacement="None" TickFrequency="2" Orientation="Vertical"></Slider>-->
+                                </Grid>
                             </Grid>
-
                         </TabItem>
                     </TabControl>
                 </Grid>
