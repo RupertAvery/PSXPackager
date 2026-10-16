@@ -59,10 +59,17 @@ namespace Popstation
 
                     file = "";
 
+                    var pbpOrM3u = tempFiles.FirstOrDefault(f => FileExtensionHelper.IsPbp(f) || FileExtensionHelper.IsM3u(f));
+
                     if (tempFiles.Count(FileExtensionHelper.IsImageFile) == 0)
                     {
-                        _notifier?.Notify(PopstationEventEnum.Error, "No image files found!");
-                        return false;
+                        if (pbpOrM3u == null)
+                        {
+                            _notifier?.Notify(PopstationEventEnum.Error, "No image files found!");
+                            return false;
+                        }
+
+                        file = pbpOrM3u;
                     }
                     else if (tempFiles.Count(FileExtensionHelper.IsImageFile) == 1)
                     {
@@ -88,6 +95,19 @@ namespace Popstation
                         else
                         {
                             _notifier?.Notify(PopstationEventEnum.Warning, $"No cue sheet found!");
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        var cue = tempFiles.FirstOrDefault(FileExtensionHelper.IsCue);
+                        var m3u = tempFiles.FirstOrDefault(FileExtensionHelper.IsM3u);
+
+                        file = m3u ?? cue;
+
+                        if (file == null)
+                        {
+                            _notifier?.Notify(PopstationEventEnum.Error, "The archive contains several image files, but no .cue or .m3u to say how they fit together");
                             return false;
                         }
                     }
@@ -297,7 +317,7 @@ namespace Popstation
                 var binDirectory = Path.GetDirectoryName(binPath);
 
                 // If the bin path is relative, combine it with the base path
-                if (binDirectory == "" || binDirectory.StartsWith("..") || binDirectory.StartsWith("."))
+                if (binDirectory == "" || !Path.IsPathFullyQualified(binPath))
                 {
                     binPath = Path.Combine(basePath, cueFileEntry.FileName);
                 }

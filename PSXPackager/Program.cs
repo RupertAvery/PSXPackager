@@ -62,14 +62,16 @@ namespace PSXPackager
                      if (o.CompressionLevel < 0 || o.CompressionLevel > 9)
                      {
                          Console.WriteLine($"Invalid compression level, please enter a value from 0 to 9");
+                         result = Results.INVALID_INPUT;
                          return;
                      }
 
                      if (!string.IsNullOrEmpty(o.Discs))
                      {
-                         if (!Regex.IsMatch(o.Discs, "\\d(,\\d)*"))
+                         if (!Regex.IsMatch(o.Discs, "^[1-5](,[1-5])*$"))
                          {
                              Console.WriteLine($"Invalid discs specification, please enter a comma separated list of values from 1-5");
+                             result = Results.INVALID_INPUT;
                              return;
                          }
                      }
@@ -100,6 +102,7 @@ namespace PSXPackager
                      if (resourceOptionsCount > 1)
                      {
                          Console.WriteLine($"Invalid option, please select only one of extract, import, or generate");
+                         result = Results.INVALID_INPUT;
                          return;
                      }
 
