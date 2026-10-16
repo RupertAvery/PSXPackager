@@ -103,6 +103,14 @@ public class PbpDiscStream : Stream
         _blockIndex = (int)(_position / _buffer.Length);
         _bufPos = _bufLen = 0;
 
+        var offsetInBlock = (int)(_position % _buffer.Length);
+
+        if (offsetInBlock > 0 && _blockIndex < _pbpDiscEntry.IsoIndex.Count)
+        {
+            _bufLen = (int)_pbpDiscEntry.ReadBlock(_blockIndex++, _buffer);
+            _bufPos = Math.Min(offsetInBlock, _bufLen);
+        }
+
         return _position;
     }
 
