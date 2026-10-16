@@ -23,7 +23,7 @@ public static class CueExtensions
     /// <summary>
     /// Finds one of a track's indexes, or null if the track does not have it.
     /// </summary>
-    public static IndexPosition FindIndex(this CueTrack track, int number)
+    public static IndexPosition? FindIndex(this CueTrack track, int number)
     {
         return track.Indexes?.FirstOrDefault(index => index.Number == number)?.Position;
     }

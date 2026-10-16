@@ -87,8 +87,6 @@ namespace PSXPackager.Common
 
             CueTrack? lastTrack = null;
 
-            var audioLeadIn = new IndexPosition { Seconds = 2 };
-
             foreach (var track in tocEntries)
             {
                 var position = new IndexPosition
@@ -100,13 +98,18 @@ namespace PSXPackager.Common
 
                 var indexes = new List<CueIndex>();
 
-                if (track.TrackType == TrackTypeEnum.Audio)
+                if (track.TrackType == TrackTypeEnum.Audio && lastTrack != null)
                 {
-                    indexes.Add(new CueIndex()
+                    var audioLeadIn = new IndexPosition(0, 2, 0);
+
+                    if (position >= new IndexPosition(0, 2, 0))
                     {
-                        Number = 0,
-                        Position = position - audioLeadIn,
-                    });
+                        indexes.Add(new CueIndex()
+                        {
+                            Number = 0,
+                            Position = position - audioLeadIn,
+                        });
+                    }
                 }
 
                 indexes.Add(new CueIndex()

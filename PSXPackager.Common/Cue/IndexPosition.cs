@@ -1,9 +1,10 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 
 namespace PSXPackager.Common.Cue
 {
     [DebuggerDisplay("{Minutes}:{Seconds}:{Frames}")]
-    public partial class IndexPosition
+    public partial struct IndexPosition
     {
         public IndexPosition()
         {
@@ -24,6 +25,19 @@ namespace PSXPackager.Common.Cue
         public override string ToString()
         {
             return $"{Minutes:00}:{Seconds:00}:{Frames:00}";
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is IndexPosition position &&
+                   Minutes == position.Minutes &&
+                   Seconds == position.Seconds &&
+                   Frames == position.Frames;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Minutes, Seconds, Frames);
         }
     }
 }

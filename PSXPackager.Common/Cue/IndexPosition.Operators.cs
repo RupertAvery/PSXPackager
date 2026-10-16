@@ -1,6 +1,6 @@
 ﻿namespace PSXPackager.Common.Cue
 {
-    public partial class IndexPosition
+    public partial struct IndexPosition
     {
         public static IndexPosition operator +(IndexPosition positionA, IndexPosition positionB)
         {
@@ -134,6 +134,42 @@
                 Seconds = seconds,
                 Frames = frames,
             };
+        }
+
+        public static bool operator >(IndexPosition positionA, IndexPosition positionB)
+        {
+            return positionA.Minutes > positionB.Minutes ||
+                   (positionA.Minutes == positionB.Minutes && positionA.Seconds > positionB.Seconds) ||
+                   (positionA.Minutes == positionB.Minutes && positionA.Seconds == positionB.Seconds && positionA.Frames > positionB.Frames);
+        }
+
+        public static bool operator >=(IndexPosition positionA, IndexPosition positionB)
+        {
+            return positionA > positionB || positionA == positionB;
+        }
+
+        public static bool operator <(IndexPosition positionA, IndexPosition positionB)
+        {
+            return positionA.Minutes < positionB.Minutes ||
+                   (positionA.Minutes == positionB.Minutes && positionA.Seconds < positionB.Seconds) ||
+                   (positionA.Minutes == positionB.Minutes && positionA.Seconds == positionB.Seconds && positionA.Frames < positionB.Frames);
+        }
+
+        public static bool operator <=(IndexPosition positionA, IndexPosition positionB)
+        {
+            return positionA < positionB || positionA == positionB; 
+        }
+
+        public static bool operator ==(IndexPosition positionA, IndexPosition positionB)
+        {
+            return positionA.Minutes == positionB.Minutes &&
+                   positionA.Seconds == positionB.Seconds &&
+                   positionA.Frames == positionB.Frames;
+        }
+
+        public static bool operator !=(IndexPosition positionA, IndexPosition positionB)
+        {
+            return !(positionA == positionB);
         }
     }
 }
