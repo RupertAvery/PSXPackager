@@ -2,6 +2,7 @@
 using PSXPackagerGUI.Models.Resource;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using PSXPackager.Common.Cue;
 
