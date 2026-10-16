@@ -3,16 +3,18 @@ using PSXPackagerGUI.Models.Resource;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows.Media.Imaging;
+using PSXPackager.Common.Cue;
 
 namespace PSXPackagerGUI.Models
 {
+
     public class SingleModel : BaseNotifyModel
     {
         private ObservableCollection<Disc> _discs;
         private bool _isDirty;
         private double _progress;
         private double _maxProgress;
-        private Disc _selectedDisc;
+        private Disc? _selectedDisc;
         private ResourceModel _icon0;
         private ResourceModel _icon1;
         private ResourceModel _icon1Pmf;
@@ -37,6 +39,9 @@ namespace PSXPackagerGUI.Models
         private int _totalSeconds;
         private int _currentAudioPosition;
         private TimeSpan _currentAudioTime;
+        private ObservableCollection<FileSystemNode> _rootNodes;
+        private ICommand _extractCommand;
+        private bool _hasFileSystem;
 
         public SettingsModel Settings
         {
@@ -51,8 +56,17 @@ namespace PSXPackagerGUI.Models
             ShowIcon = true;
         }
 
-        public Disc SelectedDisc { get => _selectedDisc; set => SetProperty(ref _selectedDisc, value); }
-        public ObservableCollection<Disc> Discs { get => _discs; set => SetProperty(ref _discs, value); }
+        public Disc? SelectedDisc
+        {
+            get => _selectedDisc;
+            set => SetProperty(ref _selectedDisc, value);
+        }
+
+        public ObservableCollection<Disc> Discs
+        {
+            get => _discs;
+            set => SetProperty(ref _discs, value);
+        }
 
         public ObservableCollection<SFOEntry> SFOEntries
         {
@@ -66,20 +80,68 @@ namespace PSXPackagerGUI.Models
             set => SetProperty(ref _currentResource, value);
         }
 
-        public ResourceModel Icon0 { get => _icon0; set => SetProperty(ref _icon0, value); }
-        public ResourceModel Icon1 { get => _icon1; set => SetProperty(ref _icon1, value); }
-        public ResourceModel Pic0 { get => _pic0; set => SetProperty(ref _pic0, value); }
-        public ResourceModel Pic1 { get => _pic1; set => SetProperty(ref _pic1, value); }
-        public ResourceModel Snd0 { get => _snd0; set => SetProperty(ref _snd0, value); }
-        public ResourceModel Boot { get => _boot; set => SetProperty(ref _boot, value); }
+        public ResourceModel Icon0
+        {
+            get => _icon0;
+            set => SetProperty(ref _icon0, value);
+        }
+
+        public ResourceModel Icon1
+        {
+            get => _icon1;
+            set => SetProperty(ref _icon1, value);
+        }
+
+        public ResourceModel Pic0
+        {
+            get => _pic0;
+            set => SetProperty(ref _pic0, value);
+        }
+
+        public ResourceModel Pic1
+        {
+            get => _pic1;
+            set => SetProperty(ref _pic1, value);
+        }
+
+        public ResourceModel Snd0
+        {
+            get => _snd0;
+            set => SetProperty(ref _snd0, value);
+        }
+
+        public ResourceModel Boot
+        {
+            get => _boot;
+            set => SetProperty(ref _boot, value);
+        }
 
 
-        public string Status { get => _status; set => SetProperty(ref _status, value); }
-        public double Progress { get => _progress; set => SetProperty(ref _progress, value); }
-        public double MaxProgress { get => _maxProgress; set => SetProperty(ref _maxProgress, value); }
+        public string Status
+        {
+            get => _status;
+            set => SetProperty(ref _status, value);
+        }
+
+        public double Progress
+        {
+            get => _progress;
+            set => SetProperty(ref _progress, value);
+        }
+
+        public double MaxProgress
+        {
+            get => _maxProgress;
+            set => SetProperty(ref _maxProgress, value);
+        }
 
 
-        public bool IsDirty { get => _isDirty; set => SetProperty(ref _isDirty, value); }
+        public bool IsDirty
+        {
+            get => _isDirty;
+            set => SetProperty(ref _isDirty, value);
+        }
+
         public bool IsBusy { get; set; }
 
         public bool IsNew { get; set; }
@@ -161,5 +223,25 @@ namespace PSXPackagerGUI.Models
             get => _currentAudioTime;
             set => SetProperty(ref _currentAudioTime, value);
         }
+
+        public ObservableCollection<FileSystemNode> RootNodes
+        {
+            get => _rootNodes;
+            set => SetProperty(ref _rootNodes, value);
+        }
+
+        public bool HasFileSystem
+        {
+            get => _hasFileSystem;
+            set => SetProperty(ref _hasFileSystem, value);
+        }
+
+        public ICommand ExtractCommand
+        {
+            get => _extractCommand;
+            set => SetProperty(ref _extractCommand, value);
+        }
+
+        public CueTrack CurrentDataTrack { get; set; }
     }
 }

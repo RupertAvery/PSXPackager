@@ -1,4 +1,5 @@
 ﻿using DiscUtils;
+using DiscUtils.Iso9660;
 using DiscUtils.Raw;
 using Popstation;
 using Popstation.Database;
@@ -14,6 +15,7 @@ using PSXPackagerGUI.Common;
 using PSXPackagerGUI.Models;
 using PSXPackagerGUI.Models.Resource;
 using PSXPackagerGUI.Shaders;
+using SharpCompress.Common;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -26,12 +28,20 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Shapes;
+using Microsoft.Win32;
+using Path = System.IO.Path;
 using SFOEntry = PSXPackagerGUI.Models.SFOEntry;
+using Track = PSXPackagerGUI.Models.Track;
 
 namespace PSXPackagerGUI.Pages
 {
+
+
+
     /// <summary>
     /// Interaction logic for Single.xaml
     /// </summary>
@@ -93,7 +103,8 @@ namespace PSXPackagerGUI.Pages
                 IsDirty = false,
                 MaxProgress = 100,
                 Progress = 0,
-                Settings = _settings
+                Settings = _settings,
+                ExtractCommand = new RelayCommand((o) => Extract((FileSystemNode)o))
             };
 
             DataContext = Model;
@@ -108,6 +119,30 @@ namespace PSXPackagerGUI.Pages
             timer = new Timer(Callback, null, new TimeSpan(0, 0, 1), new TimeSpan(0, 0, 1));
             Window.Closed += Window_Closed;
             _playTimer = new Timer(PlayCallback, null, 250, 250);
+        }
+
+        private void Extract(FileSystemNode o)
+        {
+            var saveFileDialog = new SaveFileDialog();
+            saveFileDialog.FileName = o.Name;
+
+            var result = saveFileDialog.ShowDialog(Window);
+
+            if (result is true)
+            {
+
+                using var source = DiscSource.ForTrack(Model.CurrentDataTrack);
+
+                using var cdReader = new CDReader(source.Stream, false, DiscImage.RawSectorSize);
+
+                using var sourceStream = cdReader.OpenFile(o.Path, FileMode.Open);
+                // Skip the Sync Field (12 bytes) + Header (4 bytes) + Subheader (8 bytes)
+                sourceStream.Seek(24, SeekOrigin.Begin);
+
+                using var destinationStream = new FileStream(saveFileDialog.FileName, FileMode.Create, FileAccess.Write);
+                sourceStream.CopyTo(destinationStream);
+            }
+
         }
 
         private void PlayCallback(object? state)
@@ -183,6 +218,20 @@ namespace PSXPackagerGUI.Pages
                     break;
                 case nameof(SingleModel.Volume):
                     _player.SetVolume(_model.Volume / 100);
+                    break;
+                case nameof(SingleModel.SelectedDisc):
+                    Model.RootNodes = new ObservableCollection<FileSystemNode>();
+                    Model.HasFileSystem = false;
+
+                    if (Model.SelectedDisc is not null && !Model.SelectedDisc.IsEmpty)
+                    {
+                        var dataTrack = Model.SelectedDisc.Tracks.FirstOrDefault(d => d.DataType == "MODE2/2352");
+
+                        if (dataTrack is not null)
+                        {
+                            LoadFileSystem(dataTrack);
+                        }
+                    }
                     break;
             }
         }
@@ -1172,8 +1221,6 @@ namespace PSXPackagerGUI.Pages
                 disc.IsSaveAsEnabled = false;
                 disc.RemoveCommand = new RelayCommand((o) => Remove(disc));
 
-                _model.SelectedDisc = disc;
-
                 Model.IsDirty = true;
 
                 Model.Discs[discIndex] = disc;
@@ -1640,6 +1687,86 @@ namespace PSXPackagerGUI.Pages
                         Model.SaveTitle = (string)entry.Value;
                         break;
                 }
+            }
+        }
+
+
+
+
+        private void ReadFileSystemDirectory(CDReader cdReader, string path, ObservableCollection<FileSystemNode> targetCollection)
+        {
+            foreach (var dirPath in cdReader.GetDirectories(path))
+            {
+                try
+                {
+                    var filename = Path.GetRelativePath(path, dirPath);
+
+                    var node = new FileSystemNode() { Name = filename, Path = dirPath, Type = FileSystemNodeType.Directory };
+
+                    targetCollection.Add(node);
+
+                    ReadFileSystemDirectory(cdReader, dirPath, node.Children);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+            }
+
+            foreach (var file in cdReader.GetFiles(path))
+            {
+                try
+                {
+                    var filePath = file.Substring(0, file.LastIndexOf(";"));
+
+                    var filename = Path.GetRelativePath(path, filePath);
+
+                    targetCollection.Add(new FileSystemNode() { Name = filename, Path = filePath, Type = FileSystemNodeType.File });
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+            }
+
+        }
+
+        private void ViewFilesystem_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (((MenuItem)sender).DataContext is Track { DataType: "MODE2/2352" } track)
+            {
+                LoadFileSystem(track);
+                FileSystemTab.IsSelected = true;
+            }
+        }
+
+        private void LoadFileSystem(Track track)
+        {
+            Model.CurrentDataTrack = track.CueTrack;
+
+            Model.RootNodes = new ObservableCollection<FileSystemNode>();
+
+            using var source = DiscSource.ForTrack(Model.CurrentDataTrack);
+
+            using var cdReader = new CDReader(source.Stream, false, DiscImage.RawSectorSize);
+
+            ReadFileSystemDirectory(cdReader, "\\", Model.RootNodes);
+
+            Model.HasFileSystem = true;
+
+        }
+
+        private void TreeViewItem_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            // Ensure the sender is a TreeViewItem
+            if (sender is TreeViewItem treeViewItem)
+            {
+                // Select and focus the item
+                treeViewItem.IsSelected = true;
+                treeViewItem.Focus();
+
+                // Prevent the event from bubbling up and altering selection behavior further
+                e.Handled = true;
             }
         }
     }
