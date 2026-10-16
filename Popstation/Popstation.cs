@@ -63,12 +63,28 @@ namespace Popstation
                 finalDirectory.Create();
             }
 
+            if (!ContinueIfFileExists(convertInfo, outputPath))
+            {
+                return true;
+            }
+
+            // Removed again once the file has been written completely, so a cancelled
+            // or failed conversion does not leave a truncated PBP behind
+            TempFiles?.Add(outputPath);
+
             using (var outputStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.Write))
             {
                 writer.Write(outputStream, cancellationToken);
             }
 
-            return !cancellationToken.IsCancellationRequested;
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return false;
+            }
+
+            TempFiles?.Remove(outputPath);
+
+            return true;
         }
 
         public static string GetExtensionFromType(ResourceType type)

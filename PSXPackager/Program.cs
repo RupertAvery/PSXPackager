@@ -9,6 +9,7 @@ using System.Threading;
 using Popstation;
 using Popstation.Database;
 using PSXPackager.Common;
+using PSXPackager.Common.Cue;
 
 namespace PSXPackager
 {
@@ -188,12 +189,18 @@ namespace PSXPackager
                 ".bin", ".cue", ".img", ".chd", ".pbp"
             };
 
-            if (string.IsNullOrEmpty(filterExpression))
+            // With the default filter, a bin/img that a cue sheet refers to is part of that
+            // cue's disc and must not be converted again on its own
+            var useDefaultFilter = string.IsNullOrEmpty(filterExpression);
+
+            if (useDefaultFilter)
             {
                 filterExpression = string.Join(";", supportedFiles);
             }
 
             var filters = filterExpression.Split(new char[] { ';', '|' });
+
+            var found = new List<string>();
 
             foreach (var filter in filters)
             {
@@ -204,27 +211,56 @@ namespace PSXPackager
                     tempFilter = $"*{filter}";
                 }
 
-                var files = Directory.GetFiles(path, tempFilter);
-
-                foreach (var file in files)
+                foreach (var file in Directory.GetFiles(path, tempFilter))
                 {
-                    if (supportedFiles.Contains(Path.GetExtension(file).ToLower()))
-                        yield return file;
+                    if (supportedFiles.Contains(Path.GetExtension(file).ToLower())
+                        && !found.Contains(file, StringComparer.OrdinalIgnoreCase))
+                    {
+                        found.Add(file);
+                    }
+                }
+            }
+
+            var referenced = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            if (useDefaultFilter)
+            {
+                foreach (var cue in found.Where(FileExtensionHelper.IsCue))
+                {
+                    try
+                    {
+                        var cueFile = CueFileReader.Read(cue);
+                        var cueDirectory = Path.GetDirectoryName(Path.GetFullPath(cue));
+
+                        foreach (var entry in cueFile.FileEntries)
+                        {
+                            referenced.Add(Path.GetFullPath(entry.FileName, cueDirectory));
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // An unreadable cue is reported when it is converted
+                    }
+                }
+            }
+
+            foreach (var file in found)
+            {
+                if (referenced.Contains(Path.GetFullPath(file)) && !FileExtensionHelper.IsCue(file))
+                {
+                    continue;
                 }
 
-                if (recursive)
+                yield return file;
+            }
+
+            if (recursive)
+            {
+                foreach (var dir in Directory.GetDirectories(path))
                 {
-                    var dirs = Directory.GetDirectories(path);
-                    foreach (var dir in dirs)
+                    foreach (var file in GetFilesFromDirectory(dir, useDefaultFilter ? null : filterExpression, recursive))
                     {
-                        if (dir != "." && dir != "..")
-                        {
-                            foreach (var file in GetFilesFromDirectory(dir, filterExpression, recursive))
-                            {
-                                if (supportedFiles.Contains(Path.GetExtension(file).ToLower()))
-                                    yield return file;
-                            }
-                        }
+                        yield return file;
                     }
                 }
             }
@@ -274,6 +310,7 @@ namespace PSXPackager
 
                 var i = 1;
                 var processed = 0;
+                var failed = 0;
 
                 try
                 {
@@ -282,6 +319,7 @@ namespace PSXPackager
                         if (!File.Exists(file))
                         {
                             notifier.Notify(PopstationEventEnum.Error, $"Could not find file '{file}'");
+                            failed++;
                             continue;
                         }
 
@@ -299,6 +337,7 @@ namespace PSXPackager
                         }
 
                         processed += processResult ? 1 : 0;
+                        failed += processResult ? 0 : 1;
 
                         i++;
                     }
@@ -306,7 +345,12 @@ namespace PSXPackager
                 }
                 finally
                 {
-                    notifier.Notify(PopstationEventEnum.Info, $"{i - 1} files processed");
+                    notifier.Notify(PopstationEventEnum.Info, $"{processed} of {options.Files.Count} files processed");
+                }
+
+                if (result == Results.OK && failed > 0)
+                {
+                    result = Results.ERROR;
                 }
 
             }
