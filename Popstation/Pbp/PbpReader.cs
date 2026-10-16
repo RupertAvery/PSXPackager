@@ -214,25 +214,25 @@ namespace Popstation.Pbp
                 stream.ReadInteger();
 
                 var a = stream.ReadUInteger();
-                if (a != 0x2CC9C5BC)
-                {
-                    throw new Exception("Invalid header");
-                }
+                //if (a != 0x2CC9C5BC)
+                //{
+                //    throw new Exception("Invalid header");
+                //}
                 var b = stream.ReadUInteger();
-                if (b != 0x33B5A90F)
-                {
-                    throw new Exception("Invalid header");
-                }
+                //if (b != 0x33B5A90F)
+                //{
+                //    throw new Exception("Invalid header");
+                //}
                 var c = stream.ReadUInteger();
-                if (c != 0x06F6B4B3)
-                {
-                    throw new Exception("Invalid header");
-                }
+                //if (c != 0x06F6B4B3)
+                //{
+                //    throw new Exception("Invalid header");
+                //}
                 var d = stream.ReadUInteger();
-                if (d != 0xB25945BA)
-                {
-                    throw new Exception("Invalid header");
-                }
+                //if (d != 0xB25945BA)
+                //{
+                //    throw new Exception("Invalid header");
+                //}
 
                 //stream.WriteInteger(0x2CC9C5BC, 1);
                 //stream.WriteInteger(0x33B5A90F, 1);
