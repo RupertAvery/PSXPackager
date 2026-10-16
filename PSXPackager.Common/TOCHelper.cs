@@ -96,6 +96,14 @@ namespace PSXPackager.Common
                     Frames = track.Frames,
                 };
 
+                // Force the first DATA track to 00:00:00
+                if (track is { TrackType: TrackTypeEnum.Data, TrackNo: 1 } && lastTrack == null)
+                {
+                    position.Minutes = 0;
+                    position.Seconds = 0;
+                    position.Frames = 0;
+                }
+
                 var indexes = new List<CueIndex>();
 
                 if (track.TrackType == TrackTypeEnum.Audio && lastTrack != null)
