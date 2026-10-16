@@ -133,11 +133,9 @@ namespace PSXPackagerGUI.Pages
 
                 using var source = DiscSource.ForTrack(Model.CurrentDataTrack);
 
-                using var cdReader = new CDReader(source.Stream, false, DiscImage.RawSectorSize);
+                using var cdReader = new CDReader(source.Stream, false, DiscImage.RawSectorSize, true);
 
                 using var sourceStream = cdReader.OpenFile(o.Path, FileMode.Open);
-                // Skip the Sync Field (12 bytes) + Header (4 bytes) + Subheader (8 bytes)
-                sourceStream.Seek(24, SeekOrigin.Begin);
 
                 using var destinationStream = new FileStream(saveFileDialog.FileName, FileMode.Create, FileAccess.Write);
                 sourceStream.CopyTo(destinationStream);
@@ -1697,36 +1695,22 @@ namespace PSXPackagerGUI.Pages
         {
             foreach (var dirPath in cdReader.GetDirectories(path))
             {
-                try
-                {
-                    var filename = Path.GetRelativePath(path, dirPath);
+                var filename = Path.GetRelativePath(path, dirPath);
 
-                    var node = new FileSystemNode() { Name = filename, Path = dirPath, Type = FileSystemNodeType.Directory };
+                var node = new FileSystemNode() { Name = filename, Path = dirPath, Type = FileSystemNodeType.Directory };
 
-                    targetCollection.Add(node);
+                targetCollection.Add(node);
 
-                    ReadFileSystemDirectory(cdReader, dirPath, node.Children);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                }
+                ReadFileSystemDirectory(cdReader, dirPath, node.Children);
             }
 
             foreach (var file in cdReader.GetFiles(path))
             {
-                try
-                {
-                    var filePath = file.Substring(0, file.LastIndexOf(";"));
+                var filePath = file.Substring(0, file.LastIndexOf(";"));
 
-                    var filename = Path.GetRelativePath(path, filePath);
+                var filename = Path.GetRelativePath(path, filePath);
 
-                    targetCollection.Add(new FileSystemNode() { Name = filename, Path = filePath, Type = FileSystemNodeType.File });
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                }
+                targetCollection.Add(new FileSystemNode() { Name = filename, Path = filePath, Type = FileSystemNodeType.File });
             }
 
         }
@@ -1748,7 +1732,7 @@ namespace PSXPackagerGUI.Pages
 
             using var source = DiscSource.ForTrack(Model.CurrentDataTrack);
 
-            using var cdReader = new CDReader(source.Stream, false, DiscImage.RawSectorSize);
+            using var cdReader = new CDReader(source.Stream, false, DiscImage.RawSectorSize, true);
 
             ReadFileSystemDirectory(cdReader, "\\", Model.RootNodes);
 

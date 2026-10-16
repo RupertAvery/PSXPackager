@@ -1,10 +1,7 @@
 ﻿using DiscUtils.Iso9660;
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using PSXPackager.Common.Iso;
 
@@ -110,7 +107,7 @@ namespace Popstation.Database
             // A cooked .iso is expanded to raw sectors on the fly, so the reader always sees 2352
             using (var stream = DiscImage.OpenRead(srcIso))
             {
-                var cdReader = new CDReader(stream, false, DiscImage.RawSectorSize);
+                var cdReader = new CDReader(stream, false, DiscImage.RawSectorSize, true);
 
                 // Why doesn't a root file check not work?
                 //foreach (var file in cdReader.GetFiles("\\"))
@@ -132,7 +129,6 @@ namespace Popstation.Database
 
                     using (var datastream = cdReader.OpenFile(file, FileMode.Open))
                     {
-                        datastream.Seek(24, SeekOrigin.Begin);
                         var textReader = new StreamReader(datastream);
                         var bootLine = textReader.ReadLine();
                         var bootmatch = bootRegex.Match(bootLine);

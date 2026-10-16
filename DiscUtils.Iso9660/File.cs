@@ -111,7 +111,8 @@ namespace DiscUtils.Iso9660
             get
             {
                 ExtentStream es = new ExtentStream(_context.DataStream, _dirEntry.Record.LocationOfExtent,
-                    _dirEntry.Record.DataLength, _dirEntry.Record.FileUnitSize, _dirEntry.Record.InterleaveGapSize, _context.SectorSize);
+                    _dirEntry.Record.DataLength, _dirEntry.Record.FileUnitSize, _dirEntry.Record.InterleaveGapSize, _context.SectorSize,
+                    _context.FixMultiSectorDirectories);
                 return new StreamBuffer(es, Ownership.Dispose);
             }
         }

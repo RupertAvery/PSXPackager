@@ -71,6 +71,16 @@ namespace DiscUtils.Iso9660
             : base(new VfsCDReader(data, joliet, hideVersions, sectorSize)) { }
 
         /// <summary>
+        /// Initializes a new instance of the CDReader class.
+        /// </summary>
+        /// <param name="data">The stream to read the ISO image from.</param>
+        /// <param name="joliet">Whether to read Joliet extensions.</param>
+        /// <param name="sectorSize">The size of a sector</param>
+        /// <param name="fixMultiSectorDirectories">Reads directories spanning several raw sectors correctly. Off by default.</param>
+        public CDReader(Stream data, bool joliet, int sectorSize, bool fixMultiSectorDirectories)
+            : base(new VfsCDReader(data, joliet, false, sectorSize, fixMultiSectorDirectories)) { }
+
+        /// <summary>
         /// Gets which of the Iso9660 variants is being used.
         /// </summary>
         public Iso9660Variant ActiveVariant

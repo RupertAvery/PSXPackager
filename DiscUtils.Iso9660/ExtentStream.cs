@@ -36,10 +36,15 @@ namespace DiscUtils.Iso9660
 
         private readonly uint _startBlock;
         private readonly int _sectorSize;
+        private readonly bool _userDataOnly;
+
+        private const int UserDataSize = 2048;
+        private const int RawHeaderSize = 24;
 
         public ExtentStream(Stream isoStream, uint startBlock, uint dataLength, byte fileUnitSize,
-                            byte interleaveGapSize, int sectorSize)
+                            byte interleaveGapSize, int sectorSize, bool userDataOnly = false)
         {
+            _userDataOnly = userDataOnly;
             _isoStream = isoStream;
             _startBlock = startBlock;
             _dataLength = dataLength;
@@ -89,6 +94,33 @@ namespace DiscUtils.Iso9660
             }
 
             int toRead = (int)Math.Min((uint)count, _dataLength - _position);
+
+            if (_userDataOnly)
+            {
+                // Raw sectors: skip the sync/header/subheader and read 2048 bytes of user data per sector
+                int total = 0;
+
+                while (toRead > 0)
+                {
+                    long sector = _position / UserDataSize;
+                    int inSector = (int)(_position % UserDataSize);
+                    int chunk = Math.Min(toRead, UserDataSize - inSector);
+
+                    _isoStream.Position = (_startBlock + sector) * _sectorSize + RawHeaderSize + inSector;
+                    int n = _isoStream.Read(buffer, offset + total, chunk);
+
+                    if (n <= 0)
+                    {
+                        break;
+                    }
+
+                    total += n;
+                    toRead -= n;
+                    _position += n;
+                }
+
+                return total;
+            }
 
             _isoStream.Position = _position + _startBlock * (long)_sectorSize;
             int numRead = _isoStream.Read(buffer, offset, toRead);

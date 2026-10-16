@@ -41,6 +41,7 @@ namespace DiscUtils.Iso9660
         private readonly Stream _data;
         private readonly bool _hideVersions;
         protected readonly int _sectorSize;
+        private readonly bool _fixMultiSectorDirectories;
 
         /// <summary>
         /// Initializes a new instance of the VfsCDReader class.
@@ -48,8 +49,8 @@ namespace DiscUtils.Iso9660
         /// <param name="data">The stream to read the ISO image from.</param>
         /// <param name="joliet">Whether to read Joliet extensions.</param>
         /// <param name="hideVersions">Hides version numbers (e.g. ";1") from the end of files.</param>
-        public VfsCDReader(Stream data, bool joliet, bool hideVersions, int sectorSize)
-            : this(data, joliet ? DefaultVariantsWithJoliet : DefaultVariantsNoJoliet, hideVersions, sectorSize) {
+        public VfsCDReader(Stream data, bool joliet, bool hideVersions, int sectorSize, bool fixMultiSectorDirectories = false)
+            : this(data, joliet ? DefaultVariantsWithJoliet : DefaultVariantsNoJoliet, hideVersions, sectorSize, fixMultiSectorDirectories) {
         }
 
         /// <summary>
@@ -70,10 +71,11 @@ namespace DiscUtils.Iso9660
         /// <para>The Iso9660 variant should normally be specified as the final entry in the list.  Placing it earlier
         /// in the list will effectively mask later items and not including it may prevent some ISOs from being read.</para>
         /// </remarks>
-        public VfsCDReader(Stream data, Iso9660Variant[] variantPriorities, bool hideVersions, int sectorSize)
+        public VfsCDReader(Stream data, Iso9660Variant[] variantPriorities, bool hideVersions, int sectorSize, bool fixMultiSectorDirectories = false)
             : base(new DiscFileSystemOptions())
         {
             _data = data;
+            _fixMultiSectorDirectories = fixMultiSectorDirectories;
             _sectorSize = sectorSize;
             _hideVersions = hideVersions;
 
@@ -143,7 +145,7 @@ namespace DiscUtils.Iso9660
                             data.Read(buffer, 0, _sectorSize);
                             SupplementaryVolumeDescriptor volDesc = new SupplementaryVolumeDescriptor(buffer, 0);
 
-                            Context = new IsoContext(_sectorSize) { VolumeDescriptor = volDesc, DataStream = _data };
+                            Context = new IsoContext(_sectorSize) { VolumeDescriptor = volDesc, DataStream = _data, FixMultiSectorDirectories = _fixMultiSectorDirectories };
                             RootDirectory = new ReaderDirectory(Context,
                                 new ReaderDirEntry(Context, volDesc.RootDirectory));
                             ActiveVariant = Iso9660Variant.Iso9660;
@@ -161,7 +163,7 @@ namespace DiscUtils.Iso9660
 
                             volDesc.LogicalBlockSize = 2352;
 
-                            IsoContext context = new IsoContext(_sectorSize) { VolumeDescriptor = volDesc, DataStream = _data };
+                            IsoContext context = new IsoContext(_sectorSize) { VolumeDescriptor = volDesc, DataStream = _data, FixMultiSectorDirectories = _fixMultiSectorDirectories };
                             DirectoryRecord rootSelfRecord = ReadRootSelfRecord(context);
 
                             InitializeSusp(context, rootSelfRecord);

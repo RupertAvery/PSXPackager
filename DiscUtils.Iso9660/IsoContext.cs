@@ -41,6 +41,8 @@ namespace DiscUtils.Iso9660
 
         public int SectorSize { get; set; }
 
+        public bool FixMultiSectorDirectories { get; set; }
+
         public List<SuspExtension> SuspExtensions { get; set; }
 
         public int SuspSkipBytes { get; set; }

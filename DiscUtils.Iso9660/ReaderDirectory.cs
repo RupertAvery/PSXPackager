@@ -44,11 +44,25 @@ namespace DiscUtils.Iso9660
 
             uint totalLength = dirEntry.Record.DataLength;
             uint totalRead = 0;
+            long sectorIndex = 0;
             while (totalRead < totalLength)
             {
-                int bytesRead = (int)Math.Min(buffer.Length, totalLength - totalRead);
+                int bytesRead;
 
-                extent.Seek(24, SeekOrigin.Current);
+                if (context.FixMultiSectorDirectories)
+                {
+                    // Each raw sector holds 2048 bytes of user data after a 24-byte sync/header/subheader
+                    bytesRead = (int)Math.Min(2048, totalLength - totalRead);
+
+                    extent.Position = sectorIndex * context.SectorSize + 24;
+                    sectorIndex++;
+                }
+                else
+                {
+                    bytesRead = (int)Math.Min(buffer.Length, totalLength - totalRead);
+
+                    extent.Seek(24, SeekOrigin.Current);
+                }
 
                 StreamUtilities.ReadExact(extent, buffer, 0, bytesRead);
                 totalRead += (uint)bytesRead;
