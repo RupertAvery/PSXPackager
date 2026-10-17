@@ -1,19 +1,18 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using System.Reflection.Metadata;
 using System.Text.RegularExpressions;
 
 namespace PSXPackager.Common.Cue
 {
     public static class FileTypes
     {
-        public static string BINARY = "BINARY";
+        public const string BINARY = "BINARY";
     }
 
     public static class DataTypes
     {
-        public static string DATA = "MODE2/2352";
-        public static string AUDIO = "AUDIO";
+        public const string DATA = "MODE2/2352";
+        public const string AUDIO = "AUDIO";
     }
 
     public class CueFileReader

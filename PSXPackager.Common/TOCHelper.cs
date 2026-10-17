@@ -6,12 +6,6 @@ using PSXPackager.Common.Cue;
 
 namespace PSXPackager.Common
 {
-    public static class CueTrackType
-    {
-        public const string Data = "MODE2/2352";
-        public const string Audio = "AUDIO";
-    }
-
     public static class TOCHelper
     {
         public static string GetDataType(TrackTypeEnum trackType)
@@ -19,9 +13,9 @@ namespace PSXPackager.Common
             switch (trackType)
             {
                 case TrackTypeEnum.Data:
-                    return CueTrackType.Data;
+                    return DataTypes.DATA;
                 case TrackTypeEnum.Audio:
-                    return CueTrackType.Audio;
+                    return DataTypes.AUDIO;
             }
             throw new ArgumentOutOfRangeException();
         }
@@ -31,9 +25,9 @@ namespace PSXPackager.Common
         {
             switch (dataType)
             {
-                case CueTrackType.Data:
+                case DataTypes.DATA:
                     return TrackTypeEnum.Data;
-                case CueTrackType.Audio:
+                case DataTypes.AUDIO:
                     return TrackTypeEnum.Audio;
             }
             throw new ArgumentOutOfRangeException();

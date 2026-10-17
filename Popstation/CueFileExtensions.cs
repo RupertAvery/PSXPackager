@@ -17,12 +17,12 @@ namespace Popstation
                 {
                     new CueFileEntry()
                     {
-                        FileType = "BINARY",
+                        FileType = FileTypes.BINARY,
                         Tracks = new List<CueTrack>()
                         {
                             new CueTrack()
                             {
-                                DataType = CueTrackType.Data,
+                                DataType = DataTypes.DATA,
                                 Number = 1,
                                 Indexes = new List<CueIndex>()
                                 {

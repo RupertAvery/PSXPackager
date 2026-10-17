@@ -32,14 +32,14 @@ namespace PSXPackager.Common.Cue
                 cueFile.FileEntries.Add(new CueFileEntry()
                 {
                     FileName = fileName,
-                    FileType = "BINARY",
+                    FileType = FileTypes.BINARY,
                     Tracks = index == 1
                         ?
                         [
                             // Data track 
                             new CueTrack()
                             {
-                                DataType = CueTrackType.Data,
+                                DataType = DataTypes.DATA,
                                 Number = index,
                                 Indexes = new List<CueIndex>()
                                 {
@@ -53,7 +53,7 @@ namespace PSXPackager.Common.Cue
                             // Audio track
                             new CueTrack()
                             {
-                                DataType = CueTrackType.Audio,
+                                DataType = DataTypes.AUDIO,
                                 Number = index,
                                 Indexes = new List<CueIndex>()
                                 {

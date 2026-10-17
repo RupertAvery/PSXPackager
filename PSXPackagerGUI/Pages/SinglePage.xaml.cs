@@ -223,7 +223,7 @@ namespace PSXPackagerGUI.Pages
 
                     if (Model.SelectedDisc is not null && !Model.SelectedDisc.IsEmpty)
                     {
-                        var dataTrack = Model.SelectedDisc.Tracks.FirstOrDefault(d => d.DataType == "MODE2/2352");
+                        var dataTrack = Model.SelectedDisc.Tracks.FirstOrDefault(d => d.DataType == DataTypes.DATA);
 
                         if (dataTrack is not null)
                         {
@@ -1408,7 +1408,7 @@ namespace PSXPackagerGUI.Pages
 
         private void Track_OnMouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            if (((ListViewItem)sender).DataContext is Track { DataType: "AUDIO" } track)
+            if (((ListViewItem)sender).DataContext is Track { DataType: DataTypes.AUDIO } track)
             {
                 Play(track);
 
@@ -1418,7 +1418,7 @@ namespace PSXPackagerGUI.Pages
 
         private void PlayControls_OnMouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (((Image)sender).DataContext is Track { DataType: "AUDIO" } track)
+            if (((Image)sender).DataContext is Track { DataType: DataTypes.AUDIO } track)
             {
                 Play(track);
 
@@ -1486,7 +1486,7 @@ namespace PSXPackagerGUI.Pages
 
         private void SaveTrack(object sender, CDAudioFormat format)
         {
-            if (((MenuItem)sender).DataContext is not Track { DataType: "AUDIO" } track) return;
+            if (((MenuItem)sender).DataContext is not Track { DataType: DataTypes.AUDIO } track) return;
 
             var extension = CDAudioExtractor.GetExtension(format);
 
@@ -1717,7 +1717,7 @@ namespace PSXPackagerGUI.Pages
 
         private void ViewFilesystem_OnClick(object sender, RoutedEventArgs e)
         {
-            if (((MenuItem)sender).DataContext is Track { DataType: "MODE2/2352" } track)
+            if (((MenuItem)sender).DataContext is Track { DataType: DataTypes.DATA } track)
             {
                 LoadFileSystem(track);
                 FileSystemTab.IsSelected = true;

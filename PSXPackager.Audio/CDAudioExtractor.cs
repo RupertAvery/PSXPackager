@@ -76,7 +76,7 @@ namespace PSXPackager.Audio
         {
             if (track == null) throw new ArgumentNullException(nameof(track));
 
-            if (!string.Equals(track.DataType, "AUDIO", StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(track.DataType, DataTypes.AUDIO, StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException($"Track {track.Number} is not an audio track");
             }

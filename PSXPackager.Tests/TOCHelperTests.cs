@@ -11,11 +11,11 @@ namespace UnitTestProject
         [TestMethod]
         public void GetDataTypeAndGetTrackTypeRoundTrip()
         {
-            Assert.AreEqual(CueTrackType.Data, TOCHelper.GetDataType(TrackTypeEnum.Data));
-            Assert.AreEqual(CueTrackType.Audio, TOCHelper.GetDataType(TrackTypeEnum.Audio));
+            Assert.AreEqual(DataTypes.DATA, TOCHelper.GetDataType(TrackTypeEnum.Data));
+            Assert.AreEqual(DataTypes.AUDIO, TOCHelper.GetDataType(TrackTypeEnum.Audio));
 
-            Assert.AreEqual(TrackTypeEnum.Data, TOCHelper.GetTrackType(CueTrackType.Data));
-            Assert.AreEqual(TrackTypeEnum.Audio, TOCHelper.GetTrackType(CueTrackType.Audio));
+            Assert.AreEqual(TrackTypeEnum.Data, TOCHelper.GetTrackType(DataTypes.DATA));
+            Assert.AreEqual(TrackTypeEnum.Audio, TOCHelper.GetTrackType(DataTypes.AUDIO));
         }
 
         [TestMethod]
@@ -115,7 +115,7 @@ namespace UnitTestProject
             var track = cueFile.FileEntries[0].Tracks[0];
 
             Assert.AreEqual(1, track.Number);
-            Assert.AreEqual(CueTrackType.Data, track.DataType);
+            Assert.AreEqual(DataTypes.DATA, track.DataType);
             Assert.AreEqual(1, track.Indexes.Count);
             Assert.AreEqual(1, track.Indexes[0].Number);
             Assert.AreEqual(0, track.Indexes[0].Position.Minutes);

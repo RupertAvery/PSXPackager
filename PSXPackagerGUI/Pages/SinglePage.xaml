@@ -9,6 +9,7 @@
       xmlns:models="clr-namespace:PSXPackagerGUI.Models"
       xmlns:shaders="clr-namespace:PSXPackagerGUI.Shaders"
       xmlns:resources="clr-namespace:PSXPackagerGUI.Models.Resource"
+      xmlns:cue="clr-namespace:PSXPackager.Common.Cue;assembly=PSXPackager.Common"
       mc:Ignorable="d" 
       d:DataContext="{d:DesignInstance models:SingleModelDesignTime, IsDesignTimeCreatable=True}"
       d:DesignHeight="450" d:DesignWidth="800"
@@ -171,10 +172,10 @@
                                                 <Trigger Property="IsMouseOver" Value="True">
                                                     <Setter Property="Tag" Value="Hovered"/>
                                                 </Trigger>
-                                                <DataTrigger Binding="{Binding DataType}" Value="MODE2/2352">
+                                                <DataTrigger Binding="{Binding DataType}" Value="{x:Static cue:DataTypes.DATA}">
                                                     <Setter Property="ContextMenu" Value="{StaticResource DataTrackContextMenu}"/>
                                                 </DataTrigger>
-                                                <DataTrigger Binding="{Binding DataType}" Value="AUDIO">
+                                                <DataTrigger Binding="{Binding DataType}" Value="{x:Static cue:DataTypes.AUDIO}">
                                                     <Setter Property="ContextMenu" Value="{StaticResource AudioTrackContextMenu}"/>
                                                 </DataTrigger>
                                             </Style.Triggers>

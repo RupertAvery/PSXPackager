@@ -52,7 +52,7 @@ var tracks = cue.FileEntries.SelectMany(d => d.Tracks).ToList();
 //    current.Next = i + 1 < current.ParentEntry.Tracks.Count ? current.ParentEntry.Tracks[i + 1] : null;
 //}
 
-var track = tracks.Where(d => d.DataType == "AUDIO" && d.Number == 6).First();
+var track = tracks.First(d => d.DataType == DataTypes.AUDIO && d.Number == 6);
 
 var cdPlayer = new CDAudioPlayer();
 
