@@ -73,8 +73,14 @@ namespace UnitTestProject
         [TestMethod]
         public void WritesAnMp3()
         {
-            var path = Path.Combine(_directory, "track.mp3");
+            // NAudio.Lame only bundles Windows native libraries
+            if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+            {
+                Assert.Inconclusive("MP3 encoding requires the Windows LAME library.");
+            }
 
+            var path = Path.Combine(_directory, "track.mp3");
+            
             CDAudioExtractor.Extract(AudioTrack(), path, CDAudioFormat.Mp3);
 
             var written = File.ReadAllBytes(path);
