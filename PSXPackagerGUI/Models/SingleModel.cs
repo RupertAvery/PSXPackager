@@ -37,9 +37,8 @@ namespace PSXPackagerGUI.Models
         private string _saveTitle;
         private Track _currentTrack;
         private float _volume;
-        private int _totalSeconds;
-        private int _currentAudioPosition;
-        private TimeSpan _currentAudioTime;
+        private long _totalSeconds;
+        private long _currentAudioPosition;
         private ObservableCollection<FileSystemNode> _rootNodes;
         private ICommand _extractCommand;
         private bool _hasFileSystem;
@@ -207,22 +206,16 @@ namespace PSXPackagerGUI.Models
             set => SetProperty(ref _volume, value);
         }
 
-        public int TotalAudioLength
+        public long TotalAudioLength
         {
             get => _totalSeconds;
             set => SetProperty(ref _totalSeconds, value);
         }
 
-        public int CurrentAudioPosition
+        public long CurrentAudioPosition
         {
             get => _currentAudioPosition;
             set => SetProperty(ref _currentAudioPosition, value);
-        }
-
-        public TimeSpan CurrentAudioTime
-        {
-            get => _currentAudioTime;
-            set => SetProperty(ref _currentAudioTime, value);
         }
 
         public ObservableCollection<FileSystemNode> RootNodes

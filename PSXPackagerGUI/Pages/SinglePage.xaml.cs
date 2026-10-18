@@ -53,7 +53,7 @@ namespace PSXPackagerGUI.Pages
         private readonly SettingsModel _settings;
         private readonly GameDB _gameDb;
         private readonly CDAudioPlayer _player;
-        private Timer _playTimer;
+        private System.Windows.Threading.DispatcherTimer _playTimer;
 
         private IEnumerable<Disc> DummyDisc(int start, int count)
         {
@@ -118,7 +118,12 @@ namespace PSXPackagerGUI.Pages
 
             timer = new Timer(Callback, null, new TimeSpan(0, 0, 1), new TimeSpan(0, 0, 1));
             Window.Closed += Window_Closed;
-            _playTimer = new Timer(PlayCallback, null, 250, 250);
+            _playTimer = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Render)
+            {
+                Interval = TimeSpan.FromMilliseconds(33)
+            };
+            _playTimer.Tick += PlayCallback;
+            _playTimer.Start();
         }
 
         private void Extract(FileSystemNode o)
@@ -143,16 +148,15 @@ namespace PSXPackagerGUI.Pages
 
         }
 
-        private void PlayCallback(object? state)
+        private void PlayCallback(object? sender, EventArgs e)
         {
-            _model.CurrentAudioPosition = (int)_player.CurrentTime.TotalSeconds;
-            _model.TotalAudioLength = (int)_player.TotalTime.TotalSeconds;
-            _model.CurrentAudioTime = _player.CurrentTime;
+            _model.CurrentAudioPosition = _player.CurrentPosition;
+            _model.TotalAudioLength = _player.TotalLength;
         }
 
         private void Window_Closed(object? sender, EventArgs e)
         {
-            _playTimer?.Dispose();
+            _playTimer?.Stop();
             timer?.Dispose();
         }
 
@@ -385,6 +389,16 @@ namespace PSXPackagerGUI.Pages
                         {
                             if (pbpReader.TryGetResourceStream(resource.Type, stream, out var resourceStream))
                             {
+                                if (resource.Composite == null)
+                                {
+                                    // ICON1 (PMF) and SND0 (AT3) are not images, keep the raw data
+                                    resource.CopyFromStream(resourceStream);
+                                    resource.SourceUrl = $"pbp://{path}#{resource.Type}";
+                                    resource.IsIncluded = true;
+                                    resource.HasResource = true;
+                                    return;
+                                }
+
                                 //using var outStream = new FileStream(@"D:\roms\PSX\Animetic Story Game 1 - Card Captor Sakura (English v1.0)\test2.png", FileMode.Create, FileAccess.Write);
                                 //resourceStream.CopyTo(outStream);
                                 //outStream.Flush();
@@ -1210,6 +1224,51 @@ namespace PSXPackagerGUI.Pages
                     MessageBox.Show(Window, "The disc does not appear to be a valid PlayStation disc",
                         "PSXPackager",
                         MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+
+                const int bytesPerSector = 2352;
+
+                var orderedTracks = disc.Tracks.OrderBy(d => d.Number).ToList();
+
+                // Sector positions in a cue sheet are relative to the FILE they are listed under,
+                // so a track ends at the next track's first index only if that track is in the
+                // same file. Otherwise it runs to the end of its own file.
+                long GetFileSectors(PSXPackager.Common.Cue.CueFileEntry fileEntry)
+                {
+                    if (!isCue)
+                    {
+                        // A single image: a CHD is larger than the file on disk, so use the computed size
+                        return fileSize / bytesPerSector;
+                    }
+
+                    var fileInfo = new FileInfo(fileEntry.CueFile.GetAbsolutePath(fileEntry));
+                    return fileInfo.Exists ? fileInfo.Length / bytesPerSector : 0;
+                }
+
+                for (var i = 0; i < orderedTracks.Count; i++)
+                {
+                    var track = orderedTracks[i];
+                    var indexes = track.CueTrack.Indexes;
+
+                    // The data of a track begins at INDEX 01, any INDEX 00 pregap before it is not counted
+                    var startIndex = indexes.FirstOrDefault(x => x.Number == 1) ?? indexes[0];
+                    long startSector = startIndex.Position.Sectors;
+
+                    long endSector;
+
+                    var next = i + 1 < orderedTracks.Count ? orderedTracks[i + 1] : null;
+
+                    if (next != null && ReferenceEquals(next.CueTrack.FileEntry, track.CueTrack.FileEntry))
+                    {
+                        // The next track's first index, which is its INDEX 00 when it has a pregap
+                        endSector = next.CueTrack.Indexes[0].Position.Sectors;
+                    }
+                    else
+                    {
+                        endSector = GetFileSectors(track.CueTrack.FileEntry);
+                    }
+
+                    track.Size = Math.Max(0, endSector - startSector) * bytesPerSector;
                 }
 
                 disc.Size = fileSize;

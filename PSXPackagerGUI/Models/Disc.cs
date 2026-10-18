@@ -46,7 +46,13 @@ namespace PSXPackagerGUI.Models
             set => SetField(ref _dataType, value);
         }
 
+        //public string Length
+        //{
+        //    get => CueTrack.Size;
+        //}
+
         public CueTrack CueTrack { get; private set; }
+        public long Size { get; set; }
 
         public Track()
         {

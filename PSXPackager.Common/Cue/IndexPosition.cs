@@ -35,6 +35,8 @@ namespace PSXPackager.Common.Cue
                    Frames == position.Frames;
         }
 
+        public int Sectors => (Minutes * 60 + Seconds) * 75 + Frames;
+
         public override int GetHashCode()
         {
             return HashCode.Combine(Minutes, Seconds, Frames);

@@ -29,10 +29,14 @@ namespace PSXPackager.Audio
         Paused
     }
 
+    public delegate void UpdatePositionEventHandler(long position);
+
     public class ProgressTrackingStream : WaveStream
     {
         private readonly IWaveProvider sourceProvider;
         private long totalBytesRead;
+
+        public event UpdatePositionEventHandler UpdatePosition;
 
         public ProgressTrackingStream(IWaveProvider sourceProvider)
         {
@@ -49,7 +53,13 @@ namespace PSXPackager.Audio
         }
 
         // Since it's a live buffer, the total length is technically unknown or indefinite
-        public override long Length => 0;
+        public override long Length => _length;
+        private long _length;
+
+        public void SetLength(long length)
+        {
+            _length = length;
+        }
 
         public override int Read(byte[] buffer, int offset, int count)
         {
@@ -57,9 +67,6 @@ namespace PSXPackager.Audio
             totalBytesRead += bytesRead;
             return bytesRead;
         }
-
-        // Helper helper to get the elapsed playback time safely
-        public TimeSpan CurrentTime => TimeSpan.FromSeconds((double)totalBytesRead / WaveFormat.AverageBytesPerSecond);
 
         public void Reset()
         {
@@ -96,8 +103,44 @@ namespace PSXPackager.Audio
             _waveOutEvent.PlaybackStopped += WaveOutEventOnPlaybackStopped;
         }
 
-        public TimeSpan CurrentTime => _trackingStream.CurrentTime;
-        public TimeSpan TotalTime { get; private set; }
+        private long _positionBase;
+        private long _lastPosition;
+
+        /// <summary>
+        /// How many bytes of the current track have been played. This follows the audio device's own
+        /// clock, which advances continuously, rather than the reads from the buffer, which arrive
+        /// in chunks of a few hundred milliseconds.
+        /// </summary>
+        public long CurrentPosition
+        {
+            get
+            {
+                if (_waveOutEvent.PlaybackState == PlaybackState.Stopped)
+                {
+                    return _lastPosition;
+                }
+
+                try
+                {
+                    var played = _waveOutEvent.GetPosition() - _positionBase;
+
+                    if (played < _lastPosition) played = _lastPosition;
+
+                    var total = TotalLength;
+                    if (total > 0 && played > total) played = total;
+
+                    _lastPosition = played;
+                }
+                catch (Exception)
+                {
+                    // The device may be closing, keep showing the last known position
+                }
+
+                return _lastPosition;
+            }
+        }
+
+        public long TotalLength { get; set; }
 
         private void WaveOutEventOnPlaybackStopped(object? sender, StoppedEventArgs e)
         {
@@ -187,8 +230,11 @@ namespace PSXPackager.Audio
                     var size = (endSector - startSector) * SectorSize;
 
                     _trackingStream.Reset();
+                    _trackingStream.SetLength(size);
 
-                    TotalTime = TimeSpan.FromSeconds(size / _buffer.WaveFormat.AverageBytesPerSecond);
+                    TotalLength = size;
+                    _lastPosition = 0;
+                    _positionBase = _waveOutEvent.GetPosition();
 
                     while (currentSector < endSector &&
                            source.Stream.Read(sector, 0, sector.Length) == sector.Length)

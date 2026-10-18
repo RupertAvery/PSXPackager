@@ -21,6 +21,7 @@
         <converters:IsoInformationConverter x:Key="IsoInformationConverter"></converters:IsoInformationConverter>
         <converters:BooleanVisibilityConverter x:Key="VisibilityConverter"></converters:BooleanVisibilityConverter>
         <converters:BooleanInvisibilityCollapsedConverter x:Key="InvisibilityConverter"></converters:BooleanInvisibilityCollapsedConverter>
+        <converters:SizeToTimeLengthConverter x:Key="SizeToTimeLengthConverter"></converters:SizeToTimeLengthConverter>
         <ContextMenu x:Key="DiscButtonContextMenu">
             <MenuItem Header="Load Disc Image" x:Name="LoadISO" Click="LoadISO_OnClick" />
             <MenuItem Header="Save As..." x:Name="SaveImage" Click="SaveImage_OnClick" />
@@ -155,6 +156,7 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="60"/>
                                     <ColumnDefinition/>
+                                    <ColumnDefinition Width="90"/>
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="30"/>
@@ -163,7 +165,8 @@
                                 </Grid.RowDefinitions>
                                 <Label Grid.Column="0">Track #</Label>
                                 <Label Grid.Column="1">Type</Label>
-                                <ListView Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{Binding SelectedDisc.Tracks}" SelectedItem="{Binding SelectedTrack}">
+                                <Label Grid.Column="2">Size</Label>
+                                <ListView Grid.Row="1" Grid.ColumnSpan="3" ItemsSource="{Binding SelectedDisc.Tracks}" SelectedItem="{Binding SelectedTrack}">
                                     <ListView.ItemContainerStyle>
                                         <Style TargetType="{x:Type ListViewItem}">
                                             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -187,11 +190,13 @@
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="60"/>
                                                     <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="90"/>
                                                     <ColumnDefinition Width="24"/>
                                                 </Grid.ColumnDefinitions>
                                                 <Label Content="{Binding Number}"></Label>
                                                 <Label Grid.Column="1" Content="{Binding DataType}"></Label>
-                                                <Grid Grid.Column="2">
+                                                <Label Grid.Column="2" Content="{Binding Size, Converter={StaticResource SizeToTimeLengthConverter}}"></Label>
+                                                <Grid Grid.Column="3">
                                                     <Image Width="24" Height="24" MouseDown="PlayControls_OnMouseDown">
                                                         <Image.Style>
                                                             <Style TargetType="Image">
@@ -235,7 +240,7 @@
                                             <ColumnDefinition Width="50"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Text="{Binding CurrentAudioTime, StringFormat={}{0:hh\\:mm\\:ss}}" FontSize="12"></TextBlock>
+                                        <TextBlock Text="{Binding CurrentAudioPosition, Converter={StaticResource SizeToTimeLengthConverter}}" FontSize="12"></TextBlock>
                                         <Slider Grid.Column="1"  Minimum="0" Maximum="{Binding TotalAudioLength}" Value="{Binding CurrentAudioPosition}" TickPlacement="None" TickFrequency="2" Orientation="Horizontal"></Slider>
                                     </Grid>
                                     <!--<Label Content="{Binding CurrentTrack.Number}" FontSize="20"></Label>
