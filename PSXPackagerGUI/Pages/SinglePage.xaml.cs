@@ -148,10 +148,70 @@ namespace PSXPackagerGUI.Pages
 
         }
 
+        private bool _scrubbing;
+
+        private void PositionSlider_OnMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            _scrubbing = true;
+        }
+
+        private void PositionSlider_OnMouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (!_scrubbing) return;
+            _scrubbing = false;
+
+            // Let the slider finish moving the thumb to the clicked point first
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (_player.IsPlaying || _player.IsPaused)
+                {
+                    _player.Seek((long)PositionSlider.Value);
+                }
+            }), System.Windows.Threading.DispatcherPriority.Input);
+        }
+
+        private void PlayPause_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (_player.IsPlaying)
+            {
+                _player.Pause();
+            }
+            else if (_player.IsPaused)
+            {
+                _player.Play();
+            }
+            else if (_model.CurrentTrack is { DataType: DataTypes.AUDIO } track)
+            {
+                Play(track);
+            }
+
+            _model.IsAudioPlaying = _player.IsPlaying;
+        }
+
+        private void RestartTrack_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (_player.IsPlaying || _player.IsPaused)
+            {
+                _player.Seek(0);
+                _model.CurrentAudioPosition = 0;
+                if (_player.IsPaused) _player.Play();
+            }
+            else if (_model.CurrentTrack is { DataType: DataTypes.AUDIO } track)
+            {
+                Play(track);
+            }
+
+            _model.IsAudioPlaying = _player.IsPlaying;
+        }
+
         private void PlayCallback(object? sender, EventArgs e)
         {
-            _model.CurrentAudioPosition = _player.CurrentPosition;
+            if (!_scrubbing)
+            {
+                _model.CurrentAudioPosition = _player.CurrentPosition;
+            }
             _model.TotalAudioLength = _player.TotalLength;
+            _model.IsAudioPlaying = _player.IsPlaying;
         }
 
         private void Window_Closed(object? sender, EventArgs e)

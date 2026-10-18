@@ -22,6 +22,9 @@
         <converters:BooleanVisibilityConverter x:Key="VisibilityConverter"></converters:BooleanVisibilityConverter>
         <converters:BooleanInvisibilityCollapsedConverter x:Key="InvisibilityConverter"></converters:BooleanInvisibilityCollapsedConverter>
         <converters:SizeToTimeLengthConverter x:Key="SizeToTimeLengthConverter"></converters:SizeToTimeLengthConverter>
+        <Geometry x:Key="PlayIcon">M8,4 L28,16 L8,28 Z</Geometry>
+        <Geometry x:Key="PauseIcon">M6,4 H13 V28 H6 Z M19,4 H26 V28 H19 Z</Geometry>
+        <Geometry x:Key="RestartIcon">M5,4 H10 V28 H5 Z M28,4 V28 L12,16 Z</Geometry>
         <ContextMenu x:Key="DiscButtonContextMenu">
             <MenuItem Header="Load Disc Image" x:Name="LoadISO" Click="LoadISO_OnClick" />
             <MenuItem Header="Save As..." x:Name="SaveImage" Click="SaveImage_OnClick" />
@@ -161,7 +164,7 @@
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="30"/>
                                     <RowDefinition Height="*"/>
-                                    <RowDefinition Height="38"/>
+                                    <RowDefinition Height="48"/>
                                 </Grid.RowDefinitions>
                                 <Label Grid.Column="0">Track #</Label>
                                 <Label Grid.Column="1">Type</Label>
@@ -231,17 +234,37 @@
                                         </DataTemplate>
                                     </ListView.ItemTemplate>
                                 </ListView>
-                                <Grid Grid.Row="2" Grid.ColumnSpan="2" Margin="10">
+                                <Grid Grid.Row="2" Grid.ColumnSpan="3" Margin="10">
                                     <Grid.RowDefinitions>
                                         <RowDefinition/>
                                     </Grid.RowDefinitions>
                                     <Grid Grid.Row="0">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="50"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="60"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Text="{Binding CurrentAudioPosition, Converter={StaticResource SizeToTimeLengthConverter}}" FontSize="12"></TextBlock>
-                                        <Slider Grid.Column="1"  Minimum="0" Maximum="{Binding TotalAudioLength}" Value="{Binding CurrentAudioPosition}" TickPlacement="None" TickFrequency="2" Orientation="Horizontal"></Slider>
+                                        <Button Grid.Column="0" Width="28" Height="28" Margin="0,0,4,0" Padding="4" ToolTip="Restart" Click="RestartTrack_OnClick">
+                                            <Path Data="{StaticResource RestartIcon}" Fill="Black" Stretch="Uniform"/>
+                                        </Button>
+                                        <Button Grid.Column="1" Width="28" Height="28" Margin="0,0,8,0" Padding="4" ToolTip="Play / Pause" Click="PlayPause_OnClick">
+                                            <Path Fill="Black" Stretch="Uniform">
+                                                <Path.Style>
+                                                    <Style TargetType="Path">
+                                                        <Setter Property="Data" Value="{StaticResource PlayIcon}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsAudioPlaying}" Value="True">
+                                                                <Setter Property="Data" Value="{StaticResource PauseIcon}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Path.Style>
+                                            </Path>
+                                        </Button>
+                                        <TextBlock Grid.Column="2" VerticalAlignment="Center" Text="{Binding CurrentAudioPosition, Converter={StaticResource SizeToTimeLengthConverter}}" FontSize="12"></TextBlock>
+                                        <Slider x:Name="PositionSlider" Grid.Column="3" VerticalAlignment="Center" Minimum="0" Maximum="{Binding TotalAudioLength}" Value="{Binding CurrentAudioPosition}" IsMoveToPointEnabled="True" TickPlacement="None" TickFrequency="2" Orientation="Horizontal"
+                                                PreviewMouseLeftButtonDown="PositionSlider_OnMouseDown" PreviewMouseLeftButtonUp="PositionSlider_OnMouseUp"></Slider>
                                     </Grid>
                                     <!--<Label Content="{Binding CurrentTrack.Number}" FontSize="20"></Label>
                                     <Slider Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Minimum="0" Maximum="100" Value="{Binding Volume}" TickPlacement="None" TickFrequency="2" Orientation="Vertical"></Slider>-->

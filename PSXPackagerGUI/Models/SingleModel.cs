@@ -212,6 +212,14 @@ namespace PSXPackagerGUI.Models
             set => SetProperty(ref _totalSeconds, value);
         }
 
+        private bool _isAudioPlaying;
+
+        public bool IsAudioPlaying
+        {
+            get => _isAudioPlaying;
+            set => SetProperty(ref _isAudioPlaying, value);
+        }
+
         public long CurrentAudioPosition
         {
             get => _currentAudioPosition;

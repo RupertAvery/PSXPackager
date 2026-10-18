@@ -157,6 +157,24 @@ namespace PSXPackager.Audio
             _waveOutEvent.Volume = volume;
         }
 
+        public bool IsPlaying => _waveOutEvent.PlaybackState == PlaybackState.Playing;
+
+        public bool IsPaused => _waveOutEvent.PlaybackState == PlaybackState.Paused;
+
+        private int _seekSector = -1;
+
+        /// <summary>
+        /// Moves the track being played to the given byte offset from its start.
+        /// </summary>
+        public void Seek(long position)
+        {
+            var total = TotalLength;
+            if (position < 0) position = 0;
+            if (position > total) position = total;
+
+            Volatile.Write(ref _seekSector, (int)(position / SectorSize));
+        }
+
         public void Pause()
         {
             _waveOutEvent.Pause();
@@ -235,36 +253,48 @@ namespace PSXPackager.Audio
                     TotalLength = size;
                     _lastPosition = 0;
                     _positionBase = _waveOutEvent.GetPosition();
+                    Volatile.Write(ref _seekSector, -1);
 
-                    while (currentSector < endSector &&
-                           source.Stream.Read(sector, 0, sector.Length) == sector.Length)
+                    while (!cancellationToken.IsCancellationRequested)
                     {
-                        while (_buffer.BufferedBytes > _buffer.BufferLength - sector.Length)
+                        var seekSector = Interlocked.Exchange(ref _seekSector, -1);
+                        if (seekSector >= 0)
                         {
-                            if (cancellationToken.IsCancellationRequested)
+                            currentSector = startSector + seekSector;
+                            source.Stream.Seek((long)currentSector * SectorSize, SeekOrigin.Begin);
+                            _buffer.ClearBuffer();
+
+                            var offset = (long)seekSector * SectorSize;
+                            _positionBase = _waveOutEvent.GetPosition() - offset;
+                            _lastPosition = offset;
+                            continue;
+                        }
+
+                        if (currentSector < endSector)
+                        {
+                            if (_buffer.BufferedBytes > _buffer.BufferLength - sector.Length)
                             {
-                                break;
+                                Thread.Sleep(5); // wait for space
+                                continue;
                             }
-                            Thread.Sleep(5); // wait for space
+
+                            if (source.Stream.Read(sector, 0, sector.Length) != sector.Length)
+                            {
+                                currentSector = endSector;
+                                continue;
+                            }
+
+                            _buffer.AddSamples(sector, 0, sector.Length);
+                            currentSector++;
                         }
-                        if (cancellationToken.IsCancellationRequested)
+                        else if (_buffer.BufferedBytes > 0)
+                        {
+                            Thread.Sleep(5); // let the rest play out, a seek may still come
+                        }
+                        else
                         {
                             break;
                         }
-
-                        _buffer.AddSamples(sector, 0, sector.Length);
-
-                        currentSector++;
-                    }
-
-
-                    while (_buffer.BufferedBytes > 0)
-                    {
-                        if (cancellationToken.IsCancellationRequested)
-                        {
-                            break;
-                        }
-                        Thread.Sleep(5); // wait for space
                     }
                 }
                 catch (Exception e)
