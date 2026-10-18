@@ -419,6 +419,8 @@ namespace PSXPackagerGUI.Pages
                         disc.Tracks = new ObservableCollection<Track>(TOCHelper.TOCtoCUE(d.TOC, disc.SourceUrl)
                             .FileEntries.SelectMany(d => d.Tracks).Select(d => new Track(d)));
 
+                        CalculateTrackSizes(disc, false, d.IsoSize);
+
                         return disc;
                     }).ToList();
 
@@ -1286,50 +1288,7 @@ namespace PSXPackagerGUI.Pages
                         MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
 
-                const int bytesPerSector = 2352;
-
-                var orderedTracks = disc.Tracks.OrderBy(d => d.Number).ToList();
-
-                // Sector positions in a cue sheet are relative to the FILE they are listed under,
-                // so a track ends at the next track's first index only if that track is in the
-                // same file. Otherwise it runs to the end of its own file.
-                long GetFileSectors(PSXPackager.Common.Cue.CueFileEntry fileEntry)
-                {
-                    if (!isCue)
-                    {
-                        // A single image: a CHD is larger than the file on disk, so use the computed size
-                        return fileSize / bytesPerSector;
-                    }
-
-                    var fileInfo = new FileInfo(fileEntry.CueFile.GetAbsolutePath(fileEntry));
-                    return fileInfo.Exists ? fileInfo.Length / bytesPerSector : 0;
-                }
-
-                for (var i = 0; i < orderedTracks.Count; i++)
-                {
-                    var track = orderedTracks[i];
-                    var indexes = track.CueTrack.Indexes;
-
-                    // The data of a track begins at INDEX 01, any INDEX 00 pregap before it is not counted
-                    var startIndex = indexes.FirstOrDefault(x => x.Number == 1) ?? indexes[0];
-                    long startSector = startIndex.Position.Sectors;
-
-                    long endSector;
-
-                    var next = i + 1 < orderedTracks.Count ? orderedTracks[i + 1] : null;
-
-                    if (next != null && ReferenceEquals(next.CueTrack.FileEntry, track.CueTrack.FileEntry))
-                    {
-                        // The next track's first index, which is its INDEX 00 when it has a pregap
-                        endSector = next.CueTrack.Indexes[0].Position.Sectors;
-                    }
-                    else
-                    {
-                        endSector = GetFileSectors(track.CueTrack.FileEntry);
-                    }
-
-                    track.Size = Math.Max(0, endSector - startSector) * bytesPerSector;
-                }
+                CalculateTrackSizes(disc, isCue, fileSize);
 
                 disc.Size = fileSize;
                 disc.IsEmpty = false;
@@ -1345,6 +1304,55 @@ namespace PSXPackagerGUI.Pages
                 Model.SelectedDisc = disc;
             }
 
+        }
+
+        private void CalculateTrackSizes(Disc disc, bool isCue, long fileSize)
+        {
+
+            const int bytesPerSector = 2352;
+
+            var orderedTracks = disc.Tracks.OrderBy(d => d.Number).ToList();
+
+            // Sector positions in a cue sheet are relative to the FILE they are listed under,
+            // so a track ends at the next track's first index only if that track is in the
+            // same file. Otherwise it runs to the end of its own file.
+            long GetFileSectors(PSXPackager.Common.Cue.CueFileEntry fileEntry)
+            {
+                if (!isCue)
+                {
+                    // A single image: a CHD is larger than the file on disk, so use the computed size
+                    return fileSize / bytesPerSector;
+                }
+
+                var fileInfo = new FileInfo(fileEntry.CueFile.GetAbsolutePath(fileEntry));
+                return fileInfo.Exists ? fileInfo.Length / bytesPerSector : 0;
+            }
+
+            for (var i = 0; i < orderedTracks.Count; i++)
+            {
+                var track = orderedTracks[i];
+                var indexes = track.CueTrack.Indexes;
+
+                // The data of a track begins at INDEX 01, any INDEX 00 pregap before it is not counted
+                var startIndex = indexes.FirstOrDefault(x => x.Number == 1) ?? indexes[0];
+                long startSector = startIndex.Position.Sectors;
+
+                long endSector;
+
+                var next = i + 1 < orderedTracks.Count ? orderedTracks[i + 1] : null;
+
+                if (next != null && ReferenceEquals(next.CueTrack.FileEntry, track.CueTrack.FileEntry))
+                {
+                    // The next track's first index, which is its INDEX 00 when it has a pregap
+                    endSector = next.CueTrack.Indexes[0].Position.Sectors;
+                }
+                else
+                {
+                    endSector = GetFileSectors(track.CueTrack.FileEntry);
+                }
+
+                track.Size = Math.Max(0, endSector - startSector) * bytesPerSector;
+            }
         }
 
         private void SaveImage_OnClick(object sender, RoutedEventArgs e)

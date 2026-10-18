@@ -22,6 +22,7 @@
         <converters:BooleanVisibilityConverter x:Key="VisibilityConverter"></converters:BooleanVisibilityConverter>
         <converters:BooleanInvisibilityCollapsedConverter x:Key="InvisibilityConverter"></converters:BooleanInvisibilityCollapsedConverter>
         <converters:SizeToTimeLengthConverter x:Key="SizeToTimeLengthConverter"></converters:SizeToTimeLengthConverter>
+        <converters:FilenameNormalizationConverter x:Key="FilenameNormalizationConverter"></converters:FilenameNormalizationConverter>
         <Geometry x:Key="PlayIcon">M8,4 L28,16 L8,28 Z</Geometry>
         <Geometry x:Key="PauseIcon">M6,4 H13 V28 H6 Z M19,4 H26 V28 H19 Z</Geometry>
         <Geometry x:Key="RestartIcon">M5,4 H10 V28 H5 Z M28,4 V28 L12,16 Z</Geometry>
@@ -162,14 +163,19 @@
                                     <ColumnDefinition Width="90"/>
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="30"/>
                                     <RowDefinition Height="*"/>
                                     <RowDefinition Height="48"/>
                                 </Grid.RowDefinitions>
-                                <Label Grid.Column="0">Track #</Label>
-                                <Label Grid.Column="1">Type</Label>
-                                <Label Grid.Column="2">Size</Label>
-                                <ListView Grid.Row="1" Grid.ColumnSpan="3" ItemsSource="{Binding SelectedDisc.Tracks}" SelectedItem="{Binding SelectedTrack}">
+                                <ListView Grid.Row="0" Grid.ColumnSpan="3" ItemsSource="{Binding SelectedDisc.Tracks}" SelectedItem="{Binding SelectedTrack}">
+                                    <ListView.View>
+                                        <GridView>
+                                            <!-- Column definitions with fixed-at-top headers -->
+                                            <GridViewColumn Header="Track #" Width="60" DisplayMemberBinding="{Binding Number}" />
+                                            <GridViewColumn Header="Type" Width="60" DisplayMemberBinding="{Binding DataType}" />
+                                            <GridViewColumn Header="Size" Width="150" DisplayMemberBinding="{Binding Size, Converter={StaticResource SizeToTimeLengthConverter}}" />
+                                            <GridViewColumn Header="File" Width="120" DisplayMemberBinding="{Binding CueTrack.FileEntry.FileName, Converter={StaticResource FilenameNormalizationConverter}}" />
+                                        </GridView>
+                                    </ListView.View>
                                     <ListView.ItemContainerStyle>
                                         <Style TargetType="{x:Type ListViewItem}">
                                             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -187,12 +193,12 @@
                                             </Style.Triggers>
                                         </Style>
                                     </ListView.ItemContainerStyle>
-                                    <ListView.ItemTemplate>
+                                    <!--<ListView.ItemTemplate>
                                         <DataTemplate>
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="60"/>
-                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition/>
                                                     <ColumnDefinition Width="90"/>
                                                     <ColumnDefinition Width="24"/>
                                                 </Grid.ColumnDefinitions>
@@ -232,7 +238,7 @@
                                                 </Grid>
                                             </Grid>
                                         </DataTemplate>
-                                    </ListView.ItemTemplate>
+                                    </ListView.ItemTemplate>-->
                                 </ListView>
                                 <Grid Grid.Row="2" Grid.ColumnSpan="3" Margin="10">
                                     <Grid.RowDefinitions>
@@ -271,6 +277,74 @@
                                 </Grid>
                             </Grid>
                         </TabItem>
+                        <TabItem x:Name="FileSystemTab" Header="Filesystem">
+                            <Grid>
+                                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center">No Disc or Data Track Selected</TextBlock>
+                                <TreeView ItemsSource="{Binding RootNodes}">
+                                    <TreeView.Style>
+                                        <Style TargetType="TreeView">
+                                            <Setter Property="Visibility" Value="Hidden"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasFileSystem}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TreeView.Style>
+                                    <TreeView.ItemContainerStyle>
+                                        <Style TargetType="{x:Type TreeViewItem}">
+                                            <!--<EventSetter Event="MouseRightButtonDown" Handler="TreeViewItem_PreviewMouseRightButtonDown"/>-->
+                                            <Setter Property="ContextMenu">
+                                                <Setter.Value>
+                                                    <ContextMenu>
+                                                        <ContextMenu.Style>
+
+                                                            <Style TargetType="ContextMenu">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Type}" Value="{x:Static models:FileSystemNodeType.Directory}">
+                                                                        <Setter Property="Visibility" Value="Hidden"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </ContextMenu.Style>
+                                                        <MenuItem Header="Extract" 
+                                                          Command="{Binding PlacementTarget.Tag.ExtractCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                          CommandParameter="{Binding}" />
+                                                    </ContextMenu>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Setter Property="Tag" Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType=TreeView}}"/>
+                                        </Style>
+                                    </TreeView.ItemContainerStyle>
+                                    <TreeView.ItemTemplate>
+                                        <HierarchicalDataTemplate DataType="{x:Type models:FileSystemNode}" 
+                                                      ItemsSource="{Binding Children}">
+                                            <!-- Visual representation of the item itself -->
+                                            <StackPanel Orientation="Horizontal" Margin="2">
+                                                <TextBlock VerticalAlignment="Center">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Type}" Value="{x:Static models:FileSystemNodeType.Directory}">
+                                                                    <Setter Property="Text" Value="📁 "/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Type}" Value="{x:Static models:FileSystemNodeType.File}">
+                                                                    <Setter Property="Text" Value="📄 "/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </HierarchicalDataTemplate>
+                                    </TreeView.ItemTemplate>
+                                </TreeView>
+
+                            </Grid>
+                        </TabItem>
+
                     </TabControl>
                 </Grid>
 
@@ -567,73 +641,6 @@
                             </ItemsControl>
                         </ScrollViewer>
                         <Button Grid.Row="2" Grid.ColumnSpan="2" Click="ResetSFO_Click">Reset</Button>
-                    </Grid>
-                </TabItem>
-                <TabItem x:Name="FileSystemTab" Header="Filesystem">
-                    <Grid>
-                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center">No Data Track Selected</TextBlock>
-                        <TreeView ItemsSource="{Binding RootNodes}">
-                            <TreeView.Style>
-                                <Style TargetType="TreeView">
-                                    <Setter Property="Visibility" Value="Hidden"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding HasFileSystem}" Value="True">
-                                            <Setter Property="Visibility" Value="Visible"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TreeView.Style>
-                            <TreeView.ItemContainerStyle>
-                                <Style TargetType="{x:Type TreeViewItem}">
-                                    <!--<EventSetter Event="MouseRightButtonDown" Handler="TreeViewItem_PreviewMouseRightButtonDown"/>-->
-                                    <Setter Property="ContextMenu">
-                                        <Setter.Value>
-                                            <ContextMenu>
-                                                <ContextMenu.Style>
-                                                    
-                                                    <Style TargetType="ContextMenu">
-                                                        <Setter Property="Visibility" Value="Visible"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding Type}" Value="{x:Static models:FileSystemNodeType.Directory}">
-                                                                <Setter Property="Visibility" Value="Hidden"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </ContextMenu.Style>
-                                                <MenuItem Header="Extract" 
-                                                          Command="{Binding PlacementTarget.Tag.ExtractCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                          CommandParameter="{Binding}" />
-                                            </ContextMenu>
-                                        </Setter.Value>
-                                    </Setter>
-                                    <Setter Property="Tag" Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType=TreeView}}"/>
-                                </Style>
-                            </TreeView.ItemContainerStyle>
-                            <TreeView.ItemTemplate>
-                                <HierarchicalDataTemplate DataType="{x:Type models:FileSystemNode}" 
-                                                      ItemsSource="{Binding Children}">
-                                    <!-- Visual representation of the item itself -->
-                                    <StackPanel Orientation="Horizontal" Margin="2">
-                                        <TextBlock VerticalAlignment="Center">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Type}" Value="{x:Static models:FileSystemNodeType.Directory}">
-                                                            <Setter Property="Text" Value="📁 "/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Type}" Value="{x:Static models:FileSystemNodeType.File}">
-                                                            <Setter Property="Text" Value="📄 "/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </HierarchicalDataTemplate>
-                            </TreeView.ItemTemplate>
-                        </TreeView>
-
                     </Grid>
                 </TabItem>
             </TabControl>

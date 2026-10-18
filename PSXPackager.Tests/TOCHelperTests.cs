@@ -104,8 +104,30 @@ namespace UnitTestProject
         }
 
         [TestMethod]
-        public void TOCtoCUEDataTrackHasSingleIndexAtTrackPosition()
+        public void TOCtoCUEAudioTrackHasSingleIndexAtTrackPosition()
         {
+            var tocEntries = new List<TOCEntry>
+            {
+                new TOCEntry { TrackNo = 1, TrackType = TrackTypeEnum.Audio, Minutes = 0, Seconds = 2, Frames = 0 },
+            };
+
+            var cueFile = TOCHelper.TOCtoCUE(tocEntries, "game.bin");
+            var track = cueFile.FileEntries[0].Tracks[0];
+
+            Assert.AreEqual(1, track.Number);
+            Assert.AreEqual(DataTypes.AUDIO, track.DataType);
+            Assert.AreEqual(1, track.Indexes.Count);
+            Assert.AreEqual(1, track.Indexes[0].Number);
+            Assert.AreEqual(0, track.Indexes[0].Position.Minutes);
+            Assert.AreEqual(2, track.Indexes[0].Position.Seconds);
+            Assert.AreEqual(0, track.Indexes[0].Position.Frames);
+        }
+
+        [TestMethod]
+        public void TOCtoCUEDataTrackWithAdvancedPositionHasForcedToZero()
+        {
+            // When converting a TOC to a CUE, the first DATA track is always forced to start at 00:00:00, even if the TOC specifies a different starting position.
+
             var tocEntries = new List<TOCEntry>
             {
                 new TOCEntry { TrackNo = 1, TrackType = TrackTypeEnum.Data, Minutes = 0, Seconds = 2, Frames = 0 },
@@ -119,9 +141,10 @@ namespace UnitTestProject
             Assert.AreEqual(1, track.Indexes.Count);
             Assert.AreEqual(1, track.Indexes[0].Number);
             Assert.AreEqual(0, track.Indexes[0].Position.Minutes);
-            Assert.AreEqual(2, track.Indexes[0].Position.Seconds);
+            Assert.AreEqual(0, track.Indexes[0].Position.Seconds);
             Assert.AreEqual(0, track.Indexes[0].Position.Frames);
         }
+
 
         [TestMethod]
         public void TOCtoCUEAudioTrackGetsTwoSecondPregapIndex()
