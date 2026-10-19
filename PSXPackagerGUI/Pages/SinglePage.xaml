@@ -23,6 +23,7 @@
         <converters:BooleanInvisibilityCollapsedConverter x:Key="InvisibilityConverter"></converters:BooleanInvisibilityCollapsedConverter>
         <converters:SizeToTimeLengthConverter x:Key="SizeToTimeLengthConverter"></converters:SizeToTimeLengthConverter>
         <converters:FilenameNormalizationConverter x:Key="FilenameNormalizationConverter"></converters:FilenameNormalizationConverter>
+        <converters:TrackNameConverter x:Key="TrackNameConverter"></converters:TrackNameConverter>
         <Geometry x:Key="PlayIcon">M8,4 L28,16 L8,28 Z</Geometry>
         <Geometry x:Key="PauseIcon">M6,4 H13 V28 H6 Z M19,4 H26 V28 H19 Z</Geometry>
         <Geometry x:Key="RestartIcon">M5,4 H10 V28 H5 Z M28,4 V28 L12,16 Z</Geometry>
@@ -164,7 +165,7 @@
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="*"/>
-                                    <RowDefinition Height="48"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 <ListView Grid.Row="0" Grid.ColumnSpan="3" ItemsSource="{Binding SelectedDisc.Tracks}" SelectedItem="{Binding SelectedTrack}">
                                     <ListView.View>
@@ -240,11 +241,14 @@
                                         </DataTemplate>
                                     </ListView.ItemTemplate>-->
                                 </ListView>
-                                <Grid Grid.Row="2" Grid.ColumnSpan="3" Margin="10">
+                                <Grid Grid.Row="1" Grid.ColumnSpan="3" Margin="5">
                                     <Grid.RowDefinitions>
-                                        <RowDefinition/>
+                                        <RowDefinition Height="24"/>
+                                        <RowDefinition Height="5"/>
+                                        <RowDefinition Height="28"/>
                                     </Grid.RowDefinitions>
-                                    <Grid Grid.Row="0">
+                                    <TextBlock Grid.Row="0" FontWeight="SemiBold" VerticalAlignment="Center" Text="{Binding CurrentTrack, Converter={StaticResource TrackNameConverter}}" FontSize="12"></TextBlock>
+                                    <Grid Grid.Row="2">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
