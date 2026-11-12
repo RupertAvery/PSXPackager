@@ -103,7 +103,7 @@ namespace UnitTestProject
             // DISC_ID has a 16-byte max length (including null terminator)
             builder.AddEntry(SFOKeys.DISC_ID, new string('X', 20));
 
-            Assert.ThrowsException<Exception>(() => builder.Build());
+            Assert.ThrowsExactly<Exception>(() => builder.Build());
         }
 
         [TestMethod]
@@ -112,7 +112,7 @@ namespace UnitTestProject
             var builder = new SFOBuilder();
             builder.AddEntry("NOT_A_REAL_KEY", "value");
 
-            Assert.ThrowsException<ArgumentOutOfRangeException>(() => builder.Build());
+            Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => builder.Build());
         }
     }
 }

@@ -71,7 +71,7 @@ namespace UnitTestProject
                 }
             };
 
-            Assert.ThrowsException<InvalidOperationException>(
+            Assert.ThrowsExactly<InvalidOperationException>(
                 () => track.GetSectorRange(1000L * SectorSize));
         }
 

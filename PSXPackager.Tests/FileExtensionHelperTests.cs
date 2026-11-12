@@ -5,7 +5,7 @@ namespace UnitTestProject
     [TestClass]
     public class FileExtensionHelperTests
     {
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("game.cue", true)]
         [DataRow("game.CUE", true)]
         [DataRow("game.bin", false)]
@@ -15,7 +15,7 @@ namespace UnitTestProject
             Assert.AreEqual(expected, FileExtensionHelper.IsCue(filename));
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("game.pbp", true)]
         [DataRow("game.PBP", true)]
         [DataRow("game.bin", false)]
@@ -24,7 +24,7 @@ namespace UnitTestProject
             Assert.AreEqual(expected, FileExtensionHelper.IsPbp(filename));
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("playlist.m3u", true)]
         [DataRow("playlist.M3U", true)]
         [DataRow("playlist.cue", false)]
@@ -33,7 +33,7 @@ namespace UnitTestProject
             Assert.AreEqual(expected, FileExtensionHelper.IsM3u(filename));
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("archive.rar", true)]
         [DataRow("archive.zip", true)]
         [DataRow("archive.tar", true)]
@@ -47,7 +47,7 @@ namespace UnitTestProject
             Assert.AreEqual(expected, FileExtensionHelper.IsArchive(filename));
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("track01.bin", true)]
         [DataRow("track01.BIN", true)]
         [DataRow("game.iso", false)]
@@ -56,7 +56,7 @@ namespace UnitTestProject
             Assert.AreEqual(expected, FileExtensionHelper.IsBin(filename));
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("track01.bin", true)]
         [DataRow("disc.img", true)]
         [DataRow("disc.iso", true)]

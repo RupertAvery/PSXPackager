@@ -191,7 +191,7 @@ namespace UnitTestProject
             var image = new byte[1024];
 
             Assert.IsFalse(ChdFile.IsChd(new MemoryStream(image)));
-            Assert.ThrowsException<InvalidChdException>(() => ChdFile.Open(new MemoryStream(image)));
+            Assert.ThrowsExactly<InvalidChdException>(() => ChdFile.Open(new MemoryStream(image)));
         }
 
         [TestMethod]
@@ -201,7 +201,7 @@ namespace UnitTestProject
             builder.Compressors[0] = 0x61766875; // "avhu"
             builder.AddHunk(ChdBuilder.TypeCodec0, new byte[16]);
 
-            Assert.ThrowsException<InvalidChdException>(() => Open(builder));
+            Assert.ThrowsExactly<InvalidChdException>(() => Open(builder));
         }
 
         /// <summary>
