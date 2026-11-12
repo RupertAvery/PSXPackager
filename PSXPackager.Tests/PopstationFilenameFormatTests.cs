@@ -6,7 +6,7 @@ namespace UnitTestProject
     [TestClass]
     public class PopstationFilenameFormatTests
     {
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("%FILENAME%")]
         [DataRow("%GAMEID%")]
         [DataRow("%MAINGAMEID%")]

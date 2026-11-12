@@ -118,7 +118,7 @@ namespace UnitTestProject
         {
             var dataTrack = CueFileReader.Read(_cuePath).FileEntries.Single().Tracks[0];
 
-            Assert.ThrowsException<InvalidOperationException>(() =>
+            Assert.ThrowsExactly<InvalidOperationException>(() =>
                 CDAudioExtractor.Extract(dataTrack, Path.Combine(_directory, "track.wav"), CDAudioFormat.Wav));
         }
 

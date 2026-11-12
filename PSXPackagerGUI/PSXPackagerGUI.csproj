@@ -43,8 +43,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-		<PackageReference Include="SharpCompress" Version="0.48.1" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+		<PackageReference Include="SharpCompress" Version="0.50.8" />
 	</ItemGroup>
 
 	<ItemGroup>

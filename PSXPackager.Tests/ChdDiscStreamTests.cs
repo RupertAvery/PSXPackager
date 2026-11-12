@@ -178,7 +178,7 @@ namespace UnitTestProject
 
             var chd = ChdFile.Open(new MemoryStream(builder.Build()));
 
-            Assert.ThrowsException<InvalidChdException>(() => new ChdDiscStream(chd));
+            Assert.ThrowsExactly<InvalidChdException>(() => new ChdDiscStream(chd));
         }
 
         [TestMethod]
@@ -191,7 +191,7 @@ namespace UnitTestProject
 
             var chd = ChdFile.Open(new MemoryStream(builder.Build()));
 
-            Assert.ThrowsException<InvalidChdException>(() => new ChdDiscStream(chd));
+            Assert.ThrowsExactly<InvalidChdException>(() => new ChdDiscStream(chd));
         }
 
         [TestMethod]
@@ -202,7 +202,7 @@ namespace UnitTestProject
 
             var chd = ChdFile.Open(new MemoryStream(builder.Build()));
 
-            Assert.ThrowsException<InvalidChdException>(() => new ChdDiscStream(chd));
+            Assert.ThrowsExactly<InvalidChdException>(() => new ChdDiscStream(chd));
         }
 
         /// <summary>

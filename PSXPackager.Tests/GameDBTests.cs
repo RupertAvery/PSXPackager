@@ -23,7 +23,7 @@ namespace UnitTestProject
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow("SLUS-00001", "U")]
         [DataRow("SLUS00001", "U")]
         [DataRow("slus-00001", "U")]

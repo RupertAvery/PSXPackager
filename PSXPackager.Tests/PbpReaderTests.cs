@@ -87,7 +87,7 @@ namespace UnitTestProject
             using var stream = new MemoryStream(buffer);
             var reader = CreateReaderWithoutRunningConstructor();
 
-            Assert.ThrowsException<ArgumentOutOfRangeException>(() => reader.Seek(ResourceType.BOOT, stream));
+            Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => reader.Seek(ResourceType.BOOT, stream));
         }
 
         [TestMethod]
@@ -137,7 +137,7 @@ namespace UnitTestProject
 
             using var stream = new MemoryStream(buffer);
 
-            Assert.ThrowsException<Exception>(() => new PbpReader(stream));
+            Assert.ThrowsExactly<Exception>(() => new PbpReader(stream));
         }
     }
 }

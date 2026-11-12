@@ -21,10 +21,10 @@ namespace UnitTestProject
         [TestMethod]
         public void GetTrackTypeThrowsForUnknownDataType()
         {
-            Assert.ThrowsException<ArgumentOutOfRangeException>(() => TOCHelper.GetTrackType("BOGUS"));
+            Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => TOCHelper.GetTrackType("BOGUS"));
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(0, 0)]
         [DataRow(5, 0x05)]
         [DataRow(10, 0x10)]
@@ -35,7 +35,7 @@ namespace UnitTestProject
             Assert.AreEqual((byte)expected, TOCHelper.ToBinaryDecimal(value));
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(0x00, 0)]
         [DataRow(0x05, 5)]
         [DataRow(0x10, 10)]
