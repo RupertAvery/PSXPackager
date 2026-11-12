@@ -38,8 +38,8 @@ Not sure what to download?
 
 # Requirements
 
-* PSXPackager requires the [.NET 8.0 Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
-* PSXPackagerGUI requires the [.NET Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
+* PSXPackager requires the [.NET 10.0 Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/10.0).
+* PSXPackagerGUI requires the [.NET Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/10.0).
 
 # Usage
 
